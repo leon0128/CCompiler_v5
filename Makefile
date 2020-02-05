@@ -6,13 +6,14 @@ PPOBJS   = $(patsubst %.cpp, %.o, $(wildcard $(SRCDIR)$(PPDIR)*.cpp))
 
 PP = pp
 
+APPDIR = app/
 SRCDIR = src/
 PPDIR  = pp/
 
 all: $(PP)
 
 $(PP): $(PPOBJS)
-	$(CXX) $(PPOBJS) $(CXXFLAGS) $(DEBFLAGS) -o $(PP)
+	$(CXX) $(PPOBJS) $(CXXFLAGS) $(DEBFLAGS) -o $(APPDIR)$(PP)
 
 clean: clean_pp
-clean_pp:; rm -f $(PP) $(SRCDIR)$(PPDIR)*.o
+clean_pp:; rm -f $(APPDIR)$(PP) $(SRCDIR)$(PPDIR)*.o
