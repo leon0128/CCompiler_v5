@@ -1,14 +1,18 @@
 CXX      = g++-8
 CXXFLAGS = -std=c++11 $(DEBFLAGS)
 DEBFLAGS = -g3 -Wall
-OBJS     = $(patsubst %.cpp, %.o, $(wildcard $(SRCDIR)*.cpp))
-PROGRAM  = Compiler
+OBJS     = $(patsubst %.cpp, %.o, $(wildcard $(SRCDIR)*/*.cpp))
+PPOBJS   = $(patsubst %.cpp, %.o, $(wildcard $(SRCDIR)$(PPDIR)*.cpp))
+
+PP = pp
 
 SRCDIR = src/
+PPDIR  = pp/
 
-all: $(PROGRAM)
+all: $(PP)
 
-$(PROGRAM): $(OBJS)
-	$(CXX) $(OBJS) $(CXXFLAGS) -o $(PROGRAM)
+$(PP): $(PPOBJS)
+	$(CXX) $(PPOBJS) $(CXXFLAGS) $(DEBFLAGS) -o $(PP)
 
-clean:; rm -f *.o */*.o *~ $(PROGRAM)
+clean: clean_pp
+clean_pp:; rm -f $(PP) $(SRCDIR)$(PPDIR)*.o
