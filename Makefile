@@ -1,19 +1,24 @@
 CXX      = g++-8
 CXXFLAGS = -std=c++11 $(DEBFLAGS)
 DEBFLAGS = -g3 -Wall
-OBJS     = $(patsubst %.cpp, %.o, $(wildcard $(SRCDIR)*/*.cpp))
+
+SHROBJS  = $(patsubst %.cpp, %.o, $(wildcard $(SRCDIR)*$(SHRDIR)*.cpp))
 PPOBJS   = $(patsubst %.cpp, %.o, $(wildcard $(SRCDIR)$(PPDIR)*.cpp))
 
 PP = pp
 
 APPDIR = app/
 SRCDIR = src/
+SHRDIR = share/
 PPDIR  = pp/
 
 all: $(PP)
 
-$(PP): $(PPOBJS)
-	$(CXX) $(PPOBJS) $(CXXFLAGS) $(DEBFLAGS) -o $(APPDIR)$(PP)
+shr: $(SHROBJS)
 
-clean: clean_pp
+$(PP): $(PPOBJS) $(SHROBJS)
+	$(CXX) $(PPOBJS) $(CXXFLAGS) $(SHROBJS) $(DEBFLAGS) -o $(APPDIR)$(PP)
+
+clean: clean_pp clean_shr
 clean_pp:; rm -f $(APPDIR)$(PP) $(SRCDIR)$(PPDIR)*.o
+clean_shr:; rm -f $(SRCDIR)$(SHRDIR)*.o
