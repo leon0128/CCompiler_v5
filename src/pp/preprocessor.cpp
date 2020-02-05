@@ -32,6 +32,8 @@ bool Preprocessor::operator()(int argc, char** argv)
     if(mIsValid)
         replaceTrigraphs();
     if(mIsValid)
+        joinBackslash();
+    if(mIsValid)
         writeResult();
 
     return mIsValid;
@@ -75,6 +77,45 @@ void Preprocessor::replaceTrigraphs()
         auto iter = TRIGRAPH_MAP.find(mSource.substr(pos, 3));
         if(iter != TRIGRAPH_MAP.end())
             mSource.replace(pos, 3, 1, iter->second);
+    }
+}
+
+void Preprocessor::joinBackslash()
+{
+    for(auto pos = mSource.find('\\');
+        pos != std::string::npos;
+        pos = mSource.find('\\', pos))
+    {
+        auto endPos = pos + 1;
+        bool isValid = false;
+
+        if(CONF::IGNORE_WHITESPACE_AFTER_BACKSLASH)
+        {
+            for(; endPos < mSource.size(); endPos++)
+            {
+                if(mSource.at(endPos) == ' ')
+                    continue;
+                else if(mSource.at(endPos) == '\n')
+                    isValid = true;
+                
+                break;
+            }
+        }
+        else
+        {
+            for(; endPos < mSource.size(); endPos++)
+            {
+                if(mSource.at(endPos) == '\n')
+                    isValid = true;
+                
+                break;
+            }
+        }
+
+        if(isValid)
+            mSource.replace(pos, endPos - pos + 1, "");
+        else
+            pos++;
     }
 }
 
