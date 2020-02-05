@@ -2,6 +2,19 @@
 #include <fstream>
 #include <sstream>
 
+bool FileManager::write(const char* filename,
+                        const std::string& data)
+{
+    std::ofstream file(filename, std::ios::out);
+    if(!file.is_open())
+        return false;
+    
+    file << data;
+    file.close();
+
+    return true;
+}
+
 bool FileManager::read(const char* filename,
                        std::string& data)
 {
