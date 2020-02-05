@@ -1,8 +1,12 @@
 #pragma once
 #include <string>
+#include <unordered_map>
 
 class Preprocessor
 {
+private:
+    static const std::unordered_map<std::string, char> TRIGRAPH_MAP;
+
 public:
     Preprocessor();
     ~Preprocessor();
@@ -10,10 +14,12 @@ public:
     bool operator()(int argc, char** argv);
 
 private:
-    bool confirmArguments(int argc, char** argv);
+    void confirmArguments(int argc, char** argv);
+    void replaceTrigraphs();
+    void writeResult();
 
-    char* mFilename;
+    std::string mFilename;
     std::string mSource;
-    
+
     bool mIsValid;
 };
