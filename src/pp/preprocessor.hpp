@@ -17,6 +17,7 @@ private:
     void confirmArguments(int argc, char** argv);
     void replaceTrigraphs();
     void joinBackslash();
+    void deleteComment();
     void writeResult();
 
     std::string mFilename;

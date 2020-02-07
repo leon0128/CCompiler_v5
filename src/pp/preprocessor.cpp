@@ -34,6 +34,8 @@ bool Preprocessor::operator()(int argc, char** argv)
     if(mIsValid)
         joinBackslash();
     if(mIsValid)
+        deleteComment();
+    if(mIsValid)
         writeResult();
 
     return mIsValid;
@@ -64,7 +66,7 @@ void Preprocessor::confirmArguments(int argc, char** argv)
 
 void Preprocessor::replaceTrigraphs()
 {
-    if(!CONF::TRIGRAPH)
+    if(!config().pp_is_replaced_trigraph)
         return;
 
     for(auto pos = mSource.find("??");
@@ -89,7 +91,7 @@ void Preprocessor::joinBackslash()
         auto endPos = pos + 1;
         bool isValid = false;
 
-        if(CONF::IGNORE_WHITESPACE_AFTER_BACKSLASH)
+        if(config().pp_is_ignored_space)
         {
             for(; endPos < mSource.size(); endPos++)
             {
@@ -119,20 +121,15 @@ void Preprocessor::joinBackslash()
     }
 }
 
+void Preprocessor::deleteComment()
+{
+}
+
 void Preprocessor::writeResult()
 {
-    std::string output(mFilename);
-    for(auto pos = output.find('/');
-        pos != std::string::npos;
-        pos = output.find('/', pos + 2))
-    {
-        output.replace(pos, 1, "-");
-    }
-
-    std::string outputFilename(CONF::RESULT_PATH);
-    outputFilename += "/";
-    outputFilename += output;
-    outputFilename += ".pp";
+    std::string outputFilename(config().gen_result_pathname +
+                               "/" +
+                               config().pp_result_filename);
 
     if(!FileManager::write(outputFilename.c_str(), mSource))
     {
