@@ -1,0 +1,13 @@
+# compiler configure
+
+# general config
+# processing result path name
+gen_result_pathname = data
+
+# preprocessor config
+# result file name
+pp_result_filename = result.pp
+# replace trigraphs
+pp_replace_trigraph = true
+# ignore space after backslash
+pp_ignore_space = true
