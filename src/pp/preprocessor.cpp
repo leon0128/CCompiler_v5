@@ -123,6 +123,28 @@ void Preprocessor::joinBackslash()
 
 void Preprocessor::deleteComment()
 {
+    for(auto pos = mSource.find('/');
+        pos != std::string::npos;
+        pos = mSource.find('/', pos + 1))
+    {
+        if(pos + 1 >= mSource.size())
+            break;
+
+        if(mSource.at(pos + 1) == '/')
+        {
+            auto p = mSource.find('\n', pos + 2);
+            if(p != std::string::npos)
+                mSource.replace(pos, p - pos + 1, " ");
+            else
+                mSource.replace(pos, mSource.size() - pos, " ");
+        }
+        else if(mSource.at(pos + 1) == '*')
+        {
+            auto p = mSource.find("*/", pos + 2);
+            if(p != std::string::npos)
+                mSource.replace(pos, p - pos + 2, " ");
+        }
+    }
 }
 
 void Preprocessor::writeResult()
