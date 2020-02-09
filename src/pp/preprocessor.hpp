@@ -20,8 +20,5 @@ private:
     void deleteComment();
     void writeResult();
 
-    std::string mFilename;
-    std::string mSource;
-
     bool mIsValid;
 };

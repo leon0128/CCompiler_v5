@@ -1,4 +1,5 @@
 #include "preprocessor.hpp"
+#include "data.hpp"
 #include "../share/file_manager.hpp"
 #include "../share/config.hpp"
 #include <iostream>
@@ -16,8 +17,6 @@ const std::unordered_map<std::string, char> Preprocessor::TRIGRAPH_MAP
        {"?\?-", '~'}};
 
 Preprocessor::Preprocessor():
-    mFilename(),
-    mSource(),
     mIsValid(true)
 {
 }
@@ -53,11 +52,11 @@ void Preprocessor::confirmArguments(int argc, char** argv)
     }
 
     // confirm argv
-    mFilename = argv[1];
-    if(!FileManager::read(mFilename.c_str(), mSource))
+    DATA::filename() = argv[1];
+    if(!FileManager::read(DATA::filename().c_str(), DATA::source()))
     {
         std::cerr << "error: cannot open file; \""
-                  << mFilename
+                  << DATA::filename()
                   << "\""
                   << std::endl;
         mIsValid = false;
@@ -69,35 +68,35 @@ void Preprocessor::replaceTrigraphs()
     if(!config().pp_is_replaced_trigraph)
         return;
 
-    for(auto pos = mSource.find("??");
+    for(auto pos = DATA::source().find("??");
         pos != std::string::npos;
-        pos = mSource.find("??", pos + 1))
+        pos = DATA::source().find("??", pos + 1))
     {
-        if(pos + 2 >= mSource.size())
+        if(pos + 2 >= DATA::source().size())
             break;
 
-        auto iter = TRIGRAPH_MAP.find(mSource.substr(pos, 3));
+        auto iter = TRIGRAPH_MAP.find(DATA::source().substr(pos, 3));
         if(iter != TRIGRAPH_MAP.end())
-            mSource.replace(pos, 3, 1, iter->second);
+            DATA::source().replace(pos, 3, 1, iter->second);
     }
 }
 
 void Preprocessor::joinBackslash()
 {
-    for(auto pos = mSource.find('\\');
+    for(auto pos = DATA::source().find('\\');
         pos != std::string::npos;
-        pos = mSource.find('\\', pos))
+        pos = DATA::source().find('\\', pos))
     {
         auto endPos = pos + 1;
         bool isValid = false;
 
         if(config().pp_is_ignored_space)
         {
-            for(; endPos < mSource.size(); endPos++)
+            for(; endPos < DATA::source().size(); endPos++)
             {
-                if(mSource.at(endPos) == ' ')
+                if(DATA::source().at(endPos) == ' ')
                     continue;
-                else if(mSource.at(endPos) == '\n')
+                else if(DATA::source().at(endPos) == '\n')
                     isValid = true;
                 
                 break;
@@ -105,9 +104,9 @@ void Preprocessor::joinBackslash()
         }
         else
         {
-            for(; endPos < mSource.size(); endPos++)
+            for(; endPos < DATA::source().size(); endPos++)
             {
-                if(mSource.at(endPos) == '\n')
+                if(DATA::source().at(endPos) == '\n')
                     isValid = true;
                 
                 break;
@@ -115,7 +114,7 @@ void Preprocessor::joinBackslash()
         }
 
         if(isValid)
-            mSource.replace(pos, endPos - pos + 1, "");
+            DATA::source().replace(pos, endPos - pos + 1, "");
         else
             pos++;
     }
@@ -123,26 +122,26 @@ void Preprocessor::joinBackslash()
 
 void Preprocessor::deleteComment()
 {
-    for(auto pos = mSource.find('/');
+    for(auto pos = DATA::source().find('/');
         pos != std::string::npos;
-        pos = mSource.find('/', pos + 1))
+        pos = DATA::source().find('/', pos + 1))
     {
-        if(pos + 1 >= mSource.size())
+        if(pos + 1 >= DATA::source().size())
             break;
 
-        if(mSource.at(pos + 1) == '/')
+        if(DATA::source().at(pos + 1) == '/')
         {
-            auto p = mSource.find('\n', pos + 2);
+            auto p = DATA::source().find('\n', pos + 2);
             if(p != std::string::npos)
-                mSource.replace(pos, p - pos + 1, " ");
+                DATA::source().replace(pos, p - pos + 1, " ");
             else
-                mSource.replace(pos, mSource.size() - pos, " ");
+                DATA::source().replace(pos, DATA::source().size() - pos, " ");
         }
-        else if(mSource.at(pos + 1) == '*')
+        else if(DATA::source().at(pos + 1) == '*')
         {
-            auto p = mSource.find("*/", pos + 2);
+            auto p = DATA::source().find("*/", pos + 2);
             if(p != std::string::npos)
-                mSource.replace(pos, p - pos + 2, " ");
+                DATA::source().replace(pos, p - pos + 2, " ");
         }
     }
 }
@@ -153,7 +152,7 @@ void Preprocessor::writeResult()
                                "/" +
                                config().pp_result_filename);
 
-    if(!FileManager::write(outputFilename.c_str(), mSource))
+    if(!FileManager::write(outputFilename.c_str(), DATA::source()))
     {
         std::cerr << "error: cannot open file; \""
                   << outputFilename
