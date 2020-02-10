@@ -9,8 +9,8 @@ const Config conf;
 const Config& config(){return conf;}
 
 Config::Config():
-    gen_result_pathname("data"),
     sys_include_pathname("/usr/include"),
+    gen_result_pathname("data"),
     pp_result_filename("result.pp"),
     pp_is_replaced_trigraph(true),
     pp_is_ignored_space(true)
