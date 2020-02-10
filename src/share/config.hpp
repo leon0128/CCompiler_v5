@@ -6,6 +6,8 @@ class Config
 {
 private:
     constexpr static const char* const CONFIG_FILENAME = "config";
+    
+    constexpr static const char* const SYS_INCLUDE_PATHNAME = "sys_include_pathname;
 
     constexpr static const char* const GEN_RESULT_PATHNAME = "gen_result_pathname";
     
@@ -15,6 +17,8 @@ private:
 
 public:
     Config();
+
+    std::string sys_include_pathname;
 
     std::string gen_result_pathname;
     

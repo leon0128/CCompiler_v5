@@ -10,6 +10,7 @@ const Config& config(){return conf;}
 
 Config::Config():
     gen_result_pathname("data"),
+    sys_include_pathname("/usr/include"),
     pp_result_filename("result.pp"),
     pp_is_replaced_trigraph(true),
     pp_is_ignored_space(true)
@@ -80,8 +81,15 @@ void Config::load()
         return true;
     };
 
+    // sys_include_pathname
+    auto iter = attributeMap.find(SYS_INCLUDE_PATHNAME);
+    if(iter != attributeMap.end())
+        sys_include_pathname = iter->second;
+    else
+        outputCoution(SYS_INCLUDE_PATHNAME,
+                      sys_include_pathname.c_str());
     // gen_result_pathname
-    auto iter = attributeMap.find(GEN_RESULT_PATHNAME);
+    iter = attributeMap.find(GEN_RESULT_PATHNAME);
     if(iter != attributeMap.end())
         gen_result_pathname = iter->second;
     else

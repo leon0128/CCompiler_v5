@@ -1,5 +1,9 @@
 # compiler configure
 
+# system config
+# system include pathname
+sys_include_pathname = /usr/include
+
 # general config
 # processing result path name
 gen_result_pathname = data
