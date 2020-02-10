@@ -18,6 +18,10 @@ public:
           EClass inEClass):
         data(inData),
         eClass(inEClass){}
+    Token(std::string&& inData,
+          EClass inEClass):
+        data(inData),
+        eClass(inEClass){}
 
     std::string data;
     EClass eClass;
