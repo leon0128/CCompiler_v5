@@ -2,6 +2,12 @@
 #include <fstream>
 #include <sstream>
 
+bool FileManager::isExisted(const char* filename)
+{
+    std::ifstream file(filename);
+    return file.is_open();
+}
+
 bool FileManager::write(const char* filename,
                         const std::string& data)
 {
