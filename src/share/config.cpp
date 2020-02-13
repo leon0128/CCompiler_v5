@@ -9,7 +9,7 @@ const Config conf;
 const Config& config(){return conf;}
 
 Config::Config():
-    sys_include_pathname("/usr/include"),
+    sys_include_pathname_vec(),
     gen_result_pathname("data"),
     pp_result_filename("result.pp"),
     pp_is_replaced_trigraph(true),
@@ -68,11 +68,13 @@ void Config::load()
         if(node == "true" ||
            node == "t" ||
            node == "yes" ||
+           node == "y" ||
            node == "1")
             value = true;
         else if(node == "false" ||
                 node == "f" ||
                 node == "no" ||
+                node == "n" ||
                 node == "0")
             value = false;
         else
@@ -82,12 +84,25 @@ void Config::load()
     };
 
     // sys_include_pathname
-    auto iter = attributeMap.find(SYS_INCLUDE_PATHNAME);
+    auto iter = attributeMap.find(SYS_INCLUDE_PATHNAME_0);
     if(iter != attributeMap.end())
-        sys_include_pathname = iter->second;
-    else
-        outputCoution(SYS_INCLUDE_PATHNAME,
-                      sys_include_pathname.c_str());
+        sys_include_pathname_vec.push_back(iter->second);
+    iter = attributeMap.find(SYS_INCLUDE_PATHNAME_1);
+        sys_include_pathname_vec.push_back(iter->second);
+    iter = attributeMap.find(SYS_INCLUDE_PATHNAME_2);
+        sys_include_pathname_vec.push_back(iter->second);
+    iter = attributeMap.find(SYS_INCLUDE_PATHNAME_3);
+        sys_include_pathname_vec.push_back(iter->second);
+    iter = attributeMap.find(SYS_INCLUDE_PATHNAME_4);
+        sys_include_pathname_vec.push_back(iter->second);
+    if(sys_include_pathname_vec.empty())
+    {
+        std::string def = "/usr/include";
+        sys_include_pathname_vec.push_back(def);
+        outputCoution("sys_include_pathname",
+                      def.c_str());
+    }
+
     // gen_result_pathname
     iter = attributeMap.find(GEN_RESULT_PATHNAME);
     if(iter != attributeMap.end())

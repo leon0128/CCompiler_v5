@@ -2,7 +2,13 @@
 
 # system config
 # system include pathname
-sys_include_pathname = /usr/include
+## this attribute can be overloaded.
+## searched in order from the top
+sys_include_pathname_0 = /usr/lib/gcc/x86_64-linux-gnu/7/include
+sys_include_pathname_1 = /usr/local/include
+sys_include_pathname_2 = /usr/lib/gcc/x86_64-linux-gnu/7/include-fixed
+sys_include_pathname_3 = /usr/include/x86_64-linux-gnu
+sys_include_pathname_4 = /usr/include
 
 # general config
 # processing result path name

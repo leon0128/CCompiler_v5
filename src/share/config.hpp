@@ -1,13 +1,18 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 class Config
 {
 private:
     constexpr static const char* const CONFIG_FILENAME = "config";
     
-    constexpr static const char* const SYS_INCLUDE_PATHNAME = "sys_include_pathname";
+    constexpr static const char* const SYS_INCLUDE_PATHNAME_0 = "sys_include_pathname_0";
+    constexpr static const char* const SYS_INCLUDE_PATHNAME_1 = "sys_include_pathname_1";
+    constexpr static const char* const SYS_INCLUDE_PATHNAME_2 = "sys_include_pathname_2";
+    constexpr static const char* const SYS_INCLUDE_PATHNAME_3 = "sys_include_pathname_3";
+    constexpr static const char* const SYS_INCLUDE_PATHNAME_4 = "sys_include_pathname_4";
 
     constexpr static const char* const GEN_RESULT_PATHNAME = "gen_result_pathname";
     
@@ -18,7 +23,7 @@ private:
 public:
     Config();
 
-    std::string sys_include_pathname;
+    std::vector<std::string> sys_include_pathname_vec;
 
     std::string gen_result_pathname;
     
