@@ -88,12 +88,16 @@ void Config::load()
     if(iter != attributeMap.end())
         sys_include_pathname_vec.push_back(iter->second);
     iter = attributeMap.find(SYS_INCLUDE_PATHNAME_1);
+    if(iter != attributeMap.end())
         sys_include_pathname_vec.push_back(iter->second);
     iter = attributeMap.find(SYS_INCLUDE_PATHNAME_2);
+    if(iter != attributeMap.end())
         sys_include_pathname_vec.push_back(iter->second);
     iter = attributeMap.find(SYS_INCLUDE_PATHNAME_3);
+    if(iter != attributeMap.end())
         sys_include_pathname_vec.push_back(iter->second);
     iter = attributeMap.find(SYS_INCLUDE_PATHNAME_4);
+    if(iter != attributeMap.end())
         sys_include_pathname_vec.push_back(iter->second);
     if(sys_include_pathname_vec.empty())
     {
