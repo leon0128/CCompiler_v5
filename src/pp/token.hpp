@@ -16,9 +16,11 @@ public:
     };
 
     Token(const std::string& inData,
-          EClass inEClass):
+          EClass inEClass,
+          std::string::size_type inPos = std::string::npos):
         data(inData),
-        eClass(inEClass){}
+        eClass(inEClass),
+        pos(inPos){}
     Token(std::string&& inData,
           EClass inEClass):
         data(inData),
@@ -35,6 +37,7 @@ public:
 
     std::string data;
     EClass eClass;
+    std::string::size_type pos;
 };
 
 bool operator==(const Token& lhs, const Token& rhs)
