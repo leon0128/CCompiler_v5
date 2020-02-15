@@ -2,7 +2,7 @@
 
 #include "token.hpp"
 #include <string>
-#include <deque>
+#include <vector>
 
 class Macro
 {
@@ -14,14 +14,13 @@ public:
     };
 
     Macro(EKind inEKind,
-          std::deque<Token>::iterator first,
-          std::deque<Token>::iterator last,
-          std::size_t inNumArgs = 0):
-        eKind(OBJECT),
-        tokens(first, last),
-        numArgs(inNumArgs){}
-        
+          std::vector<Token>::iterator first,
+          std::vector<Token>::iterator last):
+        eKind(inEKind),
+        seq(first, last),
+        args(){}
+
     EKind eKind;
-    std::deque<Token> tokens;
-    std::size_t numArgs;
+    std::vector<Token> seq;
+    std::vector<Token> args;
 };
