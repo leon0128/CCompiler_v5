@@ -411,7 +411,7 @@ void Preprocessor::processPreprocessingLanguage()
 {
     for(std::size_t i = 0; i < mTokens.size(); i++)
     {
-        if(mTokens.at(i) == Token("#", Token::PUNCTUATOR))
+        if(isEquality(i, Token("#", Token::PUNCTUATOR)))
         {
             if(i + 1 >= mTokens.size())
                 break;
@@ -438,60 +438,45 @@ void Preprocessor::processPreprocessingLanguage()
 
 void Preprocessor::processInclude(std::size_t index)
 {
-    if(mTokens.size() >= index + 5)
+    if(isEquality(index + 2, Token("<", Token::PUNCTUATOR)))
     {
-        if(mTokens.at(index + 2) == Token("<", Token::PUNCTUATOR))
+        for(std::size_t i = index + 3; i < mTokens.size(); i++)
         {
-            for(std::size_t i = index + 3;
-                i < mTokens.size();
-                i++)
+            if(isEquality(i, Token(">", Token::PUNCTUATOR)))
             {
-                if(mTokens.at(i) == Token(">", Token::PUNCTUATOR))
-                {
-                    for(std::size_t j = index + 4; j < i; j++)
-                    {
-                        mTokens.at(index + 3).data
-                            += mTokens.at(j).data;
-                    }
-                    mTokens.at(index + 3).eClass
-                        = Token::STRING_LITERAL;
-                    mTokens.erase(mTokens.begin() + index + 4,
-                                  mTokens.begin() + i);
-                    break;
-                }
-                else if(mTokens.at(i) == Token("\n", Token::OTHER) ||
-                        i + 1 == mTokens.size())
-                {
-                    std::cerr << "error: closing parenthesis of include directive does not exist."
-                              << std::endl;
-                    return;
-                }
+                for(std::size_t j = index + 4; j < i; j++)
+                    mTokens.at(index + 3).data += mTokens.at(j).data;
+                mTokens.at(index + 3).eClass = Token::STRING_LITERAL;
+                
+                mTokens.erase(mTokens.begin() + index + 4,
+                              mTokens.begin() + i);
+                break;
+            }
+            else if(isEquality(i, Token("\n", Token::OTHER)) ||
+                    i + 1 == mTokens.size())
+            {
+                std::cerr << "error: closing parenthesis of include directive does not exist."
+                          << std::endl;
+                return;
             }
         }
     }
-    else
-    {
-        std::cerr << "error: arguments of include directive is invalid."
-                  << std::endl;
-        return;
-    }
-    
     
     std::string includeFilename;
     std::string includePathname;
     ESearch eSearch = CURRENT_ONLY;
     // <> filename
-    if(mTokens.at(index + 2) == Token("<", Token::PUNCTUATOR) &&
+    if(isEquality(index + 2, Token("<", Token::PUNCTUATOR)) &&
        mTokens.at(index + 3).eClass == Token::STRING_LITERAL &&
-       mTokens.at(index + 4) == Token(">", Token::PUNCTUATOR))
+       isEquality(index + 4, Token(">", Token::PUNCTUATOR)))
     {
         eSearch = SYSTEM_ONLY;
         includeFilename = mTokens.at(index + 3).data;
     }
     // "" filename
-    else if(mTokens.at(index + 2) == Token("\"", Token::PUNCTUATOR) &&
+    else if(isEquality(index + 2, Token("\"", Token::PUNCTUATOR)) &&
             mTokens.at(index + 3).eClass == Token::STRING_LITERAL &&
-            mTokens.at(index + 4) == Token("\"", Token::PUNCTUATOR))
+            isEquality(index + 4, Token("\"", Token::PUNCTUATOR)))
     {
         eSearch = CURRENT_SYSTEM;
         auto pos = mFilename.rfind('/');
