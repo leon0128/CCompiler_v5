@@ -4,6 +4,7 @@
 #include "../share/file_manager.hpp"
 #include "../share/config.hpp"
 #include <iostream>
+#include <utility>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -68,8 +69,6 @@ bool Preprocessor::operator()(int argc,
         joinBackslash();
     if(mIsValid)
         deleteComment();
-    if(mIsValid)
-        writeResult();
     if(mIsValid)
         tokenization();
     if(mIsValid)
@@ -232,21 +231,6 @@ void Preprocessor::deleteComment()
             if(p != std::string::npos)
                 mSource.replace(pos, p - pos + 2, " ");
         }
-    }
-}
-
-void Preprocessor::writeResult()
-{
-    std::string outputFilename(config().gen_result_pathname +
-                               "/" +
-                               config().pp_result_filename);
-
-    if(!FileManager::write(outputFilename.c_str(), mSource))
-    {
-        std::cerr << "error: cannot open file; \""
-                  << outputFilename
-                  << "\""
-                  << std::endl;
     }
 }
 
@@ -527,4 +511,20 @@ void Preprocessor::processInclude(std::size_t index)
         std::cerr << "error: include file is invalid."
                   << std::endl;
     }
+}
+
+bool Preprocessor::isEquality(std::size_t index, const Token& token) const
+{
+    if(index < mTokens.size())
+        return mTokens.at(index) == std::forward<const Token>(token);
+    else
+        return false;
+}
+
+bool Preprocessor::isEquality(std::size_t index, Token&& token) const
+{
+    if(index < mTokens.size())
+        return mTokens.at(index) == std::forward<Token>(token);
+    else
+        return false;
 }

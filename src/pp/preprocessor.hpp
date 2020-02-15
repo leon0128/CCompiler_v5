@@ -3,6 +3,7 @@
 #include "token.hpp"
 #include <string>
 #include <vector>
+#include <deque>
 #include <unordered_map>
 
 class Preprocessor
@@ -44,16 +45,17 @@ private:
     void replaceTrigraphs();
     void joinBackslash();
     void deleteComment();
-    void writeResult();
-    // tokenization
     void tokenization();
     // process a preprocessing language
     void processPreprocessingLanguage();
         void processInclude(std::size_t index);
 
+    bool isEquality(std::size_t index, const Token& token) const;
+    bool isEquality(std::size_t index, Token&& token) const;
+
     std::string mFilename;
     std::string mSource;
-    std::vector<Token> mTokens;
+    std::deque<Token> mTokens;
     ESearch mESearch;
 
     bool mIsValid;
