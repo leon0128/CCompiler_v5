@@ -291,7 +291,8 @@ void Preprocessor::tokenization()
             
             mTokens.
                 emplace_back(mSource.substr(i, end - i),
-                             Token::IDENTIFIER);
+                             Token::IDENTIFIER,
+                             i);
             i = end - 1;
         }
         // preprocessing number
@@ -306,7 +307,8 @@ void Preprocessor::tokenization()
 
             mTokens.
                 emplace_back(mSource.substr(i, end - i),
-                             Token::PREPROCESSING_NUMBER);
+                             Token::PREPROCESSING_NUMBER,
+                             i);
             i = end - 1;
         }
         // string literal ('')
@@ -329,13 +331,16 @@ void Preprocessor::tokenization()
 
             mTokens.
                 emplace_back(mSource.substr(i, 1),
-                             Token::PUNCTUATOR);
+                             Token::PUNCTUATOR,
+                             i);
             mTokens.
                 emplace_back(mSource.substr(i + 1, end - i - 1),
-                             Token::STRING_LITERAL);
+                             Token::STRING_LITERAL,
+                             i + 1);
             mTokens.
                 emplace_back(mSource.substr(end, 1),
-                             Token::PUNCTUATOR);
+                             Token::PUNCTUATOR,
+                             end);
             i = end;
         }
         // string literal ("")
@@ -358,13 +363,16 @@ void Preprocessor::tokenization()
 
             mTokens.
                 emplace_back(mSource.substr(i, 1),
-                             Token::PUNCTUATOR);
+                             Token::PUNCTUATOR,
+                             i);
             mTokens.
                 emplace_back(mSource.substr(i + 1, end - i - 1),
-                             Token::STRING_LITERAL);
+                             Token::STRING_LITERAL,
+                             i + 1);
             mTokens.
                 emplace_back(mSource.substr(end, 1),
-                             Token::PUNCTUATOR);
+                             Token::PUNCTUATOR,
+                             end);
             i = end;
         }
         // punctuator
@@ -375,13 +383,15 @@ void Preprocessor::tokenization()
             {
                 mTokens.
                     emplace_back(iter->second,
-                                 Token::PUNCTUATOR);
+                                 Token::PUNCTUATOR,
+                                 i);
             }
             else
             {
                 mTokens.
                     emplace_back(*iterator,
-                                 Token::PUNCTUATOR);
+                                 Token::PUNCTUATOR,
+                                 i);
             }
 
             i += iterator->size() - 1;
@@ -391,7 +401,8 @@ void Preprocessor::tokenization()
         {
             mTokens.
                 emplace_back(std::string(1, mSource.at(i)),
-                             Token::OTHER);
+                             Token::OTHER,
+                             i);
         }
     }
 }
