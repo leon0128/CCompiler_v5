@@ -13,9 +13,10 @@ public:
         FUNCTION
     };
 
+    template<typename Iter>
     Macro(EKind inEKind,
-          std::vector<Token>::iterator first,
-          std::vector<Token>::iterator last):
+          Iter first,
+          Iter last):
         eKind(inEKind),
         seq(first, last),
         args(){}
