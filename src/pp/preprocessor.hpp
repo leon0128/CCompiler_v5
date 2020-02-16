@@ -1,6 +1,7 @@
 #pragma once
 
 #include "token.hpp"
+#include "macro.hpp"
 #include <string>
 #include <vector>
 #include <deque>
@@ -12,13 +13,16 @@ private:
     // preprocessing directive
     enum EDirective
     {
-        INCLUDE
+        INCLUDE,
+        DEFINE
     };
 
     static const std::unordered_map<std::string, char> TRIGRAPH_MAP;
     static const std::unordered_map<std::string, std::string> DIGRAPH_MAP;
     static const std::unordered_map<std::string, EDirective> DIRECTIVE_MAP;
     static const std::vector<std::string> PUNCTUATOR_VEC; // sort lengest first
+
+    static std::unordered_map<std::string, Macro> MACRO_MAP;
 
 public:
     enum ESearch
@@ -48,7 +52,9 @@ private:
     void tokenization();
     // process a preprocessing language
     void processPreprocessingLanguage();
-        void processInclude(std::size_t index);
+        void includeFile(std::size_t index);
+        void defineMacro(std::size_t index);
+        bool expandMacro(std::size_t index);
 
     bool isEquality(std::size_t index, const Token& token) const;
     bool isEquality(std::size_t index, Token&& token) const;

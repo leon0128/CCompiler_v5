@@ -1,5 +1,6 @@
 #include "preprocessor.hpp"
 #include "token.hpp"
+#include "macro.hpp"
 #include "data.hpp"
 #include "../share/file_manager.hpp"
 #include "../share/config.hpp"
@@ -27,7 +28,8 @@ const std::unordered_map<std::string, std::string> Preprocessor::DIGRAPH_MAP
        {"%:%:", "##"},
        {"%:", "#"}};
 const std::unordered_map<std::string, Preprocessor::EDirective> Preprocessor::DIRECTIVE_MAP
-    = {{"include", INCLUDE}};
+    = {{"include", INCLUDE},
+       {"define", DEFINE}};
 const std::vector<std::string> Preprocessor::PUNCTUATOR_VEC
     = {"%:%:",
        ">>=", "<<=",
@@ -43,6 +45,8 @@ const std::vector<std::string> Preprocessor::PUNCTUATOR_VEC
        ".", "/", ":", ";", "<", "=",
        ">", "?", "[", "]", "^", "{",
        "|", "}", "~"};
+
+std::unordered_map<std::string, Macro> Preprocessor::MACRO_MAP;
 
 Preprocessor::Preprocessor():
     mFilename(),
@@ -73,6 +77,9 @@ bool Preprocessor::operator()(int argc,
         tokenization();
     if(mIsValid)
         processPreprocessingLanguage();
+
+    for(auto&& e : mTokens)
+        std::cout << e.data;
 
     return mIsValid;
 }
@@ -424,7 +431,10 @@ void Preprocessor::processPreprocessingLanguage()
             switch(iter->second)
             {
                 case(INCLUDE):
-                    processInclude(i);
+                    includeFile(i);
+                    break;
+                case(DEFINE):
+                    defineMacro(i);
                     break;
                 
                 default:
@@ -433,10 +443,12 @@ void Preprocessor::processPreprocessingLanguage()
                     break;
             }
         }
+        else
+            expandMacro(i);
     }
 }
 
-void Preprocessor::processInclude(std::size_t index)
+void Preprocessor::includeFile(std::size_t index)
 {
     if(isEquality(index + 2, Token("<", Token::PUNCTUATOR)))
     {
@@ -507,6 +519,52 @@ void Preprocessor::processInclude(std::size_t index)
         std::cerr << "error: include file is invalid."
                   << std::endl;
     }
+}
+
+void Preprocessor::defineMacro(std::size_t index)
+{
+    if(mTokens.at(index + 2).eClass != Token::IDENTIFIER)
+    {
+        mIsValid = false;
+        std::cerr << "error: define directive must follow by a identifier."
+                  << std::endl;
+        return;
+    }
+
+    auto last = mTokens.begin() + index + 3;
+    for(; last != mTokens.end(); last++)
+    {
+        if((*last) == Token("\n", Token::OTHER))
+            break;
+    }
+
+    Macro macro = Macro(Macro::OBJECT,
+                        mTokens.begin() + index + 3,
+                        last);
+    auto result = MACRO_MAP.emplace(mTokens.at(index + 2).data, macro);
+    if(!result.second)
+        result.first->second = macro;
+
+    mTokens.erase(mTokens.begin() + index,
+                  last);
+}
+
+bool Preprocessor::expandMacro(std::size_t index)
+{
+    if(mTokens.at(index).eClass == Token::IDENTIFIER)
+    {
+        auto iter = MACRO_MAP.find(mTokens.at(index).data);
+        if(iter != MACRO_MAP.end())
+        {
+            mTokens.erase(mTokens.begin() + index);
+            mTokens.insert(mTokens.begin() + index,
+                           iter->second.seq.begin(),
+                           iter->second.seq.end());
+            return true;
+        }
+    }
+
+    return false;
 }
 
 bool Preprocessor::isEquality(std::size_t index, const Token& token) const
