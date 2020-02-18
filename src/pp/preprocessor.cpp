@@ -444,7 +444,8 @@ void Preprocessor::processPreprocessingLanguage()
             }
         }
         else
-            expandMacro(i);
+            if(expandMacro(i))
+                i--;
     }
 }
 
@@ -543,7 +544,7 @@ void Preprocessor::defineMacro(std::size_t index)
 
         bool isValid = true;
         auto iter = mTokens.begin() + 4;
-        for(; iter != mTokens.end() && isValid; iter++)
+        for(; iter != mTokens.end(); iter++)
         {
             if(iter->eClass == Token::IDENTIFIER)
             {
@@ -553,12 +554,10 @@ void Preprocessor::defineMacro(std::size_t index)
                     break;
             }
             else
-                isValid = false;
+                break;
         }
 
-        if(iter == mTokens.end())
-            isValid = false;
-        else if(isValid)
+        if(iter != mTokens.end())
         {
             if((*iter) == Token(")", Token::PUNCTUATOR))
                 first = iter + 1;
@@ -581,22 +580,14 @@ void Preprocessor::defineMacro(std::size_t index)
         first = mTokens.begin() + index + 3;
     }
 
-    for(last = mTokens.begin() + index + 3;
-        last != mTokens.end();
-        last++)
+    for(last = first; last != mTokens.end(); last++)
     {
-        if((*iter) == Token("\n", Token::OTHER))
-            break;
-    }
-
-    for(; last = mTokens.end(); last++)
-    {
-        if((*iter) == Token("\n", Token::OTHER))
+        if((*last) == Token("\n", Token::OTHER))
             break;
     }
     macro.seq = std::vector<Token>(first, last);
 
-    auto result = MACRO_MAP.emplace(mTokens.at(index + 2), macro);
+    auto result = MACRO_MAP.emplace(mTokens.at(index + 2).data, macro);
     if(!result.second)
         result.first->second = macro;
     
@@ -606,20 +597,113 @@ void Preprocessor::defineMacro(std::size_t index)
 
 bool Preprocessor::expandMacro(std::size_t index)
 {
-    if(mTokens.at(index).eClass == Token::IDENTIFIER)
+    if(mTokens.at(index).eClass != Token::IDENTIFIER)
+        return false;
+
+    auto iter = MACRO_MAP.find(mTokens.at(index).data);
+    if(iter == MACRO_MAP.end())
+        return false;
+    
+    // object-like
+    if(iter->second.eKind == Macro::OBJECT)
     {
-        auto iter = MACRO_MAP.find(mTokens.at(index).data);
-        if(iter != MACRO_MAP.end())
+        mTokens.erase(mTokens.begin() + index);
+        mTokens.insert(mTokens.begin() + index,
+                       iter->second.seq.begin(),
+                       iter->second.seq.end());
+    }
+    // function-like
+    else if(iter->second.eKind == Macro::FUNCTION)
+    {
+        if(!isEquality(index + 1, Token("(", Token::PUNCTUATOR)))
+            return false;
+
+        std::vector<std::vector<Token>> tokensVec;
+        auto last = mTokens.begin();
+        
+        // get arguments token sequence
+        int numPar = 0;
+        for(auto i = index + 2, begin = index + 2;
+            i < mTokens.size(); i++)
         {
-            mTokens.erase(mTokens.begin() + index);
-            mTokens.insert(mTokens.begin() + index,
-                           iter->second.seq.begin(),
-                           iter->second.seq.end());
-            return true;
+            if(isEquality(i, Token("(", Token::PUNCTUATOR)))
+                numPar++;
+            else if(isEquality(i, Token(",", Token::PUNCTUATOR)) &&
+                    numPar == 0)
+            {
+                tokensVec.emplace_back(mTokens.begin() + begin,
+                                       mTokens.begin() + i);
+                begin = i + 1;
+            }
+            else if(isEquality(i, Token(")", Token::PUNCTUATOR)))
+            {
+                if(numPar != 0)
+                    numPar--;
+                else
+                {
+                    tokensVec.emplace_back(mTokens.begin() + begin,
+                                           mTokens.begin() + i);
+                    last = mTokens.begin() + i + 1;
+                    break;
+                }
+            }
         }
+
+        // check arguments size error
+        bool isValid = true;
+        if(iter->second.seq.empty())
+        {
+            if(tokensVec.size() == 1)
+            {
+                if(!tokensVec.at(0).empty())
+                    isValid = false;
+            }
+            else
+                isValid =  false;
+        }
+        else
+        {
+            if(iter->second.args.size() != tokensVec.size())
+                isValid = false;
+        }
+        if(!isValid)
+        {
+            std::cerr << "error: function-like macro arguments is invalid."
+                      << std::endl;
+            return false;
+        }
+
+        // expand function-like macro
+        std::deque<Token> seq(iter->second.seq.begin(),
+                              iter->second.seq.end());
+        for(std::size_t i = 0; i < seq.size(); i++)
+        {
+            if(seq.at(i).eClass == Token::IDENTIFIER)
+            {
+                std::size_t pos = 0;
+                for(pos = 0; pos < iter->second.args.size(); pos++)
+                {
+                    if(seq.at(i) == iter->second.args.at(pos))
+                        break;
+                }
+                if(pos != iter->second.args.size())
+                {
+                    seq.erase(seq.begin() + i);
+                    seq.insert(seq.begin() + i,
+                               tokensVec.at(pos).begin(),
+                               tokensVec.at(pos).end());
+                }
+            }
+        }
+        
+        mTokens.erase(mTokens.begin() + index,
+                      last);
+        mTokens.insert(mTokens.begin() + index,
+                       seq.begin(),
+                       seq.end());
     }
 
-    return false;
+    return true;
 }
 
 bool Preprocessor::isEquality(std::size_t index, const Token& token) const
