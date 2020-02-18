@@ -13,6 +13,10 @@ public:
         FUNCTION
     };
 
+    Macro():
+        eKind(OBJECT),
+        seq(),
+        args(){}
     template<typename Iter>
     Macro(EKind inEKind,
           Iter first,

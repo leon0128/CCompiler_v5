@@ -531,20 +531,75 @@ void Preprocessor::defineMacro(std::size_t index)
         return;
     }
 
-    auto last = mTokens.begin() + index + 3;
-    for(; last != mTokens.end(); last++)
+    Macro macro;
+    auto first = mTokens.begin();
+    auto last = mTokens.begin();
+
+    // function-like
+    if(isEquality(index + 3, Token("(", Token::PUNCTUATOR)) &&
+       mTokens.at(index + 2).pos + mTokens.at(index + 2).data.size() == mTokens.at(index + 3).pos)
     {
-        if((*last) == Token("\n", Token::OTHER))
+        macro.eKind = Macro::FUNCTION;
+
+        bool isValid = true;
+        auto iter = mTokens.begin() + 4;
+        for(; iter != mTokens.end() && isValid; iter++)
+        {
+            if(iter->eClass == Token::IDENTIFIER)
+            {
+                macro.args.emplace_back(*iter);
+                iter++;
+                if((*iter) != Token(",", Token::PUNCTUATOR))
+                    break;
+            }
+            else
+                isValid = false;
+        }
+
+        if(iter == mTokens.end())
+            isValid = false;
+        else if(isValid)
+        {
+            if((*iter) == Token(")", Token::PUNCTUATOR))
+                first = iter + 1;
+            else
+                isValid = false;
+        }
+
+        if(!isValid)
+        {
+            mIsValid = false;
+            std::cerr << "error: function-like macro arguments is invalid."
+                      << std::endl;
+            return;
+        }
+    }
+    // object-like
+    else
+    {
+        macro.eKind = Macro::OBJECT;
+        first = mTokens.begin() + index + 3;
+    }
+
+    for(last = mTokens.begin() + index + 3;
+        last != mTokens.end();
+        last++)
+    {
+        if((*iter) == Token("\n", Token::OTHER))
             break;
     }
 
-    Macro macro = Macro(Macro::OBJECT,
-                        mTokens.begin() + index + 3,
-                        last);
-    auto result = MACRO_MAP.emplace(mTokens.at(index + 2).data, macro);
+    for(; last = mTokens.end(); last++)
+    {
+        if((*iter) == Token("\n", Token::OTHER))
+            break;
+    }
+    macro.seq = std::vector<Token>(first, last);
+
+    auto result = MACRO_MAP.emplace(mTokens.at(index + 2), macro);
     if(!result.second)
         result.first->second = macro;
-
+    
     mTokens.erase(mTokens.begin() + index,
                   last);
 }
