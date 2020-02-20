@@ -543,7 +543,7 @@ void Preprocessor::defineMacro(std::size_t index)
         macro.eKind = Macro::FUNCTION;
 
         bool isValid = true;
-        auto iter = mTokens.begin() + 4;
+        auto iter = mTokens.begin() + index + 4;
         for(; iter != mTokens.end(); iter++)
         {
             if(iter->eClass == Token::IDENTIFIER)
@@ -688,14 +688,35 @@ bool Preprocessor::expandMacro(std::size_t index)
                 }
                 if(pos != iter->second.args.size())
                 {
-                    seq.erase(seq.begin() + i);
-                    seq.insert(seq.begin() + i,
-                               tokensVec.at(pos).begin(),
-                               tokensVec.at(pos).end());
+                    // stringize
+                    if(i - 1 >= 0 &&
+                       seq[i - 1] == Token("#", Token::PUNCTUATOR))
+                    {
+                        std::string str;
+                        for(auto e : tokensVec.at(pos))
+                            str += e.data + " ";
+                        std::vector<Token> vec
+                            = {Token("\"", Token::PUNCTUATOR),
+                               Token(str, Token::STRING_LITERAL),
+                               Token("\"", Token::PUNCTUATOR)};
+                        seq.erase(seq.begin() + i - 1,
+                                  seq.begin() + i + 1);
+                        seq.insert(seq.begin() + i - 1,
+                                   vec.begin(),
+                                   vec.end());
+                    }
+                    // expand
+                    else
+                    {
+                        seq.erase(seq.begin() + i);
+                        seq.insert(seq.begin() + i,
+                                   tokensVec.at(pos).begin(),
+                                   tokensVec.at(pos).end());
+                    }
                 }
             }
         }
-        
+
         mTokens.erase(mTokens.begin() + index,
                       last);
         mTokens.insert(mTokens.begin() + index,
