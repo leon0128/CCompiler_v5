@@ -23,9 +23,11 @@ public:
           Iter last):
         eKind(inEKind),
         seq(first, last),
-        args(){}
+        args(),
+        isVariadic(false){}
 
     EKind eKind;
     std::vector<Token> seq;
     std::vector<Token> args;
+    bool isVariadic;
 };
