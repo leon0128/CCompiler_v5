@@ -693,8 +693,14 @@ bool Preprocessor::expandMacro(std::size_t index)
                        repSeq[i - 1] == Token("#", Token::PUNCTUATOR))
                     {
                         std::string str;
-                        for(auto e : tokensVec.at(pos))
-                            str += e.data + " ";
+                        if(!tokensVec.at(pos).empty())
+                        {
+                            str = mSource.substr(tokensVec.at(pos).front().pos,
+                                                 tokensVec.at(pos).back().pos +
+                                                 tokensVec.at(pos).back().data.size() -
+                                                 tokensVec.at(pos).front().pos);
+                        }
+
                         std::vector<Token> vec
                             = {Token("\"", Token::PUNCTUATOR),
                                Token(str, Token::STRING_LITERAL),
