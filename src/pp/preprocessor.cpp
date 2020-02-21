@@ -534,35 +534,38 @@ void Preprocessor::defineMacro(std::size_t index)
 
     Macro macro;
     auto first = mTokens.begin();
-    auto last = mTokens.begin();
 
     // function-like
     if(isEquality(index + 3, Token("(", Token::PUNCTUATOR)) &&
        mTokens.at(index + 2).pos + mTokens.at(index + 2).data.size() == mTokens.at(index + 3).pos)
     {
         macro.eKind = Macro::FUNCTION;
-        last = mTokens.begin() + index + 4;
+        auto iter = mTokens.begin() + index + 4;
 
-        if(!isValidDefined(last, macro))
+        if(!isValidDefined(iter, macro))
         {
             mIsValid = false;
             std::cerr << "error: function-like macro arguments is invalid."
                       << std::endl;
             return;
         }
+
+        first = iter;
     }
     // object-like
     else
     {
         macro.eKind = Macro::OBJECT;
-        first = mTokens.begin() + index + 3;
+        first = mTokens.begin() + 3;
     }
 
-    for(last = first; last != mTokens.end(); last++)
+    auto last = first;
+    for(; last != mTokens.end(); last++)
     {
         if((*last) == Token("\n", Token::OTHER))
             break;
     }
+
     macro.seq = std::vector<Token>(first, last);
 
     auto result = MACRO_MAP.emplace(mTokens.at(index + 2).data, macro);
@@ -587,6 +590,10 @@ bool Preprocessor::isValidDefined(std::deque<Token>::iterator& iter,
             iter++;
             isValid = isValidDefined(iter, macro);
         }
+        else if((*iter) == Token(")", Token::PUNCTUATOR))
+        {
+            iter++;
+        }
         else if((*iter) == Token(".", Token::PUNCTUATOR) &&
                 (*(iter + 1)) == Token(".", Token::PUNCTUATOR) &&
                 (*(iter + 2)) == Token(".", Token::PUNCTUATOR) &&
@@ -595,10 +602,12 @@ bool Preprocessor::isValidDefined(std::deque<Token>::iterator& iter,
             iter = iter + 4;
             macro.isVariadic = true;
         }
-        else if((*iter) == Token(")", Token::PUNCTUATOR))
-            iter++;
         else
             isValid = false;
+    }
+    else if((*iter) == Token(")", Token::PUNCTUATOR))
+    {
+        iter++;  
     }
     else if((*iter) == Token(".", Token::PUNCTUATOR) &&
             (*(iter + 1)) == Token(".", Token::PUNCTUATOR) &&
@@ -608,10 +617,8 @@ bool Preprocessor::isValidDefined(std::deque<Token>::iterator& iter,
         iter = iter + 4;
         macro.isVariadic = true;
         macro.args.emplace_back("__VA_ARGS__",
-                                Token::PUNCTUATOR);
+                                Token::IDENTIFIER);
     }
-    else if((*iter) == Token(")", Token::PUNCTUATOR))
-        iter++;
     else
         isValid = false;
 
@@ -674,21 +681,43 @@ bool Preprocessor::expandMacro(std::size_t index)
 
         // check arguments size error
         bool isValid = true;
-        if(iter->second.seq.empty())
+        if(iter->second.isVariadic)
         {
-            if(tokensVec.size() == 1)
+            if(tokensVec.size() + 1 >= iter->second.args.size())
             {
-                if(!tokensVec.at(0).empty())
-                    isValid = false;
+                std::vector<Token> vec;
+                for(auto i = iter->second.args.size() - 1; i < tokensVec.size(); i++)
+                {
+                    vec.insert(vec.end(),
+                               tokensVec.at(i).begin(),
+                               tokensVec.at(i).end());
+                }
+                tokensVec.erase(tokensVec.begin() + iter->second.args.size() - 1,
+                                tokensVec.end());
+                tokensVec.emplace_back(std::move(vec));
             }
             else
-                isValid =  false;
+                isValid = false;
         }
         else
         {
-            if(iter->second.args.size() != tokensVec.size())
-                isValid = false;
+            if(iter->second.seq.empty())
+            {
+                if(tokensVec.size() == 1)
+                {
+                    if(tokensVec.at(0).empty())
+                        isValid = false;
+                }
+                else
+                    isValid = false;
+            }
+            else
+            {
+                if(iter->second.args.size() != tokensVec.size())
+                    isValid = false;
+            }
         }
+
         if(!isValid)
         {
             std::cerr << "error: function-like macro arguments is invalid."
@@ -712,7 +741,7 @@ bool Preprocessor::expandMacro(std::size_t index)
                 if(pos != iter->second.args.size())
                 {
                     // stringize
-                    if(i - 1 >= 0 &&
+                    if(i >= 1 &&
                        repSeq[i - 1] == Token("#", Token::PUNCTUATOR))
                     {
                         std::string str;
