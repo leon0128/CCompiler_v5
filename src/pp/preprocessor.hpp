@@ -54,6 +54,8 @@ private:
     void processPreprocessingLanguage();
         void includeFile(std::size_t index);
         void defineMacro(std::size_t index);
+            bool isValidDefined(std::deque<Token>::iterator& iter,
+                                Macro& macro);
         bool expandMacro(std::size_t index);
 
     bool isEquality(std::size_t index, const Token& token) const;

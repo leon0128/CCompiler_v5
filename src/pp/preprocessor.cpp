@@ -541,31 +541,9 @@ void Preprocessor::defineMacro(std::size_t index)
        mTokens.at(index + 2).pos + mTokens.at(index + 2).data.size() == mTokens.at(index + 3).pos)
     {
         macro.eKind = Macro::FUNCTION;
+        last = mTokens.begin() + index + 4;
 
-        bool isValid = true;
-        auto iter = mTokens.begin() + index + 4;
-        for(; iter != mTokens.end(); iter++)
-        {
-            if(iter->eClass == Token::IDENTIFIER)
-            {
-                macro.args.emplace_back(*iter);
-                iter++;
-                if((*iter) != Token(",", Token::PUNCTUATOR))
-                    break;
-            }
-            else
-                break;
-        }
-
-        if(iter != mTokens.end())
-        {
-            if((*iter) == Token(")", Token::PUNCTUATOR))
-                first = iter + 1;
-            else
-                isValid = false;
-        }
-
-        if(!isValid)
+        if(!isValidDefined(last, macro))
         {
             mIsValid = false;
             std::cerr << "error: function-like macro arguments is invalid."
@@ -593,6 +571,51 @@ void Preprocessor::defineMacro(std::size_t index)
     
     mTokens.erase(mTokens.begin() + index,
                   last);
+}
+
+bool Preprocessor::isValidDefined(std::deque<Token>::iterator& iter,
+                                   Macro& macro)
+{
+    bool isValid = true;
+
+    if(iter->eClass == Token::IDENTIFIER)
+    {
+        macro.args.emplace_back(*iter);
+        iter++;
+        if((*iter) == Token(",", Token::PUNCTUATOR))
+        {
+            iter++;
+            isValid = isValidDefined(iter, macro);
+        }
+        else if((*iter) == Token(".", Token::PUNCTUATOR) &&
+                (*(iter + 1)) == Token(".", Token::PUNCTUATOR) &&
+                (*(iter + 2)) == Token(".", Token::PUNCTUATOR) &&
+                (*(iter + 3)) == Token(")", Token::PUNCTUATOR))
+        {
+            iter = iter + 4;
+            macro.isVariadic = true;
+        }
+        else if((*iter) == Token(")", Token::PUNCTUATOR))
+            iter++;
+        else
+            isValid = false;
+    }
+    else if((*iter) == Token(".", Token::PUNCTUATOR) &&
+            (*(iter + 1)) == Token(".", Token::PUNCTUATOR) &&
+            (*(iter + 2)) == Token(".", Token::PUNCTUATOR) &&
+            (*(iter + 3)) == Token(")", Token::PUNCTUATOR))
+    {
+        iter = iter + 4;
+        macro.isVariadic = true;
+        macro.args.emplace_back("__VA_ARGS__",
+                                Token::PUNCTUATOR);
+    }
+    else if((*iter) == Token(")", Token::PUNCTUATOR))
+        iter++;
+    else
+        isValid = false;
+
+    return isValid;
 }
 
 bool Preprocessor::expandMacro(std::size_t index)
