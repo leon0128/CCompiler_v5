@@ -604,13 +604,13 @@ bool Preprocessor::expandMacro(std::size_t index)
     if(iter == MACRO_MAP.end())
         return false;
     
+    std::deque<Token> repSeq;
     // object-like
     if(iter->second.eKind == Macro::OBJECT)
     {
+        repSeq = std::deque<Token>(iter->second.seq.begin(),
+                                   iter->second.seq.end());
         mTokens.erase(mTokens.begin() + index);
-        mTokens.insert(mTokens.begin() + index,
-                       iter->second.seq.begin(),
-                       iter->second.seq.end());
     }
     // function-like
     else if(iter->second.eKind == Macro::FUNCTION)
@@ -674,23 +674,23 @@ bool Preprocessor::expandMacro(std::size_t index)
         }
 
         // expand function-like macro
-        std::deque<Token> seq(iter->second.seq.begin(),
-                              iter->second.seq.end());
-        for(std::size_t i = 0; i < seq.size(); i++)
+        repSeq = std::deque<Token>(iter->second.seq.begin(),
+                                   iter->second.seq.end());
+        for(std::size_t i = 0; i < repSeq.size(); i++)
         {
-            if(seq.at(i).eClass == Token::IDENTIFIER)
+            if(repSeq.at(i).eClass == Token::IDENTIFIER)
             {
                 std::size_t pos = 0;
                 for(pos = 0; pos < iter->second.args.size(); pos++)
                 {
-                    if(seq.at(i) == iter->second.args.at(pos))
+                    if(repSeq.at(i) == iter->second.args.at(pos))
                         break;
                 }
                 if(pos != iter->second.args.size())
                 {
                     // stringize
                     if(i - 1 >= 0 &&
-                       seq[i - 1] == Token("#", Token::PUNCTUATOR))
+                       repSeq[i - 1] == Token("#", Token::PUNCTUATOR))
                     {
                         std::string str;
                         for(auto e : tokensVec.at(pos))
@@ -699,19 +699,19 @@ bool Preprocessor::expandMacro(std::size_t index)
                             = {Token("\"", Token::PUNCTUATOR),
                                Token(str, Token::STRING_LITERAL),
                                Token("\"", Token::PUNCTUATOR)};
-                        seq.erase(seq.begin() + i - 1,
-                                  seq.begin() + i + 1);
-                        seq.insert(seq.begin() + i - 1,
-                                   vec.begin(),
-                                   vec.end());
+                        repSeq.erase(repSeq.begin() + i - 1,
+                                     repSeq.begin() + i + 1);
+                        repSeq.insert(repSeq.begin() + i - 1,
+                                      vec.begin(),
+                                      vec.end());
                     }
                     // expand
                     else
                     {
-                        seq.erase(seq.begin() + i);
-                        seq.insert(seq.begin() + i,
-                                   tokensVec.at(pos).begin(),
-                                   tokensVec.at(pos).end());
+                        repSeq.erase(repSeq.begin() + i);
+                        repSeq.insert(repSeq.begin() + i,
+                                      tokensVec.at(pos).begin(),
+                                      tokensVec.at(pos).end());
                     }
                 }
             }
@@ -719,10 +719,35 @@ bool Preprocessor::expandMacro(std::size_t index)
 
         mTokens.erase(mTokens.begin() + index,
                       last);
-        mTokens.insert(mTokens.begin() + index,
-                       seq.begin(),
-                       seq.end());
     }
+
+    // concatenate
+    for(std::size_t i = 1; i + 1 < repSeq.size(); i++)
+    {
+        if(repSeq.at(i) == Token("##", Token::PUNCTUATOR))
+        {
+            Token::EClass befClass = repSeq.at(i - 1).eClass;
+            Token::EClass aftClass = repSeq.at(i + 1).eClass;
+            if((befClass == Token::IDENTIFIER && aftClass == Token::IDENTIFIER) ||
+               (befClass == Token::IDENTIFIER && aftClass == Token::PREPROCESSING_NUMBER) ||
+               (befClass == Token::PREPROCESSING_NUMBER && aftClass == Token::PREPROCESSING_NUMBER))
+            {
+                repSeq.at(i - 1).data += repSeq.at(i + 1).data;
+                repSeq.erase(repSeq.begin() + i + 1);
+            }
+            else
+            {
+                std::cerr << "caution: Token concatenation is invalid."
+                          << std::endl;
+            }
+            repSeq.erase(repSeq.begin() + i--);
+        }
+    }
+
+    // replace
+    mTokens.insert(mTokens.begin() + index,
+                   repSeq.begin(),
+                   repSeq.end());
 
     return true;
 }
