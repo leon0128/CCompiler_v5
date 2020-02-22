@@ -18,6 +18,7 @@ private:
         bool isFindedCurrentPath(std::string& result) const;
         bool isFindedSystemPath(std::string& result) const;
     void replaceTrigraph() const;
+    void joinLine() const;
 
     Preprocessor* mPP;
 };

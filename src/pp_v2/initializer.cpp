@@ -25,6 +25,7 @@ void Initializer::execute() const
 {
     openSource();
     replaceTrigraph();
+    joinLine();
 }
 
 void Initializer::openSource() const
@@ -135,4 +136,32 @@ void Initializer::replaceTrigraph() const
                 mPP->mSrc.replace(pos, 3, 1, iter->second);
         }
     }
+}
+
+void Initializer::joinLine() const
+{
+    for(auto pos = mPP->mSrc.find('\\');
+        pos != std::string::npos;
+        pos = mPP->mSrc.find('\\', pos))
+    {
+        auto endPos = pos + 1;
+
+        if(config().pp_is_ignored_space)
+        {
+            for(; endPos < mPP->mSrc.size(); endPos++)
+            {
+                if(mPP->mSrc.at(endPos) != ' ')
+                    break;
+            }
+        }
+
+        if(mPP->mSrc.at(endPos) == '\n')
+            mPP->mSrc.erase(mPP->mSrc.begin() + pos,
+                            mPP->mSrc.begin() + endPos + 1);
+        else
+            pos++;
+    }
+
+    if(mPP->mSrc.back() != '\n')
+        mPP->mSrc.push_back('\n');
 }
