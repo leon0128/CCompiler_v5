@@ -20,7 +20,9 @@ public:
     void execute();
 
 private:
-
+    void openSource();
+        bool isFindedCurrentPath(std::string& filename) const;
+        bool isFindedSystemPath(std::string& filename) const;
 
     std::string mFilename;
     std::string mDirectory;
