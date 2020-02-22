@@ -23,6 +23,8 @@ public:
 
 private:
 
+    class Initializer* mInitializer;
+
     std::string mFile;
     std::string mDir;
     std::string mSrc;

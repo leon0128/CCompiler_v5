@@ -5,18 +5,18 @@
 ## this attribute can be overloaded.
 ## searched in order from the top
 #sys_include_pathname_0 = /usr/lib/gcc/x86_64-linux-gnu/7/include
-sys_include_pathname_1 = /usr/local/include
+sys_include_pathname_1 = /usr/local/include/
 #sys_include_pathname_2 = /usr/lib/gcc/x86_64-linux-gnu/7/include-fixed
-sys_include_pathname_3 = /usr/include/x86_64-linux-gnu
-sys_include_pathname_4 = /usr/include
+sys_include_pathname_3 = /usr/include/x86_64-linux-gnu/
+sys_include_pathname_4 = /usr/include/
 
 # general config
 # processing result path name
-gen_result_pathname = data
+gen_result_pathname = data/
 
 # preprocessor config
 # result file name
-pp_result_filename = result.pp
+pp_result_filename = res.pp
 # replace trigraphs
 pp_replace_trigraph = true
 # ignore space after backslash
