@@ -10,7 +10,7 @@ PP = pp
 APPDIR = app/
 SRCDIR = src/
 SHRDIR = share/
-PPDIR  = pp/
+PPDIR  = pp_v2/
 
 all: $(PP)
 
