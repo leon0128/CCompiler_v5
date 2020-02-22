@@ -5,6 +5,17 @@
 #include <utility>
 #include <iostream>
 
+const std::unordered_map<std::string, char> Initializer::TRIGRAPH_MAP
+    = {{"?\?(", '['},
+       {"?\?)", ']'},
+       {"?\?<", '{'},
+       {"?\?>", '}'},
+       {"?\?=", '#'},
+       {"?\?/", '\\'},
+       {"?\?\'", '^'},
+       {"?\?!", '|'},
+       {"?\?-", '~'}};
+
 Initializer::Initializer(Preprocessor* pp):
     mPP(pp)
 {
@@ -13,6 +24,7 @@ Initializer::Initializer(Preprocessor* pp):
 void Initializer::execute() const
 {
     openSource();
+    replaceTrigraph();
 }
 
 void Initializer::openSource() const
@@ -57,6 +69,7 @@ void Initializer::openSource() const
         }
 
         FileManager::read(result.c_str(), mPP->mSrc);
+        mPP->mSrc.push_back('\n');
     }
     else
     {
@@ -107,4 +120,19 @@ bool Initializer::isFindedSystemPath(std::string& result) const
         return true;
     else
         return false;
+}
+
+void Initializer::replaceTrigraph() const
+{
+    if(config().pp_is_replaced_trigraph)
+    {
+        for(auto pos = mPP->mSrc.find("??");
+            pos != std::string::npos;
+            pos = mPP->mSrc.find("??", pos + 1))
+        {
+            auto iter = TRIGRAPH_MAP.find(mPP->mSrc.substr(pos, 3));
+            if(iter != TRIGRAPH_MAP.end())
+                mPP->mSrc.replace(pos, 3, 1, iter->second);
+        }
+    }
 }
