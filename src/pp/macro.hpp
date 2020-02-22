@@ -16,7 +16,8 @@ public:
     Macro():
         eKind(OBJECT),
         seq(),
-        args(){}
+        args(),
+        isVariadic(false){}
     template<typename Iter>
     Macro(EKind inEKind,
           Iter first,

@@ -14,7 +14,8 @@ private:
     enum EDirective
     {
         INCLUDE,
-        DEFINE
+        DEFINE,
+        UNDEF
     };
 
     static const std::unordered_map<std::string, char> TRIGRAPH_MAP;
@@ -23,6 +24,7 @@ private:
     static const std::vector<std::string> PUNCTUATOR_VEC; // sort lengest first
 
     static std::unordered_map<std::string, Macro> MACRO_MAP;
+    static bool IS_INITIALIZED_MACRO_MAP;
 
 public:
     enum ESearch
@@ -56,6 +58,7 @@ private:
         void defineMacro(std::size_t index);
             bool isValidDefined(std::deque<Token>::iterator& iter,
                                 Macro& macro);
+        void undefineMacro(std::size_t index);
         bool expandMacro(std::size_t index);
 
     bool isEquality(std::size_t index, const Token& token) const;

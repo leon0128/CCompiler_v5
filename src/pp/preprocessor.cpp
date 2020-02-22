@@ -29,7 +29,8 @@ const std::unordered_map<std::string, std::string> Preprocessor::DIGRAPH_MAP
        {"%:", "#"}};
 const std::unordered_map<std::string, Preprocessor::EDirective> Preprocessor::DIRECTIVE_MAP
     = {{"include", INCLUDE},
-       {"define", DEFINE}};
+       {"define", DEFINE},
+       {"undef", UNDEF}};
 const std::vector<std::string> Preprocessor::PUNCTUATOR_VEC
     = {"%:%:",
        ">>=", "<<=",
@@ -47,6 +48,7 @@ const std::vector<std::string> Preprocessor::PUNCTUATOR_VEC
        "|", "}", "~"};
 
 std::unordered_map<std::string, Macro> Preprocessor::MACRO_MAP;
+bool Preprocessor::IS_INITIALIZED_MACRO_MAP = false;
 
 Preprocessor::Preprocessor():
     mFilename(),
@@ -55,6 +57,34 @@ Preprocessor::Preprocessor():
     mESearch(CURRENT_ONLY),
     mIsValid(true)
 {
+    if(!IS_INITIALIZED_MACRO_MAP)
+    {
+        IS_INITIALIZED_MACRO_MAP = true;
+
+        Macro macro;
+        // __FILE__
+        macro.seq = {Token("\"", Token::PUNCTUATOR),
+                    Token("undefined", Token::STRING_LITERAL),
+                    Token("\"", Token::PUNCTUATOR)};
+        MACRO_MAP.emplace("__FILE__", macro);
+        // __DATE__
+        MACRO_MAP.emplace("__DATE__", macro);
+        // __TIME__
+        MACRO_MAP.emplace("__TIME__", macro);
+        // __LINE__
+        macro.seq = {Token("0", Token::PREPROCESSING_NUMBER)};
+        MACRO_MAP.emplace("__LINE__", macro);
+        // __STDC__
+        MACRO_MAP.emplace("__STDC__", macro);
+        // __STDC_VERSION__
+        MACRO_MAP.emplace("__STDC_VERSION__", macro);
+        // __STDC_HOSTED__
+        MACRO_MAP.emplace("__STDC_HOSTED__", macro);
+        // __OBJC__
+        MACRO_MAP.emplace("__OBJC__", macro);
+        // __ASSEMBLER__
+        MACRO_MAP.emplace("__ASSEMBLER__", macro);
+    }
 }
 
 Preprocessor::~Preprocessor()
@@ -436,6 +466,9 @@ void Preprocessor::processPreprocessingLanguage()
                 case(DEFINE):
                     defineMacro(i);
                     break;
+                case(UNDEF):
+                    undefineMacro(i);
+                    break;
                 
                 default:
                     std::cerr << "error: not implement directive"
@@ -571,7 +604,7 @@ void Preprocessor::defineMacro(std::size_t index)
     auto result = MACRO_MAP.emplace(mTokens.at(index + 2).data, macro);
     if(!result.second)
         result.first->second = macro;
-    
+
     mTokens.erase(mTokens.begin() + index,
                   last);
 }
@@ -623,6 +656,24 @@ bool Preprocessor::isValidDefined(std::deque<Token>::iterator& iter,
         isValid = false;
 
     return isValid;
+}
+
+void Preprocessor::undefineMacro(std::size_t index)
+{
+    if(mTokens.at(index + 2).eClass != Token::IDENTIFIER)
+    {
+        mIsValid = false;
+        std::cerr << "error: undefine directive must follow by a identifier."
+                  << std::endl;
+        return;
+    }
+
+    auto iter = MACRO_MAP.find(mTokens.at(index + 2).data);
+    if(iter != MACRO_MAP.end())
+        MACRO_MAP.erase(iter);
+
+    mTokens.erase(mTokens.begin() + index,
+                  mTokens.begin() + index + 3);
 }
 
 bool Preprocessor::expandMacro(std::size_t index)
