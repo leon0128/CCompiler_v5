@@ -32,32 +32,32 @@ void Initializer::execute() const
 void Initializer::openSource() const
 {
     std::string result;
-    bool isFinded = false;
+    bool isFound = false;
     switch(mPP->mESearch)
     {
         case(Preprocessor::CURRENT_ONLY):
         {
-            if(isFindedCurrentPath(result))
-                isFinded = true;
+            if(isFoundCurrentPath(result))
+                isFound = true;
             break;
         }
         case(Preprocessor::CURRENT_AND_SYSTEM):
         {
-            if(isFindedCurrentPath(result))
-                isFinded = true;
-            else if(isFindedSystemPath(result))
-                isFinded = true;
+            if(isFoundCurrentPath(result))
+                isFound = true;
+            else if(isFoundSystemPath(result))
+                isFound = true;
             break;
         }
         case(Preprocessor::SYSTEM_ONLY):
         {
-            if(isFindedSystemPath(result))
-                isFinded = true;
+            if(isFoundSystemPath(result))
+                isFound = true;
             break;
         }
     }
 
-    if(isFinded)
+    if(isFound)
     {
         auto pos = result.rfind('/');
         if(pos != std::string::npos)
@@ -83,7 +83,7 @@ void Initializer::openSource() const
     }
 }
 
-bool Initializer::isFindedCurrentPath(std::string& result) const
+bool Initializer::isFoundCurrentPath(std::string& result) const
 {
     std::string searchFilename;
     if(!mPP->mDir.empty())
@@ -102,7 +102,7 @@ bool Initializer::isFindedCurrentPath(std::string& result) const
     }
 }
 
-bool Initializer::isFindedSystemPath(std::string& result) const
+bool Initializer::isFoundSystemPath(std::string& result) const
 {
     std::string searchFilename;
 
@@ -169,6 +169,61 @@ void Initializer::joinLine() const
 
 void Initializer::deleteComment() const
 {
+    std::string line;
+    std::string::size_type pos = 0;
+    while(getLine(line, mPP->mSrc, pos))
+    {
+        for(std::string::size_type p = 0; p < line.size(); p++)
+        {
+            char c = line.at(p);
+            if(c == '"' ||
+               c == '\'')
+            {
+                char punctuator = c;
+                for(p++; p < line.size(); p++)
+                {
+                    c = line.at(p);
+                    if(c == '\\')
+                        p++;
+                    else if(c == punctuator)
+                        break;
+                }
+            }
+            else if(c == '/' &&
+                    p + 1 < line.size() &&
+                    line[p + 1] == '/')
+            {
+                mPP->mSrc.erase(mPP->mSrc.begin() + pos + p,
+                                mPP->mSrc.begin() + pos + line.size());
+                pos += p + 1;
+                break;
+            }
+            else if(c == '/' &&
+                    p + 1 < line.size() &&
+                    line[p + 1] == '*')
+            {
+                auto end = mPP->mSrc.find("*/", pos + 2);
+                if(end != std::string::npos)
+                {
+                    mPP->mSrc.replace(p, end - p + 2, " ");
+                    break;
+                }
+                else
+                {
+                    std::cerr << "warning: block-comment end token not found.\n"
+                              << "    line contents: "
+                              << line
+                              << std::endl;
+                }
+            }
+            
+            if(p + 1 == line.size())
+                pos += line.size() + 1;
+        }
+
+        if(line.empty())
+            pos++;
+    }
 }
 
 bool Initializer::getLine(std::string& line,

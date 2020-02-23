@@ -15,8 +15,8 @@ public:
 
 private:
     void openSource() const;
-        bool isFindedCurrentPath(std::string& result) const;
-        bool isFindedSystemPath(std::string& result) const;
+        bool isFoundCurrentPath(std::string& result) const;
+        bool isFoundSystemPath(std::string& result) const;
     void replaceTrigraph() const;
     void joinLine() const;
     void deleteComment() const;
