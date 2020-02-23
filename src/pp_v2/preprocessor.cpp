@@ -17,6 +17,11 @@ Preprocessor::Preprocessor(const std::string& filename,
     mInitializer = new Initializer(this);
 }
 
+Preprocessor::~Preprocessor()
+{
+    delete mInitializer;
+}
+
 void Preprocessor::execute()
 {
     mInitializer->execute();

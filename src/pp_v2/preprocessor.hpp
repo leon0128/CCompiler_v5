@@ -18,6 +18,7 @@ public:
     Preprocessor(const std::string& filename,
                  const std::string& directory,
                  ESearch eSearch = CURRENT_ONLY);
+    ~Preprocessor();
     
     void execute();
 
