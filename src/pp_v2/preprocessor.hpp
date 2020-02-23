@@ -1,11 +1,13 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 class Preprocessor
 {
 public:
     friend class Initializer;
+    friend class Tokenizer;
 
     // kind of search
     enum ESearch
@@ -25,9 +27,13 @@ public:
 private:
 
     class Initializer* mInitializer;
+    class Tokenizer* mTokenizer;
 
+    // for initializer
     std::string mFile;
     std::string mDir;
     std::string mSrc;
     ESearch mESearch;
+    // for tokenizer
+    std::vector<class Token*> mTokens;
 };

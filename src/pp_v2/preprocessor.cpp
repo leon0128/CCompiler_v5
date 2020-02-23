@@ -1,5 +1,7 @@
 #include "preprocessor.hpp"
 #include "initializer.hpp"
+#include "tokenizer.hpp"
+#include "token.hpp"
 #include "../share/file_manager.hpp"
 #include "../share/config.hpp"
 #include <utility>
@@ -9,22 +11,27 @@ Preprocessor::Preprocessor(const std::string& filename,
                            const std::string& directory,
                            ESearch eSearch):
     mInitializer(nullptr),
+    mTokenizer(nullptr),
     mFile(filename),
     mDir(directory),
     mSrc(),
-    mESearch(eSearch)
+    mESearch(eSearch),
+    mTokens()
 {
     mInitializer = new Initializer(this);
+    mTokenizer = new Tokenizer(this);
 }
 
 Preprocessor::~Preprocessor()
 {
     delete mInitializer;
+    delete mTokenizer;
 }
 
 void Preprocessor::execute()
 {
     mInitializer->execute();
+    mTokenizer->execute();
 
     std::cout << mSrc << std::endl;
 }
