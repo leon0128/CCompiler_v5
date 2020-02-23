@@ -26,6 +26,7 @@ void Initializer::execute() const
     openSource();
     replaceTrigraph();
     joinLine();
+    deleteComment();
 }
 
 void Initializer::openSource() const
@@ -164,4 +165,33 @@ void Initializer::joinLine() const
 
     if(mPP->mSrc.back() != '\n')
         mPP->mSrc.push_back('\n');
+}
+
+void Initializer::deleteComment() const
+{
+}
+
+bool Initializer::getLine(std::string& line,
+                          const std::string& src,
+                          std::string::size_type pos) const
+{
+    line.clear();
+
+    if(pos < src.size())
+    {
+        for(; pos < src.size(); pos++)
+        {
+            char c = src.at(pos);
+            if(c != '\n')
+                line.push_back(c);
+            else
+                break;
+        }
+
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }

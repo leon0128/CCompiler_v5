@@ -19,6 +19,10 @@ private:
         bool isFindedSystemPath(std::string& result) const;
     void replaceTrigraph() const;
     void joinLine() const;
+    void deleteComment() const;
+        bool getLine(std::string& line,
+                     const std::string& src,
+                     std::string::size_type pos = 0) const;
 
     Preprocessor* mPP;
 };
