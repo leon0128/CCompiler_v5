@@ -7,13 +7,16 @@ class Token
 {
 private:
     static std::vector<Token*> TOKENS;
-    static void destroy();
 
 public:
+    static void destroy();
+
     enum EClass
     {
+        HEADER_NAME,
         IDENTIFIER,
-        PREPROCESSING_NUMBER,
+        PP_NUMBER,
+        CHARACTER_CONSTANT,
         STRING_LITERAL,
         PUNCTUATOR,
         OTHER

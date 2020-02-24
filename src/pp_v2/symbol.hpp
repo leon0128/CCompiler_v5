@@ -3,10 +3,14 @@
 #include <vector>
 
 class Symbol;
+
+class Digit;
+class HexadecimalDigit;
+class HexQuad;
 class Identifier;
 class IdentifierNondigit;
-class Digit;
 class Nondigit;
+class UniversalCharacterName;
 
 class Symbol
 {
@@ -21,13 +25,43 @@ public:
     virtual ~Symbol(){}
 };
 
-class Identifir : public Symbol
+class Digit : public Symbol
+{
+public:
+    char element;
+    
+    Digit():
+        Symbol(),
+        element(0){}
+};
+
+class HexadecimalDigit : public Symbol
+{
+public:
+    char element;
+
+    HexadecimalDigit():
+        Symbol(),
+        element(0){}
+};
+
+class HexQuad : public Symbol
+{
+public:
+    HexadecimalDigit* hexadecimalDigits[4];
+
+    HexQuad():
+        Symbol(),
+        hexadecimalDigits{nullptr, nullptr, nullptr, nullptr}{}
+};
+
+class Identifier : public Symbol
 {
 public:
     enum EIdentifier
     {
         NONE,
-        IDENTIFIER_NODIGIT,
+        IDENTIFIER_NONDIGIT,
         IDENTIFIER_IDENTIFIER_NODIGIT,
         IDENTIFIER_DIGIT
     } eIdentifier;
@@ -53,7 +87,7 @@ public:
             sIdentifierNondigit(){}
     } uIdentifier;
 
-    Identifir():
+    Identifier():
         Symbol(),
         eIdentifier(NONE),
         uIdentifier(){}
@@ -65,7 +99,8 @@ public:
     enum EIdentifierNondigit
     {
         NONE,
-        NONDIGIT
+        NONDIGIT,
+        UNIVERSAL_CHARACTER_NAME
     } eIdentifierNondigit;
 
     union UIdentifierNondigit
@@ -74,6 +109,10 @@ public:
         {
             Nondigit* nondigit;
         } sNondigit;
+        struct SUniversalCharacterName
+        {
+            UniversalCharacterName* universalCharacterName;
+        } sUniversalCharacterName;
 
         UIdentifierNondigit():
             sNondigit(){}
@@ -95,12 +134,34 @@ public:
         element(0){}
 };
 
-class Digit : public Symbol
+class UniversalCharacterName : public Symbol
 {
 public:
-    char element;
-    
-    Digit():
+    enum EUniversalCharacterName
+    {
+        NONE,
+        HEX_QUAD,
+        HEX_QUAD_HEX_QUAD
+    } eUniversalCharacterName;
+
+    union UUniversalCharacterName
+    {
+        struct SHexQuad
+        {
+            HexQuad* hexQuad;
+        } sHexQuad;
+        struct SHexQuadHexQuad
+        {
+            HexQuad* hexQuad;
+            HexQuad* hexQuad_1;
+        } sHexQuadHexQuad;
+
+        UUniversalCharacterName():
+            sHexQuad(){}
+    } uUniversalCharacterName;
+
+    UniversalCharacterName():
         Symbol(),
-        element(0){}
+        eUniversalCharacterName(NONE),
+        uUniversalCharacterName(){}
 };
