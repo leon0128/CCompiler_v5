@@ -12,6 +12,8 @@ class DecimalConstant;
 class Digit;
 class EnumerationConstant;
 class FloatingConstant;
+class HChar;
+class HCharSequence;
 class HeaderName;
 class HexadecimalConstant;
 class HexadecimalDigit;
@@ -26,6 +28,8 @@ class OctalConstant;
 class Other;
 class PpNumber;
 class Punctuator;
+class QChar;
+class QCharSequence;
 class StringLiteral;
 class UniversalCharacterName;
 
@@ -179,6 +183,79 @@ public:
         element(0){}
 };
 
+class HChar : public Symbol
+{
+public:
+    char element;
+
+    HChar():
+        Symbol(),
+        element(0){}
+};
+
+class HCharSequence : public Symbol
+{
+public:
+    enum EHCharSequence
+    {
+        NONE,
+        H_CHAR,
+        H_CHAR_SEQUENCE_H_CHAR
+    } eHCharSequence;
+
+    union UHCharSequence
+    {
+        struct SHChar
+        {
+            HChar* hChar;
+        } sHChar;
+        struct SHCharSequenceHChar
+        {
+            HCharSequence* hCharSequence;
+            HChar* hChar;
+        } sHCharSequenceHChar;
+
+        UHCharSequence():
+            sHChar{nullptr}{}
+    } uHCharSequence;
+
+    HCharSequence():
+        Symbol(),
+        eHCharSequence(NONE),
+        uHCharSequence(){}
+};
+
+class HeaderName : public Symbol
+{
+public:
+    enum EHeaderName
+    {
+        NONE,
+        H_CHAR_SEQUENCE,
+        Q_CHAR_SEQUENCE
+    } eHeaderName;
+
+    union UHeaderName
+    {
+        struct SHCharSequence
+        {
+            HCharSequence* hCharSequence;
+        } sHCharSequence;
+        struct SQCharSequence
+        {
+            QCharSequence* qCharSequence;
+        } sQCharSequence;
+
+        UHeaderName():
+            sHCharSequence{nullptr}{}
+    } uHeaderName;
+
+    HeaderName():
+        Symbol(),
+        eHeaderName(NONE),
+        uHeaderName(){}
+};
+
 class HexadecimalDigit : public Symbol
 {
 public:
@@ -325,6 +402,48 @@ public:
     Other():
         Symbol(),
         element(0){}
+};
+
+class QChar : public Symbol
+{
+public:
+    char element;
+
+    QChar():
+        Symbol(),
+        element(0){}
+};
+
+class QCharSequence : public Symbol
+{
+public:
+    enum EQCharSequence
+    {
+        NONE,
+        Q_CHAR,
+        Q_CHAR_SEQUENCE_Q_CHAR
+    } eQCharSequence;
+
+    union UQCharSequence
+    {
+        struct SQChar
+        {
+            QChar* qChar;
+        } sQChar;
+        struct SQCharSequenceQChar
+        {
+            QCharSequence* qCharSequence;
+            QChar* qChar;
+        } sQCharSequenceQChar;
+
+        UQCharSequence():
+            sQChar{nullptr}{}
+    } uQCharSequence;
+
+    QCharSequence():
+        Symbol(),
+        eQCharSequence(NONE),
+        uQCharSequence(){}
 };
 
 class UniversalCharacterName : public Symbol

@@ -27,6 +27,45 @@ void Tokenizer::execute()
         std::cout << "token: " << e->data << std::endl;
 }
 
+void Tokenizer::addPreprocessingToken(PreprocessingToken_Symbol* symbol, std::string::size_type idx)
+{
+    std::string data;
+    process(symbol, data);
+
+    PreprocessingToken* token = nullptr;
+
+    switch(symbol->ePreprocessingToken)
+    {
+        case(PreprocessingToken_Symbol::HEADER_NAME):
+            token = new PreprocessingToken(data, PreprocessingToken::HEADER_NAME, idx);
+            break;
+        case(PreprocessingToken_Symbol::IDENTIFIER):
+            token = new PreprocessingToken(data, PreprocessingToken::IDENTIFIER, idx);
+            break;
+        case(PreprocessingToken_Symbol::PP_NUMBER):
+            token = new PreprocessingToken(data, PreprocessingToken::PP_NUMBER, idx);
+            break;
+        case(PreprocessingToken_Symbol::CHARACTER_CONSTANT):
+            token = new PreprocessingToken(data, PreprocessingToken::CHARACTER_CONSTANT, idx);
+            break;
+        case(PreprocessingToken_Symbol::STRING_LITERAL):
+            token = new PreprocessingToken(data, PreprocessingToken::STRING_LITERAL, idx);
+            break;
+        case(PreprocessingToken_Symbol::PUNCTUATOR):
+            token = new PreprocessingToken(data, PreprocessingToken::PUNCTUATOR, idx);
+            break;
+        case(PreprocessingToken_Symbol::OTHER):
+            token = new PreprocessingToken(data, PreprocessingToken::OTHER, idx);
+            break;
+        
+        case(PreprocessingToken_Symbol::NONE):
+            processError("PreprocessingToken_Symbol", data);
+            break;
+    }
+
+    mTokens.push_back(token);
+}
+
 PreprocessingToken_Symbol* Tokenizer::conPreprocessingToken_Symbol()
 {
     if(mIdx >= mSrc.size())
@@ -34,30 +73,40 @@ PreprocessingToken_Symbol* Tokenizer::conPreprocessingToken_Symbol()
 
     auto idx = mIdx;
     bool isValid = true;
-    PreprocessingToken_Symbol* symbol = nullptr;
+    PreprocessingToken_Symbol* preprocessingToken_symbol = nullptr;
 
-    Identifier* identifier = conIdentifier();
-    if(identifier)
+    HeaderName* headerName = conHeaderName();
+    if(headerName)
     {
-        symbol = new PreprocessingToken_Symbol();
-        symbol->ePreprocessingToken = PreprocessingToken_Symbol::IDENTIFIER;
-        symbol->uPreprocessingToken.sIdentifier.identifier = {identifier};
+        preprocessingToken_symbol = new PreprocessingToken_Symbol();
+        preprocessingToken_symbol->ePreprocessingToken = PreprocessingToken_Symbol::HEADER_NAME;
+        preprocessingToken_symbol->uPreprocessingToken.sHeaderName = {headerName};
     }
     else
     {
-        Other* other = conOther();
-        if(other)
+        Identifier* identifier = conIdentifier();
+        if(identifier)
         {
-            symbol = new PreprocessingToken_Symbol();
-            symbol->ePreprocessingToken = PreprocessingToken_Symbol::OTHER;
-            symbol->uPreprocessingToken.sOther.other = {other};
+            preprocessingToken_symbol = new PreprocessingToken_Symbol();
+            preprocessingToken_symbol->ePreprocessingToken = PreprocessingToken_Symbol::IDENTIFIER;
+            preprocessingToken_symbol->uPreprocessingToken.sIdentifier = {identifier};
         }
         else
-            isValid = false;
+        {
+            Other* other = conOther();
+            if(other)
+            {
+                preprocessingToken_symbol = new PreprocessingToken_Symbol();
+                preprocessingToken_symbol->ePreprocessingToken = PreprocessingToken_Symbol::OTHER;
+                preprocessingToken_symbol->uPreprocessingToken.sOther = {other};
+            }
+            else
+                isValid = false;
+        }
     }
 
     if(isValid)
-        return symbol;
+        return preprocessingToken_symbol;
     else
     {
         mIdx = idx;
@@ -79,6 +128,135 @@ Digit* Tokenizer::conDigit()
     
     mIdx++;
     return digit;
+}
+
+HChar* Tokenizer::conHChar()
+{
+    if(mIdx >= mSrc.size())
+        return nullptr;
+
+    char c = mSrc.at(mIdx);
+    if(c == '\n' ||
+       c == '>')
+        return nullptr;
+
+    HChar* hChar = new HChar();
+    hChar->element = c;
+
+    mIdx++;
+    return hChar;
+}
+
+HCharSequence* Tokenizer::conHCharSequence(HCharSequence* bef)
+{
+    if(mIdx >= mSrc.size())
+        return nullptr;
+
+    auto idx = mIdx;
+    bool isValid = true;
+    HCharSequence* hCharSequence = nullptr;
+
+    HChar* hChar = conHChar();
+    if(hChar)
+    {
+        if(!bef)
+        {
+            hCharSequence = new HCharSequence();
+            hCharSequence->eHCharSequence = HCharSequence::H_CHAR;
+            hCharSequence->uHCharSequence.sHChar = {hChar};
+        }
+        else
+        {
+            hCharSequence = new HCharSequence();
+            hCharSequence->eHCharSequence = HCharSequence::H_CHAR_SEQUENCE_H_CHAR;
+            hCharSequence->uHCharSequence.sHCharSequenceHChar = {bef, hChar};
+        }
+    }
+    else
+        isValid = false;
+
+    if(isValid)
+    {
+        HCharSequence* aft = conHCharSequence(hCharSequence);
+        if(aft)
+            return aft;
+        else
+            return hCharSequence;
+    }
+    else
+    {
+        mIdx = idx;
+        return nullptr;
+    }
+}
+
+HeaderName* Tokenizer::conHeaderName()
+{
+    if(mIdx >= mSrc.size() ||
+       mTokens.size() <= 1)
+        return nullptr;
+
+    if(*mTokens.at(mTokens.size() - 1) != PreprocessingToken("include", PreprocessingToken::IDENTIFIER) ||
+       *mTokens.at(mTokens.size() - 2) != PreprocessingToken("#", PreprocessingToken::PUNCTUATOR))
+        return nullptr;
+
+    auto idx = mIdx;
+    bool isValid = true;
+    HeaderName* headerName = nullptr;
+
+    char c = mSrc.at(mIdx);
+    if(c == '<')
+    {
+        mIdx++;
+        HCharSequence* hCharSequence = conHCharSequence();
+        if(hCharSequence)
+        {
+            if(mIdx < mSrc.size() &&
+               mSrc[mIdx] == '>')
+            {
+                mIdx++;
+
+                headerName = new HeaderName();
+                headerName->eHeaderName = HeaderName::H_CHAR_SEQUENCE;
+                headerName->uHeaderName.sHCharSequence = {hCharSequence};
+            }
+            else
+                isValid = false;
+        }
+        else
+            isValid = false;
+    }
+    else if(c == '"')
+    {
+        mIdx++;
+        QCharSequence* qCharSequence = conQCharSequence();
+        if(qCharSequence)
+        {
+            if(mIdx < mSrc.size() &&
+               mSrc[mIdx] == '"')
+            {
+                mIdx++;
+
+                headerName = new HeaderName();
+                headerName->eHeaderName = HeaderName::Q_CHAR_SEQUENCE;
+                headerName->uHeaderName.sQCharSequence = {qCharSequence};
+            }
+            else
+                isValid = false;
+        }
+        else
+            isValid = false;
+    }
+    else
+        isValid = false;
+
+    if(isValid)
+        return headerName;
+    else
+    {
+        mIdx = idx;
+        return nullptr;
+    }
 }
 
 HexadecimalDigit* Tokenizer::conHexadecimalDigit()
@@ -251,6 +429,66 @@ Other* Tokenizer::conOther()
     return other;
 }
 
+QChar* Tokenizer::conQChar()
+{
+    if(mIdx >= mSrc.size())
+        return nullptr;
+
+    char c = mSrc.at(mIdx);
+    if(c == '\n' ||
+       c == '"')
+        return nullptr;
+
+    QChar* qChar = new QChar();
+    qChar->element = c;
+
+    mIdx++;
+    return qChar;
+}
+
+QCharSequence* Tokenizer::conQCharSequence(QCharSequence* bef)
+{
+    if(mIdx >= mSrc.size())
+        return nullptr;
+
+    auto idx = mIdx;
+    bool isValid = true;
+    QCharSequence* qCharSequence = nullptr;
+
+    QChar* qChar = conQChar();
+    if(qChar)
+    {
+        if(!bef)
+        {
+            qCharSequence = new QCharSequence();
+            qCharSequence->eQCharSequence = QCharSequence::Q_CHAR;
+            qCharSequence->uQCharSequence.sQChar = {qChar};
+        }
+        else
+        {
+            qCharSequence = new QCharSequence();
+            qCharSequence->eQCharSequence = QCharSequence::Q_CHAR_SEQUENCE_Q_CHAR;
+            qCharSequence->uQCharSequence.sQCharSequenceQChar = {bef, qChar};
+        }
+    }
+    else
+        isValid = false;
+
+    if(isValid)
+    {
+        QCharSequence* aft = conQCharSequence(qCharSequence);
+        if(aft)
+            return aft;
+        else
+            return qCharSequence;
+    }
+    else
+    {
+        mIdx = idx;
+        return nullptr;
+    }
+}
+
 UniversalCharacterName* Tokenizer::conUniversalCharacterName()
 {
     if(mIdx + 1 >= mSrc.size())
@@ -266,6 +504,8 @@ UniversalCharacterName* Tokenizer::conUniversalCharacterName()
     char c = mSrc.at(mIdx + 1);
     if(c == 'u')
     {
+        mIdx += 2;
+
         HexQuad* hexQuad = conHexQuad();
         if(hexQuad)
         {
@@ -278,6 +518,8 @@ UniversalCharacterName* Tokenizer::conUniversalCharacterName()
     }
     else if(c == 'U')
     {
+        mIdx += 2;
+
         HexQuad* hexQuad = conHexQuad();
         if(hexQuad)
         {
@@ -306,54 +548,18 @@ UniversalCharacterName* Tokenizer::conUniversalCharacterName()
     }
 }
 
-void Tokenizer::addPreprocessingToken(PreprocessingToken_Symbol* symbol, std::string::size_type idx)
+void Tokenizer::process(PreprocessingToken_Symbol* preprocessingToken_symbol, std::string& data) const
 {
-    std::string data;
-    process(symbol, data);
-
-    PreprocessingToken* token = nullptr;
-
-    switch(symbol->ePreprocessingToken)
+    switch(preprocessingToken_symbol->ePreprocessingToken)
     {
         case(PreprocessingToken_Symbol::HEADER_NAME):
-            token = new PreprocessingToken(data, PreprocessingToken::HEADER_NAME, idx);
+            process(preprocessingToken_symbol->uPreprocessingToken.sHeaderName.headerName, data);
             break;
         case(PreprocessingToken_Symbol::IDENTIFIER):
-            token = new PreprocessingToken(data, PreprocessingToken::IDENTIFIER, idx);
-            break;
-        case(PreprocessingToken_Symbol::PP_NUMBER):
-            token = new PreprocessingToken(data, PreprocessingToken::PP_NUMBER, idx);
-            break;
-        case(PreprocessingToken_Symbol::CHARACTER_CONSTANT):
-            token = new PreprocessingToken(data, PreprocessingToken::CHARACTER_CONSTANT, idx);
-            break;
-        case(PreprocessingToken_Symbol::STRING_LITERAL):
-            token = new PreprocessingToken(data, PreprocessingToken::STRING_LITERAL, idx);
-            break;
-        case(PreprocessingToken_Symbol::PUNCTUATOR):
-            token = new PreprocessingToken(data, PreprocessingToken::PUNCTUATOR, idx);
+            process(preprocessingToken_symbol->uPreprocessingToken.sIdentifier.identifier, data);
             break;
         case(PreprocessingToken_Symbol::OTHER):
-            token = new PreprocessingToken(data, PreprocessingToken::OTHER, idx);
-            break;
-        
-        case(PreprocessingToken_Symbol::NONE):
-            processError("PreprocessingToken_Symbol", data);
-            break;
-    }
-
-    mTokens.push_back(token);
-}
-
-void Tokenizer::process(PreprocessingToken_Symbol* symbol, std::string& data) const
-{
-    switch(symbol->ePreprocessingToken)
-    {
-        case(PreprocessingToken_Symbol::IDENTIFIER):
-            process(symbol->uPreprocessingToken.sIdentifier.identifier, data);
-            break;
-        case(PreprocessingToken_Symbol::OTHER):
-            process(symbol->uPreprocessingToken.sOther.other, data);
+            process(preprocessingToken_symbol->uPreprocessingToken.sOther.other, data);
             break;
 
         default:
@@ -365,6 +571,50 @@ void Tokenizer::process(PreprocessingToken_Symbol* symbol, std::string& data) co
 void Tokenizer::process(Digit* digit, std::string& data) const
 {
     data.push_back(digit->element);
+}
+
+void Tokenizer::process(HChar* hChar, std::string& data) const
+{
+    data.push_back(hChar->element);
+}
+
+void Tokenizer::process(HCharSequence* hCharSequence, std::string& data) const
+{
+    switch(hCharSequence->eHCharSequence)
+    {
+        case(HCharSequence::H_CHAR):
+            process(hCharSequence->uHCharSequence.sHChar.hChar, data);
+            break;
+        case(HCharSequence::H_CHAR_SEQUENCE_H_CHAR):
+            process(hCharSequence->uHCharSequence.sHCharSequenceHChar.hCharSequence, data);
+            process(hCharSequence->uHCharSequence.sHCharSequenceHChar.hChar, data);
+            break;
+
+        case(HCharSequence::NONE):
+            processError("HCharSequence", data);
+            break;
+    }
+}
+
+void Tokenizer::process(HeaderName* headerName, std::string& data) const
+{
+    switch(headerName->eHeaderName)
+    {
+        case(HeaderName::H_CHAR_SEQUENCE):
+            data.push_back('<');
+            process(headerName->uHeaderName.sHCharSequence.hCharSequence, data);
+            data.push_back('>');
+            break;
+        case(HeaderName::Q_CHAR_SEQUENCE):
+            data.push_back('"');
+            process(headerName->uHeaderName.sQCharSequence.qCharSequence, data);
+            data.push_back('"');
+            break;
+
+        case(HeaderName::NONE):
+            processError("HeaderName", data);
+            break;
+    }
 }
 
 void Tokenizer::process(HexadecimalDigit* hexadecimalDigit, std::string& data) const
@@ -425,6 +675,29 @@ void Tokenizer::process(Nondigit* nondigit, std::string& data) const
 void Tokenizer::process(Other* other, std::string& data) const
 {
     data.push_back(other->element);
+}
+
+void Tokenizer::process(QChar* qChar, std::string& data) const
+{
+    data.push_back(qChar->element);
+}
+
+void Tokenizer::process(QCharSequence* qCharSequence, std::string& data) const
+{
+    switch(qCharSequence->eQCharSequence)
+    {
+        case(QCharSequence::Q_CHAR):
+            process(qCharSequence->uQCharSequence.sQChar.qChar, data);
+            break;
+        case(QCharSequence::Q_CHAR_SEQUENCE_Q_CHAR):
+            process(qCharSequence->uQCharSequence.sQCharSequenceQChar.qCharSequence, data);
+            process(qCharSequence->uQCharSequence.sQCharSequenceQChar.qChar, data);
+            break;
+        
+        case(QCharSequence::NONE):
+            processError("QCharSequence", data);
+            break;
+    }
 }
 
 void Tokenizer::process(UniversalCharacterName* universalCharacterName, std::string& data) const
