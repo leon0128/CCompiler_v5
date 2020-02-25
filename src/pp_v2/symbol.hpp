@@ -1,15 +1,26 @@
 #pragma once
 
 #include <vector>
+#include <array>
 
 class Symbol;
 
+class CharacterConstant;
+class Constant;
+class DecimalConstant;
 class Digit;
+class EnumerationConstant;
+class FloatingConstant;
+class HexadecimalConstant;
 class HexadecimalDigit;
 class HexQuad;
 class Identifier;
 class IdentifierNondigit;
+class IntegerConstant;
+class IntegerSuffix;
 class Nondigit;
+class NonzeroDigit;
+class OctalConstant;
 class UniversalCharacterName;
 
 class Symbol
@@ -23,6 +34,78 @@ public:
     Symbol()
         {SYMBOLS.push_back(this);}
     virtual ~Symbol(){}
+};
+
+class Constant : public Symbol
+{
+public:
+    enum EConstant
+    {
+        NONE,
+        INTEGER_CONSTANT,
+        FLOATING_CONSTANT,
+        ENUMERATION_CONSTANT,
+        CHARACTER_CONSTANT
+    } eConstant;
+
+    union UConstant
+    {
+        struct SIntegerConstant
+        {
+            IntegerConstant* integerConstant;
+        } sIntegerConstant;
+        struct SFloatingConstant
+        {
+            FloatingConstant* floatingConstant;
+        } sFloatingConstant;
+        struct SEnumerationConstant
+        {
+            EnumerationConstant* enumerationConstant;
+        } sEnumerationConstant;
+        struct SCharacterConstant
+        {
+            CharacterConstant* characterConstant;
+        } sCharacterConstant;
+
+        UConstant():
+            sIntegerConstant{nullptr}{}
+    } uConstant;
+
+    Constant():
+        Symbol(),
+        eConstant(NONE),
+        uConstant(){}
+};
+
+class DecimalConstant : public Symbol
+{
+public:
+    enum EDecimalConstant
+    {
+        NONE,
+        NONZERO_DIGIT,
+        DECIMAL_CONSTANT_DIGIT
+    } eDecimalConstant;
+
+    union UDecimalConstant
+    {
+        struct SNonzeroDigit
+        {
+            NonzeroDigit* nonzeroDigit;
+        } sNonzeroDigit;
+        struct SDecimalConstantDigit
+        {
+            DecimalConstant* decimalConstant;
+            Digit* digit;
+        } sDecimalConstantDigit;
+
+        UDecimalConstant():
+            sNonzeroDigit{nullptr}{}
+    } uDecimalConstant;
+
+    DecimalConstant():
+        eDecimalConstant(NONE),
+        uDecimalConstant(){}
 };
 
 class Digit : public Symbol
@@ -48,7 +131,7 @@ public:
 class HexQuad : public Symbol
 {
 public:
-    HexadecimalDigit* hexadecimalDigits[4];
+    std::array<HexadecimalDigit*, 4> hexadecimalDigits;
 
     HexQuad():
         Symbol(),
@@ -84,7 +167,7 @@ public:
         } sIdentifierDigit;
 
         UIdentifier():
-            sIdentifierNondigit(){}
+            sIdentifierNondigit{nullptr}{}
     } uIdentifier;
 
     Identifier():
@@ -115,13 +198,52 @@ public:
         } sUniversalCharacterName;
 
         UIdentifierNondigit():
-            sNondigit(){}
+            sNondigit{nullptr}{}
     } uIdentifierNondigit;
 
     IdentifierNondigit():
         Symbol(),
         eIdentifierNondigit(NONE),
         uIdentifierNondigit(){}
+};
+
+class IntegerConstant : public Symbol
+{
+public:
+    enum EIntegerConstant
+    {
+        NONE,
+        DECIMAL_CONSTANT_INTEGER_SUFFIX,
+        OCTAL_CONSTANT_INTEGER_SUFFIX,
+        HEXADECIMAL_CONSTANT_INTEGER_SUFFIX
+    } eIntegerConstant;
+
+    union UIntegerConstant
+    {
+        struct SDecimalConstantIntegerSuffix
+        {
+            DecimalConstant* decimalConstant;
+            IntegerSuffix* integerSuffix;
+        } sDecimalConstantIntegerSuffix;
+        struct SOctalConstantIntegerSuffix
+        {
+            OctalConstant* octalConstant;
+            IntegerSuffix* integerSuffix;
+        } sOctalConstantIntegerSuffix;
+        struct SHexadecimalConstantIntegerSuffix
+        {
+            HexadecimalConstant* hexadecimalConstant;
+            IntegerSuffix* integerSuffix;
+        } sHexadecimalConstantIntegerSuffix;
+
+        UIntegerConstant():
+            sDecimalConstantIntegerSuffix{nullptr, nullptr}{}
+    } uIntegerConstant;
+
+    IntegerConstant():
+        Symbol(),
+        eIntegerConstant(NONE),
+        uIntegerConstant(){}
 };
 
 class Nondigit : public Symbol
@@ -133,6 +255,8 @@ public:
         Symbol(),
         element(0){}
 };
+
+// class OctalConstant : public 
 
 class UniversalCharacterName : public Symbol
 {
@@ -157,7 +281,7 @@ public:
         } sHexQuadHexQuad;
 
         UUniversalCharacterName():
-            sHexQuad(){}
+            sHexQuad{nullptr}{}
     } uUniversalCharacterName;
 
     UniversalCharacterName():

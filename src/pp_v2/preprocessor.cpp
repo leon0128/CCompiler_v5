@@ -19,7 +19,7 @@ Preprocessor::Preprocessor(const std::string& filename,
     mTokens()
 {
     mInitializer = new Initializer(this);
-    mTokenizer = new Tokenizer(this);
+    mTokenizer = new Tokenizer(mSrc);
 }
 
 Preprocessor::~Preprocessor()
