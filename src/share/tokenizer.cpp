@@ -93,15 +93,25 @@ PreprocessingToken_Symbol* Tokenizer::conPreprocessingToken_Symbol()
         }
         else
         {
-            Other* other = conOther();
-            if(other)
+            PpNumber* ppNumber = conPpNumber();
+            if(ppNumber)
             {
                 preprocessingToken_symbol = new PreprocessingToken_Symbol();
-                preprocessingToken_symbol->ePreprocessingToken = PreprocessingToken_Symbol::OTHER;
-                preprocessingToken_symbol->uPreprocessingToken.sOther = {other};
+                preprocessingToken_symbol->ePreprocessingToken = PreprocessingToken_Symbol::PP_NUMBER;
+                preprocessingToken_symbol->uPreprocessingToken.sPpNumber = {ppNumber};
             }
             else
-                isValid = false;
+            {
+                Other* other = conOther();
+                if(other)
+                {
+                    preprocessingToken_symbol = new PreprocessingToken_Symbol();
+                    preprocessingToken_symbol->ePreprocessingToken = PreprocessingToken_Symbol::OTHER;
+                    preprocessingToken_symbol->uPreprocessingToken.sOther = {other};
+                }
+                else
+                    isValid = false;
+            }
         }
     }
 
@@ -429,6 +439,147 @@ Other* Tokenizer::conOther()
     return other;
 }
 
+PpNumber* Tokenizer::conPpNumber(PpNumber* bef)
+{
+    if(mIdx >= mSrc.size())
+        return nullptr;
+
+    auto idx = mIdx;
+    bool isValid = true;
+    PpNumber* ppNumber = nullptr;
+
+    if(!bef)
+    {
+        Digit* digit = conDigit();
+        if(digit)
+        {
+            ppNumber = new PpNumber();
+            ppNumber->ePpNumber = PpNumber::DIGIT;
+            ppNumber->uPpNumber.sDigit = {digit};
+        }
+        else if(mSrc.at(mIdx) == '.')
+        {
+            digit = conDigit();
+            if(digit)
+            {
+                ppNumber = new PpNumber();
+                ppNumber->ePpNumber = PpNumber::DOT_DIGIT;
+                ppNumber->uPpNumber.sDotDigit = {digit};
+            }
+            else
+                isValid = false;
+        }
+        else
+            isValid = false;
+    }
+    else
+    {
+        Digit* digit = conDigit();
+        if(digit)
+        {
+            ppNumber = new PpNumber();
+            ppNumber->ePpNumber = PpNumber::PP_NUMBER_DIGIT;
+            ppNumber->uPpNumber.sPpNumberDigit = {bef, digit};
+        }
+        else
+        {
+            char c = mSrc.at(mIdx);
+
+            if(c == '.')
+            {
+                mIdx++;
+                ppNumber = new PpNumber();
+                ppNumber->ePpNumber = PpNumber::PP_NUMBER_DOT;
+                ppNumber->uPpNumber.sPpNumberDot = {ppNumber};
+            }
+            else if(c == 'e')
+            {
+                mIdx++;
+                Sign* sign = conSign();
+                if(sign)
+                {
+                    ppNumber = new PpNumber();
+                    ppNumber->ePpNumber = PpNumber::PP_NUMBER_e_SIGN;
+                    ppNumber->uPpNumber.sPpNumber_e_Sign = {bef, sign};
+                }
+                else
+                    isValid = false;
+            }
+            else if(c == 'E')
+            {
+                mIdx++;
+                Sign* sign = conSign();
+                if(sign)
+                {
+                    ppNumber = new PpNumber();
+                    ppNumber->ePpNumber = PpNumber::PP_NUMBER_E_SIGN;
+                    ppNumber->uPpNumber.sPpNumber_E_Sign = {bef, sign};
+                }
+                else
+                    isValid = false;
+            }
+            else if(c == 'p')
+            {
+                mIdx++;
+                Sign* sign = conSign();
+                if(sign)
+                {
+                    ppNumber = new PpNumber();
+                    ppNumber->ePpNumber = PpNumber::PP_NUMBER_p_SIGN;
+                    ppNumber->uPpNumber.sPpNumber_p_Sign = {bef, sign};
+                }
+                else
+                    isValid = false;
+            }
+            else if(c == 'P')
+            {
+                mIdx++;
+                Sign* sign = conSign();
+                if(sign)
+                {
+                    ppNumber = new PpNumber();
+                    ppNumber->ePpNumber = PpNumber::PP_NUMBER_P_SIGN;
+                    ppNumber->uPpNumber.sPpNumber_P_Sign = {bef, sign};
+                }
+                else
+                    isValid = false;
+            }
+            else
+                isValid = false;
+
+            if(!isValid)
+            {
+                mIdx = idx;
+                IdentifierNondigit* identifierNondigit = conIdentifierNondigit();
+                if(identifierNondigit)
+                {
+                    isValid = true;
+
+                    ppNumber = new PpNumber();
+                    ppNumber->ePpNumber = PpNumber::PP_NUMBER_IDENTIFIER_NONDIGIT;
+                    ppNumber->uPpNumber.sPpNumberIdentifierNondigit = {bef, identifierNondigit};
+                }
+                else
+                    isValid = false;
+            }
+        }
+    }
+
+    if(isValid)
+    {
+        PpNumber* aft = conPpNumber(ppNumber);
+        if(aft)
+            return aft;
+        else
+            return ppNumber;
+    }
+    else
+    {
+        mIdx = idx;
+        return nullptr;
+    }
+}
+
 QChar* Tokenizer::conQChar()
 {
     if(mIdx >= mSrc.size())
@@ -487,6 +638,23 @@ QCharSequence* Tokenizer::conQCharSequence(QCharSequence* bef)
         mIdx = idx;
         return nullptr;
     }
+}
+
+Sign* Tokenizer::conSign()
+{
+    if(mIdx >= mSrc.size())
+        return nullptr;
+
+    char c = mSrc.at(mIdx);
+    if(c != '+' ||
+       c != '-')
+        return nullptr;
+    
+    Sign* sign = new Sign();
+    sign->element = c;
+
+    mIdx++;
+    return sign;
 }
 
 UniversalCharacterName* Tokenizer::conUniversalCharacterName()

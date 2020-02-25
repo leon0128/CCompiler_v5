@@ -30,6 +30,7 @@ class PpNumber;
 class Punctuator;
 class QChar;
 class QCharSequence;
+class Sign;
 class StringLiteral;
 class UniversalCharacterName;
 
@@ -404,6 +405,78 @@ public:
         element(0){}
 };
 
+class PpNumber : public Symbol
+{
+public:
+    enum EPpNumber
+    {
+        NONE,
+        DIGIT,
+        DOT_DIGIT,
+        PP_NUMBER_DIGIT,
+        PP_NUMBER_IDENTIFIER_NONDIGIT,
+        PP_NUMBER_e_SIGN,
+        PP_NUMBER_E_SIGN,
+        PP_NUMBER_p_SIGN,
+        PP_NUMBER_P_SIGN,
+        PP_NUMBER_DOT
+    } ePpNumber;
+
+    union UPpNumber
+    {
+        struct SDigit
+        {
+            Digit* digit;
+        } sDigit;
+        struct SDotDigit
+        {
+            Digit* digit;
+        } sDotDigit;
+        struct SPpNumberDigit
+        {
+            PpNumber* ppNumber;
+            Digit* digit;
+        } sPpNumberDigit;
+        struct SPpNumberIdentifierNondigit
+        {
+            PpNumber* ppNumber;
+            IdentifierNondigit* identifierNondigit;
+        } sPpNumberIdentifierNondigit;
+        struct SPpNumber_e_Sign
+        {
+            PpNumber* ppNumber;
+            Sign* sign;
+        } sPpNumber_e_Sign;
+        struct SPpNumber_E_Sign
+        {
+            PpNumber* ppNumber;
+            Sign* sign;
+        } sPpNumber_E_Sign;
+        struct SPpNumber_p_Sign
+        {
+            PpNumber* ppNumber;
+            Sign* sign;
+        } sPpNumber_p_Sign;
+        struct SPpNumber_P_Sign
+        {
+            PpNumber* ppNumber;
+            Sign* sign;
+        } sPpNumber_P_Sign;
+        struct SPpNumberDot
+        {
+            PpNumber* ppNumber;
+        } sPpNumberDot;
+
+        UPpNumber():
+            sDigit(){}
+    } uPpNumber;
+
+    PpNumber():
+        Symbol(),
+        ePpNumber(NONE),
+        uPpNumber(){}
+};
+
 class QChar : public Symbol
 {
 public:
@@ -444,6 +517,16 @@ public:
         Symbol(),
         eQCharSequence(NONE),
         uQCharSequence(){}
+};
+
+class Sign : public Symbol
+{
+public:
+    char element;
+
+    Sign():
+        Symbol(),
+        element(0){}
 };
 
 class UniversalCharacterName : public Symbol

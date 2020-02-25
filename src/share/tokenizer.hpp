@@ -26,8 +26,10 @@ private:
     class IdentifierNondigit* conIdentifierNondigit();
     class Nondigit* conNondigit();
     class Other* conOther();
+    class PpNumber* conPpNumber(class PpNumber* bef = nullptr);
     class QChar* conQChar();
     class QCharSequence* conQCharSequence(class QCharSequence* bef = nullptr);
+    class Sign* conSign();
     class UniversalCharacterName* conUniversalCharacterName();
 
     void process(class PreprocessingToken_Symbol* preprocessingToken_symbol, std::string& data) const;
