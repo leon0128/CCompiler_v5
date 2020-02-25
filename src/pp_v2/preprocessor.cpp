@@ -1,7 +1,7 @@
 #include "preprocessor.hpp"
 #include "initializer.hpp"
-#include "tokenizer.hpp"
-#include "token.hpp"
+#include "../share/tokenizer.hpp"
+#include "../share/preprocessing_token.hpp"
 #include "../share/file_manager.hpp"
 #include "../share/config.hpp"
 #include <utility>

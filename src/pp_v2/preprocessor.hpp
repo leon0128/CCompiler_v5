@@ -35,5 +35,5 @@ private:
     std::string mSrc;
     ESearch mESearch;
     // for tokenizer
-    std::vector<class Token*> mTokens;
+    std::vector<class PreprocessingToken*> mTokens;
 };

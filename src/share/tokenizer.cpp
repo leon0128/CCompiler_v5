@@ -1,6 +1,5 @@
 #include "tokenizer.hpp"
-#include "preprocessor.hpp"
-#include "token.hpp"
+#include "preprocessing_token.hpp"
 #include "symbol.hpp"
 #include <array>
 #include <iostream>
@@ -14,19 +13,56 @@ Tokenizer::Tokenizer(const std::string& src):
 
 void Tokenizer::execute()
 {
-    for(std::string::size_type i = 0; i < mSrc.size(); i++)
+    for(; mIdx < mSrc.size(); mIdx++)
     {
-        auto idx = i;
-        Identifier* identifier = conIdentifier();
-        if(identifier)
+        if(mSrc.at(mIdx) != ' ')
         {
-            addToken(identifier, idx);
-            continue;
+            auto idx = mIdx;
+            PreprocessingToken_Symbol* preprocessingToken_Symbol = conPreprocessingToken_Symbol();
+            addPreprocessingToken(preprocessingToken_Symbol, idx);
         }
     }
 
     for(auto&& e : mTokens)
         std::cout << "token: " << e->data << std::endl;
+}
+
+PreprocessingToken_Symbol* Tokenizer::conPreprocessingToken_Symbol()
+{
+    if(mIdx >= mSrc.size())
+        return nullptr;
+
+    auto idx = mIdx;
+    bool isValid = true;
+    PreprocessingToken_Symbol* symbol = nullptr;
+
+    Identifier* identifier = conIdentifier();
+    if(identifier)
+    {
+        symbol = new PreprocessingToken_Symbol();
+        symbol->ePreprocessingToken = PreprocessingToken_Symbol::IDENTIFIER;
+        symbol->uPreprocessingToken.sIdentifier.identifier = {identifier};
+    }
+    else
+    {
+        Other* other = conOther();
+        if(other)
+        {
+            symbol = new PreprocessingToken_Symbol();
+            symbol->ePreprocessingToken = PreprocessingToken_Symbol::OTHER;
+            symbol->uPreprocessingToken.sOther.other = {other};
+        }
+        else
+            isValid = false;
+    }
+
+    if(isValid)
+        return symbol;
+    else
+    {
+        mIdx = idx;
+        return nullptr;
+    }
 }
 
 Digit* Tokenizer::conDigit()
@@ -203,6 +239,18 @@ Nondigit* Tokenizer::conNondigit()
     return nondigit;
 }
 
+Other* Tokenizer::conOther()
+{
+    if(mIdx >= mSrc.size())
+        return nullptr;
+    
+    Other* other = new Other();
+    other->element = mSrc.at(mIdx);
+    
+    mIdx++;
+    return other;
+}
+
 UniversalCharacterName* Tokenizer::conUniversalCharacterName()
 {
     if(mIdx + 1 >= mSrc.size())
@@ -258,13 +306,60 @@ UniversalCharacterName* Tokenizer::conUniversalCharacterName()
     }
 }
 
-void Tokenizer::addToken(Identifier* identifier, std::string::size_type idx)
+void Tokenizer::addPreprocessingToken(PreprocessingToken_Symbol* symbol, std::string::size_type idx)
 {
     std::string data;
-    process(identifier, data);
+    process(symbol, data);
 
-    Token* token = new Token(data, Token::IDENTIFIER, idx);
+    PreprocessingToken* token = nullptr;
+
+    switch(symbol->ePreprocessingToken)
+    {
+        case(PreprocessingToken_Symbol::HEADER_NAME):
+            token = new PreprocessingToken(data, PreprocessingToken::HEADER_NAME, idx);
+            break;
+        case(PreprocessingToken_Symbol::IDENTIFIER):
+            token = new PreprocessingToken(data, PreprocessingToken::IDENTIFIER, idx);
+            break;
+        case(PreprocessingToken_Symbol::PP_NUMBER):
+            token = new PreprocessingToken(data, PreprocessingToken::PP_NUMBER, idx);
+            break;
+        case(PreprocessingToken_Symbol::CHARACTER_CONSTANT):
+            token = new PreprocessingToken(data, PreprocessingToken::CHARACTER_CONSTANT, idx);
+            break;
+        case(PreprocessingToken_Symbol::STRING_LITERAL):
+            token = new PreprocessingToken(data, PreprocessingToken::STRING_LITERAL, idx);
+            break;
+        case(PreprocessingToken_Symbol::PUNCTUATOR):
+            token = new PreprocessingToken(data, PreprocessingToken::PUNCTUATOR, idx);
+            break;
+        case(PreprocessingToken_Symbol::OTHER):
+            token = new PreprocessingToken(data, PreprocessingToken::OTHER, idx);
+            break;
+        
+        case(PreprocessingToken_Symbol::NONE):
+            processError("PreprocessingToken_Symbol", data);
+            break;
+    }
+
     mTokens.push_back(token);
+}
+
+void Tokenizer::process(PreprocessingToken_Symbol* symbol, std::string& data) const
+{
+    switch(symbol->ePreprocessingToken)
+    {
+        case(PreprocessingToken_Symbol::IDENTIFIER):
+            process(symbol->uPreprocessingToken.sIdentifier.identifier, data);
+            break;
+        case(PreprocessingToken_Symbol::OTHER):
+            process(symbol->uPreprocessingToken.sOther.other, data);
+            break;
+
+        default:
+            std::cout << "tmp" << std::endl;
+            break;
+    }
 }
 
 void Tokenizer::process(Digit* digit, std::string& data) const
@@ -325,6 +420,11 @@ void Tokenizer::process(IdentifierNondigit* identifierNondigit, std::string& dat
 void Tokenizer::process(Nondigit* nondigit, std::string& data) const
 {
     data.push_back(nondigit->element);
+}
+
+void Tokenizer::process(Other* other, std::string& data) const
+{
+    data.push_back(other->element);
 }
 
 void Tokenizer::process(UniversalCharacterName* universalCharacterName, std::string& data) const

@@ -4,6 +4,7 @@
 #include <array>
 
 class Symbol;
+class PreprocessingToken_Symbol;
 
 class CharacterConstant;
 class Constant;
@@ -11,6 +12,7 @@ class DecimalConstant;
 class Digit;
 class EnumerationConstant;
 class FloatingConstant;
+class HeaderName;
 class HexadecimalConstant;
 class HexadecimalDigit;
 class HexQuad;
@@ -21,6 +23,10 @@ class IntegerSuffix;
 class Nondigit;
 class NonzeroDigit;
 class OctalConstant;
+class Other;
+class PpNumber;
+class Punctuator;
+class StringLiteral;
 class UniversalCharacterName;
 
 class Symbol
@@ -34,6 +40,61 @@ public:
     Symbol()
         {SYMBOLS.push_back(this);}
     virtual ~Symbol(){}
+};
+
+class PreprocessingToken_Symbol : public Symbol
+{
+public:
+    enum EPreprocessingToken
+    {
+        NONE,
+        HEADER_NAME,
+        IDENTIFIER,
+        PP_NUMBER,
+        CHARACTER_CONSTANT,
+        STRING_LITERAL,
+        PUNCTUATOR,
+        OTHER
+    } ePreprocessingToken;
+
+    union UPreprocessingToken
+    {
+        struct SHeaderName
+        {
+            HeaderName* headerName;
+        } sHeaderName;
+        struct SIdentifier
+        {
+            Identifier* identifier;
+        } sIdentifier;
+        struct SPp_number
+        {
+            PpNumber* ppNumber;
+        } sPpNumber;
+        struct SCharacterConstant
+        {
+            CharacterConstant* characterConstant;
+        } sCharacterConstant;
+        struct SStringLiteral
+        {
+            StringLiteral* stringLitera;
+        } sStringLiteral;
+        struct SPunctuator
+        {
+            Punctuator* punctuator;
+        } sPunctuator;
+        struct SOther
+        {
+            Other* other;
+        } sOther;
+
+        UPreprocessingToken():
+            sHeaderName{nullptr}{}
+    } uPreprocessingToken;
+
+    PreprocessingToken_Symbol():
+        ePreprocessingToken(NONE),
+        uPreprocessingToken(){}
 };
 
 class Constant : public Symbol
@@ -256,7 +317,15 @@ public:
         element(0){}
 };
 
-// class OctalConstant : public 
+class Other : public Symbol
+{
+public:
+    char element;
+
+    Other():
+        Symbol(),
+        element(0){}
+};
 
 class UniversalCharacterName : public Symbol
 {

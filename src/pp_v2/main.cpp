@@ -1,6 +1,6 @@
 #include "preprocessor.hpp"
-#include "token.hpp"
-#include "symbol.hpp"
+#include "../share/preprocessing_token.hpp"
+#include "../share/symbol.hpp"
 #include <iostream>
 #include <string>
 
@@ -14,7 +14,7 @@ int main(int argc, char** argv)
         Preprocessor pp(filename, directory, Preprocessor::CURRENT_ONLY);
         pp.execute();
 
-        Token::destroy();
+        PreprocessingToken::destroy();
         Symbol::destroy();
         return 0;
     }
