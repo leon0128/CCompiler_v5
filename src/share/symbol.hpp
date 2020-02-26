@@ -6,17 +6,21 @@
 class Symbol;
 class PreprocessingToken_Symbol;
 
+class CChar;
+class CCharSequence;
 class CharacterConstant;
 class Constant;
 class DecimalConstant;
 class Digit;
 class EnumerationConstant;
+class EscapeSequence;
 class FloatingConstant;
 class HChar;
 class HCharSequence;
 class HeaderName;
 class HexadecimalConstant;
 class HexadecimalDigit;
+class HexadecimalEscapeSequence;
 class HexQuad;
 class Identifier;
 class IdentifierNondigit;
@@ -25,12 +29,15 @@ class IntegerSuffix;
 class Nondigit;
 class NonzeroDigit;
 class OctalConstant;
+class OctalDigit;
+class OctalEscapeSequence;
 class Other;
 class PpNumber;
 class Punctuator;
 class QChar;
 class QCharSequence;
 class Sign;
+class SimpleEscapeSequence;
 class StringLiteral;
 class UniversalCharacterName;
 
@@ -98,8 +105,113 @@ public:
     } uPreprocessingToken;
 
     PreprocessingToken_Symbol():
+        Symbol(),
         ePreprocessingToken(NONE),
         uPreprocessingToken(){}
+};
+
+class CChar : public Symbol
+{
+public:
+    enum ECChar
+    {
+        NONE,
+        ANY_MEMBER,
+        ESCAPE_CEQUENCE
+    } eCChar;
+
+    union UCChar
+    {
+        struct SAnyMember
+        {
+            char element;
+        } sAnyMember;
+        struct SEscapeSequence
+        {
+            EscapeSequence* escapeSequence;
+        } sEscapeSequence;
+
+        UCChar():
+            sAnyMember{0}{}
+    } uCChar;
+
+    CChar():
+        Symbol(),
+        eCChar(NONE),
+        uCChar(){}
+};
+
+class CCharSequence : public Symbol
+{
+public:
+    enum ECCharSequence
+    {
+        NONE,
+        C_CHAR,
+        C_CHAR_SEQUENCE_C_CHAR
+    } eCCharSequence;
+
+    union UCCharSequence
+    {
+        struct SCChar
+        {
+            CChar* cChar;
+        } sCChar;
+        struct SCCharSequenceCChar
+        {
+            CCharSequence* cCharSequence;
+            CChar* cChar;
+        } sCCharSequenceCChar;
+
+        UCCharSequence():
+            sCChar{nullptr}{}
+    } uCCharSequence;
+
+    CCharSequence():
+        Symbol(),
+        eCCharSequence(NONE),
+        uCCharSequence(){}
+};
+
+class CharacterConstant : public Symbol
+{
+public:
+    enum ECharacterConstant
+    {
+        NONE,
+        C_CHAR_SEQUENCE,
+        L_C_CHAR_SEQUENCE,
+        u_C_CHAR_SEQUENCE,
+        U_C_CHAR_SEQUENCE
+    } eCharacterConstant;
+
+    union UCharacterConstant
+    {
+        struct SCCharSequence
+        {
+            CCharSequence* cCharSequence;
+        } sCCharSequence;
+        struct S_L_CCharSequence
+        {
+            CCharSequence* cCharSequence;
+        } s_L_CCharSequence;
+        struct S_u_CCharSequence
+        {
+            CCharSequence* cCharSequence;
+        } s_u_CCharSequence;
+        struct S_U_CCharSequence
+        {
+            CCharSequence* cCharSequence;
+        } s_U_CCharSequence;
+
+        UCharacterConstant():
+            sCCharSequence{nullptr}{}
+    } uCharacterConstant;
+
+    CharacterConstant():
+        Symbol(),
+        eCharacterConstant(NONE),
+        uCharacterConstant(){}
 };
 
 class Constant : public Symbol
@@ -170,6 +282,7 @@ public:
     } uDecimalConstant;
 
     DecimalConstant():
+        Symbol(),
         eDecimalConstant(NONE),
         uDecimalConstant(){}
 };
@@ -182,6 +295,47 @@ public:
     Digit():
         Symbol(),
         element(0){}
+};
+
+class EscapeSequence : public Symbol
+{
+public:
+    enum EEscapeSequence
+    {
+        NONE,
+        SIMPLE_ESCAPE_SEQUENCE,
+        OCTAL_ESCAPE_SEQUENCE,
+        HEXADECIMAL_ESCAPE_SEQUENCE,
+        UNIVERSAL_CHARACTER_NAME
+    } eEscapeSequence;
+
+    union UEscapeSequence
+    {
+        struct SSimpleEscapeSequence
+        {
+            SimpleEscapeSequence* simpleEscapeSequence;
+        } sSimpleEscapeSequence;
+        struct SOctalEscapeSequence
+        {
+            OctalEscapeSequence* octalEscapeSequence;
+        } sOctalEscapeSequence;
+        struct SHexadecimalEscapeSequence
+        {
+            HexadecimalEscapeSequence* hexadecimalEscapeSequence;
+        } sHexadecimalEscapeSequence;
+        struct SUniversalCharacterName
+        {
+            UniversalCharacterName* universalCharacterName;
+        } sUniversalCharacterName;
+
+        UEscapeSequence():
+            sSimpleEscapeSequence{nullptr}{}
+    } uEscapeSequence;
+
+    EscapeSequence():
+        Symbol(),
+        eEscapeSequence(NONE),
+        uEscapeSequence(){}
 };
 
 class HChar : public Symbol
@@ -265,6 +419,38 @@ public:
     HexadecimalDigit():
         Symbol(),
         element(0){}
+};
+
+class HexadecimalEscapeSequence : public Symbol
+{
+public:
+    enum EHexadecimalEscapeSequence
+    {
+        NONE,
+        HEXADECIMAL_DIGIT,
+        HEXADECIMAL_ESCAPE_SEQUENCE_HEXADECIMAL_DIGIT
+    } eHexadecimalEscapeSequence;
+
+    union UHexadecimalEscapeSequence
+    {
+        struct SHexadecimalDigit
+        {
+            HexadecimalDigit* hexadecimalDigit;
+        } sHexadecimalDigit;
+        struct SHexadecimalEscapeSequenceHexadecimalDigit
+        {
+            HexadecimalEscapeSequence* hexadecimalEscapeSequence;
+            HexadecimalDigit* hexadecimalDigit;
+        } sHexadecimalEscapeSequenceHexadecimalDigit;
+
+        UHexadecimalEscapeSequence():
+            sHexadecimalDigit{nullptr}{}
+    } uHexadecimalEscapeSequence;
+
+    HexadecimalEscapeSequence():
+        Symbol(),
+        eHexadecimalEscapeSequence(NONE),
+        uHexadecimalEscapeSequence(){}
 };
 
 class HexQuad : public Symbol
@@ -393,6 +579,55 @@ public:
     Nondigit():
         Symbol(),
         element(0){}
+};
+
+class OctalDigit : public Symbol
+{
+public:
+    char element;
+
+    OctalDigit():
+        Symbol(),
+        element(0){}
+};
+
+class OctalEscapeSequence : public Symbol
+{
+public:
+    enum EOctalEscapeSequence
+    {
+        NONE,
+        OCTAL_DIGIT,
+        OCTAL_DIGIT_OCTAL_DIGIT,
+        OCTAL_DIGIT_OCTAL_DIGIT_OCTAL_DIGIT
+    } eOctalEscapeSequence;
+
+    union UOctalEscapeSequence
+    {
+        struct SOctalDigit
+        {
+            OctalDigit* octalDigit;
+        } sOctalDigit;
+        struct SOctalDigitOctalDigit
+        {
+            OctalDigit* octalDigit;
+            OctalDigit* octalDigit_1;
+        } sOctalDigitOctalDigit;
+        struct SOctalDigitOctalDigitOctalDigit
+        {
+            OctalDigit* octalDigit;
+            OctalDigit* octalDigit_1;
+            OctalDigit* octalDigit_2;
+        } sOctalDigitOctalDigitOctalDigit;
+
+        UOctalEscapeSequence():
+            sOctalDigit{nullptr}{}
+    } uOctalEscapeSequence;
+
+    OctalEscapeSequence():
+        Symbol(),
+        eOctalEscapeSequence(NONE),
+        uOctalEscapeSequence(){}
 };
 
 class Other : public Symbol
@@ -525,6 +760,16 @@ public:
     char element;
 
     Sign():
+        Symbol(),
+        element(0){}
+};
+
+class SimpleEscapeSequence : public Symbol
+{
+public:
+    char element;
+
+    SimpleEscapeSequence():
         Symbol(),
         element(0){}
 };

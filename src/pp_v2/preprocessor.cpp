@@ -32,6 +32,4 @@ void Preprocessor::execute()
 {
     mInitializer->execute();
     mTokenizer->execute();
-
-    std::cout << mSrc << std::endl;
 }

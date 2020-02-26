@@ -27,15 +27,15 @@ public:
                        std::string::size_type inPos = std::string::npos):
         data(inData),
         eClass(inEClass),
-        pos(inPos)
-        {PREPROCESSING_TOKENS.push_back(this);}
+        pos(inPos){}
     PreprocessingToken(std::string&& inData,
                        EClass inEClass,
                        std::string::size_type inPos = std::string::npos):
         data(std::forward<std::string>(inData)),
         eClass(inEClass),
-        pos(inPos)
-        {PREPROCESSING_TOKENS.push_back(this);}
+        pos(inPos){}
+
+    void push(){PREPROCESSING_TOKENS.push_back(this);}
 
     friend inline bool operator==(const PreprocessingToken& lhs, const PreprocessingToken& rhs);
     friend inline bool operator==(const PreprocessingToken& lhs, PreprocessingToken&& rhs);

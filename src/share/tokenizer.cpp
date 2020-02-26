@@ -24,7 +24,12 @@ void Tokenizer::execute()
     }
 
     for(auto&& e : mTokens)
-        std::cout << "token: " << e->data << std::endl;
+        std::cout << "token: "
+                  << "\n    data: "
+                  << e->data
+                  << "\n    class: "
+                  << e->eClass
+                  << std::endl;
 }
 
 void Tokenizer::addPreprocessingToken(PreprocessingToken_Symbol* symbol, std::string::size_type idx)
@@ -63,6 +68,7 @@ void Tokenizer::addPreprocessingToken(PreprocessingToken_Symbol* symbol, std::st
             break;
     }
 
+    token->push();
     mTokens.push_back(token);
 }
 
@@ -102,21 +108,186 @@ PreprocessingToken_Symbol* Tokenizer::conPreprocessingToken_Symbol()
             }
             else
             {
-                Other* other = conOther();
-                if(other)
+                CharacterConstant* characterConstant = conCharacterConstant();
+                if(characterConstant)
                 {
                     preprocessingToken_symbol = new PreprocessingToken_Symbol();
-                    preprocessingToken_symbol->ePreprocessingToken = PreprocessingToken_Symbol::OTHER;
-                    preprocessingToken_symbol->uPreprocessingToken.sOther = {other};
+                    preprocessingToken_symbol->ePreprocessingToken = PreprocessingToken_Symbol::CHARACTER_CONSTANT;
+                    preprocessingToken_symbol->uPreprocessingToken.sCharacterConstant = {characterConstant};
                 }
                 else
-                    isValid = false;
+                {
+                    Other* other = conOther();
+                    if(other)
+                    {
+                        preprocessingToken_symbol = new PreprocessingToken_Symbol();
+                        preprocessingToken_symbol->ePreprocessingToken = PreprocessingToken_Symbol::OTHER;
+                        preprocessingToken_symbol->uPreprocessingToken.sOther = {other};
+                    }
+                    else
+                        isValid = false;
+                }
             }
         }
     }
 
     if(isValid)
         return preprocessingToken_symbol;
+    else
+    {
+        mIdx = idx;
+        return nullptr;
+    }
+}
+
+CChar* Tokenizer::conCChar()
+{
+    if(mIdx >= mSrc.size())
+        return nullptr;
+
+    auto idx = mIdx;
+    bool isValid = true;
+    CChar* cChar = nullptr;
+
+    char c = mSrc.at(mIdx);
+    if(c != '\'' ||
+       c != '\\' ||
+       c != '\n')
+    {
+        mIdx++;
+
+        cChar = new CChar();
+        cChar->eCChar = CChar::ANY_MEMBER;
+        cChar->uCChar.sAnyMember = {c};
+    }
+    else
+    {
+        EscapeSequence* escapeSequence = conEscapeSequence();
+        if(escapeSequence)
+        {
+            cChar = new CChar();
+            cChar->eCChar = CChar::ESCAPE_CEQUENCE;
+            cChar->uCChar.sEscapeSequence = {escapeSequence};
+        }
+        else
+            isValid = false;
+    }
+
+    if(isValid)
+        return cChar;
+    else
+    {
+        mIdx = idx;
+        return nullptr;
+    }
+}
+
+CCharSequence* Tokenizer::conCCharSequence(CCharSequence* bef)
+{
+    if(mIdx >= mSrc.size())
+        return nullptr;
+
+    auto idx = mIdx;
+    bool isValid = true;
+    CCharSequence* cCharSequence = nullptr;
+
+    CChar* cChar = conCChar();
+    if(cChar)
+    {
+        cCharSequence = new CCharSequence();
+        if(!bef)
+        {
+            cCharSequence->eCCharSequence = CCharSequence::C_CHAR;
+            cCharSequence->uCCharSequence.sCChar = {cChar};
+        }
+        else
+        {
+            cCharSequence->eCCharSequence = CCharSequence::C_CHAR_SEQUENCE_C_CHAR;
+            cCharSequence->uCCharSequence.sCCharSequenceCChar = {bef, cChar};
+        }
+    }
+    else
+        isValid = false;
+
+    if(isValid)
+    {
+        CCharSequence* aft = conCCharSequence(cCharSequence);
+        if(aft)
+            return aft;
+        else
+            return cCharSequence;
+    }
+    else
+    {
+        mIdx = idx;
+        return nullptr;
+    }
+}
+
+CharacterConstant* Tokenizer::conCharacterConstant()
+{
+    if(mIdx >= mSrc.size())
+        return nullptr;
+
+    auto idx = mIdx;
+    bool isValid = true;
+    CharacterConstant* characterConstant = nullptr;
+
+    CharacterConstant::ECharacterConstant eCharacterConstant = CharacterConstant::C_CHAR_SEQUENCE;
+    char c = mSrc.at(mIdx);
+    mIdx++;
+    if(c == 'L')
+        eCharacterConstant = CharacterConstant::L_C_CHAR_SEQUENCE;
+    else if(c == 'u')
+        eCharacterConstant = CharacterConstant::u_C_CHAR_SEQUENCE;
+    else if(c == 'U')
+        eCharacterConstant = CharacterConstant::U_C_CHAR_SEQUENCE;
+    else
+        mIdx--;
+    
+    if(mSrc[mIdx] == '\'' &&
+       mIdx < mSrc.size())
+    {
+        mIdx++;
+        CCharSequence* cCharSequence = conCCharSequence();
+        if(cCharSequence)
+        {
+            if(mSrc[mIdx] == '\'' &&
+               mIdx < mSrc.size())
+            {
+                mIdx++;
+
+                characterConstant = new CharacterConstant();
+                characterConstant->eCharacterConstant = eCharacterConstant;
+                switch(eCharacterConstant)
+                {
+                    case(CharacterConstant::C_CHAR_SEQUENCE):
+                        characterConstant->uCharacterConstant.sCCharSequence = {cCharSequence};
+                        break;
+                    case(CharacterConstant::L_C_CHAR_SEQUENCE):
+                        characterConstant->uCharacterConstant.s_L_CCharSequence = {cCharSequence};
+                        break;
+                    case(CharacterConstant::u_C_CHAR_SEQUENCE):
+                        characterConstant->uCharacterConstant.s_u_CCharSequence = {cCharSequence};
+                        break;
+                    case(CharacterConstant::U_C_CHAR_SEQUENCE):
+                        characterConstant->uCharacterConstant.s_U_CCharSequence = {cCharSequence};
+                    
+                    case(CharacterConstant::NONE):
+                        break;
+                }
+            }
+            else
+                isValid = false;
+        }
+        else
+            isValid = false;
+    }
+    else
+        isValid = false;
+
+    if(isValid)
+        return characterConstant;
     else
     {
         mIdx = idx;
@@ -138,6 +309,64 @@ Digit* Tokenizer::conDigit()
     
     mIdx++;
     return digit;
+}
+
+EscapeSequence* Tokenizer::conEscapeSequence()
+{
+    if(mIdx >= mSrc.size())
+        return nullptr;
+
+    auto idx = mIdx;
+    bool isValid = true;
+    EscapeSequence* escapeSequence = nullptr;
+
+    SimpleEscapeSequence* simpleEscapeSequence = conSimpleEscapeSequence();
+    if(simpleEscapeSequence)
+    {
+        escapeSequence = new EscapeSequence();
+        escapeSequence->eEscapeSequence = EscapeSequence::SIMPLE_ESCAPE_SEQUENCE;
+        escapeSequence->uEscapeSequence.sSimpleEscapeSequence = {simpleEscapeSequence};
+    }
+    else
+    {
+        OctalEscapeSequence* octalEscapeSequence = conOctalEscapeSequence();
+        if(octalEscapeSequence)
+        {
+            escapeSequence = new EscapeSequence();
+            escapeSequence->eEscapeSequence = EscapeSequence::OCTAL_ESCAPE_SEQUENCE;
+            escapeSequence->uEscapeSequence.sOctalEscapeSequence = {octalEscapeSequence};
+        }
+        else
+        {
+            HexadecimalEscapeSequence* hexadecimalEscapeSequence = conHexadecimalEscapeSequence();
+            if(hexadecimalEscapeSequence)
+            {
+                escapeSequence = new EscapeSequence();
+                escapeSequence->eEscapeSequence = EscapeSequence::HEXADECIMAL_ESCAPE_SEQUENCE;
+                escapeSequence->uEscapeSequence.sHexadecimalEscapeSequence = {hexadecimalEscapeSequence};
+            }
+            else
+            {
+                UniversalCharacterName* universalCharacterName = conUniversalCharacterName();
+                if(universalCharacterName)
+                {
+                    escapeSequence = new EscapeSequence();
+                    escapeSequence->eEscapeSequence = EscapeSequence::UNIVERSAL_CHARACTER_NAME;
+                    escapeSequence->uEscapeSequence.sUniversalCharacterName = {universalCharacterName};
+                }
+                else
+                    isValid = false;
+            }
+        }
+    }
+
+    if(isValid)
+        return escapeSequence;
+    else
+    {
+        mIdx = idx;
+        return nullptr;
+    }
 }
 
 HChar* Tokenizer::conHChar()
@@ -287,6 +516,64 @@ HexadecimalDigit* Tokenizer::conHexadecimalDigit()
     return hexadecimalDigit;
 }
 
+HexadecimalEscapeSequence* Tokenizer::conHexadecimalEscapeSequence(HexadecimalEscapeSequence* bef)
+{
+    if(mIdx >= mSrc.size())
+        return nullptr;
+
+    auto idx = mIdx;
+    bool isValid = true;
+    HexadecimalEscapeSequence* hexadecimalEscapeSequence = nullptr;
+
+    if(!bef)
+    {
+        if(mSrc.at(mIdx) == '\\' &&
+           mSrc[mIdx + 1] == 'x' &&
+           mIdx + 1 < mSrc.size())
+        {
+            mIdx += 2;
+
+            HexadecimalDigit* hexadecimalDigit = conHexadecimalDigit();
+            if(hexadecimalDigit)
+            {
+                hexadecimalEscapeSequence = new HexadecimalEscapeSequence();
+                hexadecimalEscapeSequence->eHexadecimalEscapeSequence = HexadecimalEscapeSequence::HEXADECIMAL_DIGIT;
+                hexadecimalEscapeSequence->uHexadecimalEscapeSequence.sHexadecimalDigit = {hexadecimalDigit};
+            }
+            else
+                isValid = false;
+        }
+        else
+            isValid = false;
+    }
+    else
+    {
+        HexadecimalDigit* hexadecimalDigit = conHexadecimalDigit();
+        if(hexadecimalDigit)
+        {
+            hexadecimalEscapeSequence = new HexadecimalEscapeSequence();
+            hexadecimalEscapeSequence->eHexadecimalEscapeSequence = HexadecimalEscapeSequence::HEXADECIMAL_ESCAPE_SEQUENCE_HEXADECIMAL_DIGIT;
+            hexadecimalEscapeSequence->uHexadecimalEscapeSequence.sHexadecimalEscapeSequenceHexadecimalDigit = {bef, hexadecimalDigit};
+        }
+        else
+            isValid = false;
+    }
+
+    if(isValid)
+    {
+        HexadecimalEscapeSequence* aft = conHexadecimalEscapeSequence(hexadecimalEscapeSequence);
+        if(aft)
+            return aft;
+        else
+            return hexadecimalEscapeSequence;
+    }
+    else
+    {
+        mIdx = idx;
+        return nullptr;
+    }
+}
+
 HexQuad* Tokenizer::conHexQuad()
 {
     if(mIdx >= mSrc.size())
@@ -427,6 +714,73 @@ Nondigit* Tokenizer::conNondigit()
     return nondigit;
 }
 
+OctalDigit* Tokenizer::conOctalDigit()
+{
+    if(mIdx >= mSrc.size())
+        return nullptr;
+
+    char c = mSrc.at(mIdx);
+    if(c < '0' || c > '7')
+        return nullptr;
+
+    OctalDigit* octalDigit = new OctalDigit();
+    octalDigit->element = c;
+
+    mIdx++;
+    return octalDigit;
+}
+
+OctalEscapeSequence* Tokenizer::conOctalEscapeSequence()
+{
+    if(mIdx >= mSrc.size())
+        return nullptr;
+
+    if(mSrc.at(mIdx) != '\\')
+        return nullptr;
+
+    auto idx = mIdx;
+    bool isValid = true;
+    OctalEscapeSequence* octalEscapeSequence = nullptr;
+
+    OctalDigit* octalDigit = conOctalDigit();
+    if(octalDigit)
+    {
+        OctalDigit* octalDigit_1 = conOctalDigit();
+        if(octalDigit_1)
+        {
+            OctalDigit* octalDigit_2 = conOctalDigit();
+            if(octalDigit_2)
+            {
+                octalEscapeSequence = new OctalEscapeSequence();
+                octalEscapeSequence->eOctalEscapeSequence = OctalEscapeSequence::OCTAL_DIGIT_OCTAL_DIGIT_OCTAL_DIGIT;
+                octalEscapeSequence->uOctalEscapeSequence.sOctalDigitOctalDigitOctalDigit = {octalDigit, octalDigit_1, octalDigit_2};
+            }
+            else
+            {
+                octalEscapeSequence = new OctalEscapeSequence();
+                octalEscapeSequence->eOctalEscapeSequence = OctalEscapeSequence::OCTAL_DIGIT_OCTAL_DIGIT;
+                octalEscapeSequence->uOctalEscapeSequence.sOctalDigitOctalDigit = {octalDigit, octalDigit_1};
+            }
+        }
+        else
+        {
+            octalEscapeSequence = new OctalEscapeSequence();
+            octalEscapeSequence->eOctalEscapeSequence = OctalEscapeSequence::OCTAL_DIGIT;
+            octalEscapeSequence->uOctalEscapeSequence.sOctalDigit = {octalDigit};
+        }
+    }
+    else
+        isValid = false;
+
+    if(isValid)
+        return octalEscapeSequence;
+    else
+    {
+        mIdx = idx;
+        return nullptr;
+    }
+}
+
 Other* Tokenizer::conOther()
 {
     if(mIdx >= mSrc.size())
@@ -490,7 +844,7 @@ PpNumber* Tokenizer::conPpNumber(PpNumber* bef)
                 mIdx++;
                 ppNumber = new PpNumber();
                 ppNumber->ePpNumber = PpNumber::PP_NUMBER_DOT;
-                ppNumber->uPpNumber.sPpNumberDot = {ppNumber};
+                ppNumber->uPpNumber.sPpNumberDot = {bef};
             }
             else if(c == 'e')
             {
@@ -657,6 +1011,35 @@ Sign* Tokenizer::conSign()
     return sign;
 }
 
+SimpleEscapeSequence* Tokenizer::conSimpleEscapeSequence()
+{
+    if(mIdx + 1 >= mSrc.size())
+        return nullptr;
+    
+    if(mSrc.at(mIdx) != '\\')
+        return nullptr;
+
+    char c = mSrc.at(mIdx + 1);
+    if(c != '\'' &&
+       c != '"' &&
+       c != '?' &&
+       c != '\\' &&
+       c != 'a' &&
+       c != 'b' &&
+       c != 'f' &&
+       c != 'n' &&
+       c != 'r' &&
+       c != 't' &&
+       c != 'v')
+        return nullptr;
+
+    SimpleEscapeSequence* simpleEscapeSequence = new SimpleEscapeSequence();
+    simpleEscapeSequence->element = c;
+
+    mIdx += 2;
+    return simpleEscapeSequence;
+}
+
 UniversalCharacterName* Tokenizer::conUniversalCharacterName()
 {
     if(mIdx + 1 >= mSrc.size())
@@ -726,6 +1109,12 @@ void Tokenizer::process(PreprocessingToken_Symbol* preprocessingToken_symbol, st
         case(PreprocessingToken_Symbol::IDENTIFIER):
             process(preprocessingToken_symbol->uPreprocessingToken.sIdentifier.identifier, data);
             break;
+        case(PreprocessingToken_Symbol::PP_NUMBER):
+            process(preprocessingToken_symbol->uPreprocessingToken.sPpNumber.ppNumber, data);
+            break;
+        case(PreprocessingToken_Symbol::CHARACTER_CONSTANT):
+            process(preprocessingToken_symbol->uPreprocessingToken.sCharacterConstant.characterConstant, data);
+            break;
         case(PreprocessingToken_Symbol::OTHER):
             process(preprocessingToken_symbol->uPreprocessingToken.sOther.other, data);
             break;
@@ -736,9 +1125,101 @@ void Tokenizer::process(PreprocessingToken_Symbol* preprocessingToken_symbol, st
     }
 }
 
+void Tokenizer::process(CChar* cChar, std::string& data) const
+{
+    switch(cChar->eCChar)
+    {
+        case(CChar::ANY_MEMBER):
+            data.push_back(cChar->uCChar.sAnyMember.element);
+            break;
+        case(CChar::ESCAPE_CEQUENCE):
+            process(cChar->uCChar.sEscapeSequence.escapeSequence, data);
+            break;
+        
+        case(CChar::NONE):
+            processError("CChar", data);
+            break;
+    }
+}
+
+void Tokenizer::process(CCharSequence* cCharSequence, std::string& data) const
+{
+    switch(cCharSequence->eCCharSequence)
+    {
+        case(CCharSequence::C_CHAR):
+            process(cCharSequence->uCCharSequence.sCChar.cChar, data);
+            break;
+        case(CCharSequence::C_CHAR_SEQUENCE_C_CHAR):
+            process(cCharSequence->uCCharSequence.sCCharSequenceCChar.cCharSequence, data);
+            process(cCharSequence->uCCharSequence.sCCharSequenceCChar.cChar, data);
+            break;
+
+        case(CCharSequence::NONE):
+            processError("CCharSequence", data);
+            break;
+    }
+}
+
+void Tokenizer::process(CharacterConstant* characterConstant, std::string& data) const
+{
+    switch(characterConstant->eCharacterConstant)
+    {
+        case(CharacterConstant::C_CHAR_SEQUENCE):
+            data.push_back('\'');
+            process(characterConstant->uCharacterConstant.sCCharSequence.cCharSequence, data);
+            data.push_back('\'');
+            break;
+        case(CharacterConstant::L_C_CHAR_SEQUENCE):
+            data.push_back('L');
+            data.push_back('\'');
+            process(characterConstant->uCharacterConstant.s_L_CCharSequence.cCharSequence, data);
+            data.push_back('\'');
+            break;
+        case(CharacterConstant::u_C_CHAR_SEQUENCE):
+            data.push_back('u');
+            data.push_back('\'');
+            process(characterConstant->uCharacterConstant.s_u_CCharSequence.cCharSequence, data);
+            data.push_back('\'');
+            break;
+        case(CharacterConstant::U_C_CHAR_SEQUENCE):
+            data.push_back('U');
+            data.push_back('\'');
+            process(characterConstant->uCharacterConstant.s_U_CCharSequence.cCharSequence, data);
+            data.push_back('\'');
+            break;
+        
+        case(CharacterConstant::NONE):
+            processError("CharacterConstant", data);
+            break;
+    }
+}
+
 void Tokenizer::process(Digit* digit, std::string& data) const
 {
     data.push_back(digit->element);
+}
+
+void Tokenizer::process(EscapeSequence* escapeSequence, std::string& data) const
+{
+    switch(escapeSequence->eEscapeSequence)
+    {
+        case(EscapeSequence::SIMPLE_ESCAPE_SEQUENCE):
+            process(escapeSequence->uEscapeSequence.sSimpleEscapeSequence.simpleEscapeSequence, data);
+            break;
+        case(EscapeSequence::OCTAL_ESCAPE_SEQUENCE):
+            process(escapeSequence->uEscapeSequence.sOctalEscapeSequence.octalEscapeSequence, data);
+            break;
+        case(EscapeSequence::HEXADECIMAL_ESCAPE_SEQUENCE):
+            process(escapeSequence->uEscapeSequence.sHexadecimalEscapeSequence.hexadecimalEscapeSequence, data);
+            break;
+        case(EscapeSequence::UNIVERSAL_CHARACTER_NAME):
+            process(escapeSequence->uEscapeSequence.sUniversalCharacterName.universalCharacterName, data);
+            break;
+        
+        case(EscapeSequence::NONE):
+            processError("EscapeSequence", data);
+            break;
+    }
 }
 
 void Tokenizer::process(HChar* hChar, std::string& data) const
@@ -788,6 +1269,26 @@ void Tokenizer::process(HeaderName* headerName, std::string& data) const
 void Tokenizer::process(HexadecimalDigit* hexadecimalDigit, std::string& data) const
 {
     data.push_back(hexadecimalDigit->element);
+}
+
+void Tokenizer::process(HexadecimalEscapeSequence* hexadecimalEscapeSequence, std::string& data) const
+{
+    switch(hexadecimalEscapeSequence->eHexadecimalEscapeSequence)
+    {
+        case(HexadecimalEscapeSequence::HEXADECIMAL_DIGIT):
+            data.push_back('\\');
+            data.push_back('x');
+            process(hexadecimalEscapeSequence->uHexadecimalEscapeSequence.sHexadecimalDigit.hexadecimalDigit, data);
+            break;
+        case(HexadecimalEscapeSequence::HEXADECIMAL_ESCAPE_SEQUENCE_HEXADECIMAL_DIGIT):
+            process(hexadecimalEscapeSequence->uHexadecimalEscapeSequence.sHexadecimalEscapeSequenceHexadecimalDigit.hexadecimalEscapeSequence, data);
+            process(hexadecimalEscapeSequence->uHexadecimalEscapeSequence.sHexadecimalEscapeSequenceHexadecimalDigit.hexadecimalDigit, data);
+            break;
+
+        case(HexadecimalEscapeSequence::NONE):
+            processError("HexadecimalEscapeSequence", data);
+            break;
+    }
 }
 
 void Tokenizer::process(HexQuad* hexQuad, std::string& data) const
@@ -840,9 +1341,89 @@ void Tokenizer::process(Nondigit* nondigit, std::string& data) const
     data.push_back(nondigit->element);
 }
 
+void Tokenizer::process(OctalDigit* octalDigit, std::string& data) const
+{
+    data.push_back(octalDigit->element);
+}
+
+void Tokenizer::process(OctalEscapeSequence* octalEscapeSequence, std::string& data) const
+{
+    data.push_back('\\');
+
+    switch(octalEscapeSequence->eOctalEscapeSequence)
+    {
+        case(OctalEscapeSequence::OCTAL_DIGIT):
+            process(octalEscapeSequence->uOctalEscapeSequence.sOctalDigit.octalDigit, data);
+            break;
+        case(OctalEscapeSequence::OCTAL_DIGIT_OCTAL_DIGIT):
+            process(octalEscapeSequence->uOctalEscapeSequence.sOctalDigitOctalDigit.octalDigit, data);
+            process(octalEscapeSequence->uOctalEscapeSequence.sOctalDigitOctalDigit.octalDigit_1, data);
+            break;
+        case(OctalEscapeSequence::OCTAL_DIGIT_OCTAL_DIGIT_OCTAL_DIGIT):
+            process(octalEscapeSequence->uOctalEscapeSequence.sOctalDigitOctalDigitOctalDigit.octalDigit, data);
+            process(octalEscapeSequence->uOctalEscapeSequence.sOctalDigitOctalDigitOctalDigit.octalDigit_1, data);
+            process(octalEscapeSequence->uOctalEscapeSequence.sOctalDigitOctalDigitOctalDigit.octalDigit_2, data);
+            break;
+
+        case(OctalEscapeSequence::NONE):
+            processError("OctalEscapeSequence", data);
+            break;
+    }
+}
+
 void Tokenizer::process(Other* other, std::string& data) const
 {
     data.push_back(other->element);
+}
+
+void Tokenizer::process(PpNumber* ppNumber, std::string& data) const
+{
+    switch(ppNumber->ePpNumber)
+    {
+        case(PpNumber::DIGIT):
+            process(ppNumber->uPpNumber.sDigit.digit, data);
+            break;
+        case(PpNumber::DOT_DIGIT):
+            data.push_back('.');
+            process(ppNumber->uPpNumber.sDotDigit.digit, data);
+            break;
+        case(PpNumber::PP_NUMBER_DIGIT):
+            process(ppNumber->uPpNumber.sPpNumberDigit.ppNumber, data);
+            process(ppNumber->uPpNumber.sPpNumberDigit.digit, data);
+            break;
+        case(PpNumber::PP_NUMBER_IDENTIFIER_NONDIGIT):
+            process(ppNumber->uPpNumber.sPpNumberIdentifierNondigit.ppNumber, data);
+            process(ppNumber->uPpNumber.sPpNumberIdentifierNondigit.identifierNondigit, data);
+            break;
+        case(PpNumber::PP_NUMBER_e_SIGN):
+            process(ppNumber->uPpNumber.sPpNumber_e_Sign.ppNumber, data);
+            data.push_back('e');
+            process(ppNumber->uPpNumber.sPpNumber_e_Sign.sign, data);
+            break;
+        case(PpNumber::PP_NUMBER_E_SIGN):
+            process(ppNumber->uPpNumber.sPpNumber_E_Sign.ppNumber, data);
+            data.push_back('E');
+            process(ppNumber->uPpNumber.sPpNumber_E_Sign.sign, data);
+            break;
+        case(PpNumber::PP_NUMBER_p_SIGN):
+            process(ppNumber->uPpNumber.sPpNumber_p_Sign.ppNumber, data);
+            data.push_back('p');
+            process(ppNumber->uPpNumber.sPpNumber_p_Sign.sign, data);
+            break;
+        case(PpNumber::PP_NUMBER_P_SIGN):
+            process(ppNumber->uPpNumber.sPpNumber_P_Sign.ppNumber, data);
+            data.push_back('P');
+            process(ppNumber->uPpNumber.sPpNumber_P_Sign.sign, data);
+            break;
+        case(PpNumber::PP_NUMBER_DOT):
+            process(ppNumber->uPpNumber.sPpNumberDot.ppNumber, data);
+            data.push_back('.');
+            break;
+        
+        case(PpNumber::NONE):
+            processError("PpNumber", data);
+            break;
+    }
 }
 
 void Tokenizer::process(QChar* qChar, std::string& data) const
@@ -866,6 +1447,17 @@ void Tokenizer::process(QCharSequence* qCharSequence, std::string& data) const
             processError("QCharSequence", data);
             break;
     }
+}
+
+void Tokenizer::process(Sign* sign, std::string& data) const
+{
+    data.push_back(sign->element);
+}
+
+void Tokenizer::process(SimpleEscapeSequence* simpleEscapeSequence, std::string& data) const
+{
+    data.push_back('\\');
+    data.push_back(simpleEscapeSequence->element);
 }
 
 void Tokenizer::process(UniversalCharacterName* universalCharacterName, std::string& data) const
