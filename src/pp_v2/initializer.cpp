@@ -26,7 +26,6 @@ void Initializer::execute() const
     openSource();
     replaceTrigraph();
     joinLine();
-    deleteComment();
 }
 
 void Initializer::openSource() const
@@ -165,88 +164,4 @@ void Initializer::joinLine() const
 
     if(mPP->mSrc.back() != '\n')
         mPP->mSrc.push_back('\n');
-}
-
-void Initializer::deleteComment() const
-{
-    std::string line;
-    std::string::size_type pos = 0;
-    while(getLine(line, mPP->mSrc, pos))
-    {
-        for(std::string::size_type p = 0; p < line.size(); p++)
-        {
-            char c = line.at(p);
-            if(c == '"' ||
-               c == '\'')
-            {
-                char punctuator = c;
-                for(p++; p < line.size(); p++)
-                {
-                    c = line.at(p);
-                    if(c == '\\')
-                        p++;
-                    else if(c == punctuator)
-                        break;
-                }
-            }
-            else if(c == '/' &&
-                    p + 1 < line.size() &&
-                    line[p + 1] == '/')
-            {
-                mPP->mSrc.erase(mPP->mSrc.begin() + pos + p,
-                                mPP->mSrc.begin() + pos + line.size());
-                pos += p + 1;
-                break;
-            }
-            else if(c == '/' &&
-                    p + 1 < line.size() &&
-                    line[p + 1] == '*')
-            {
-                auto end = mPP->mSrc.find("*/", pos + 2);
-                if(end != std::string::npos)
-                {
-                    mPP->mSrc.replace(p, end - p + 2, " ");
-                    break;
-                }
-                else
-                {
-                    std::cerr << "warning: block-comment end token not found.\n"
-                              << "    line contents: "
-                              << line
-                              << std::endl;
-                }
-            }
-            
-            if(p + 1 == line.size())
-                pos += line.size() + 1;
-        }
-
-        if(line.empty())
-            pos++;
-    }
-}
-
-bool Initializer::getLine(std::string& line,
-                          const std::string& src,
-                          std::string::size_type pos) const
-{
-    line.clear();
-
-    if(pos < src.size())
-    {
-        for(; pos < src.size(); pos++)
-        {
-            char c = src.at(pos);
-            if(c != '\n')
-                line.push_back(c);
-            else
-                break;
-        }
-
-        return true;
-    }
-    else
-    {
-        return false;
-    }
 }

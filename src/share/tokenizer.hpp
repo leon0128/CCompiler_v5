@@ -12,6 +12,8 @@ public:
     void execute();
 
 private:
+    void deleteComment();
+
     void addPreprocessingToken(class PreprocessingToken_Symbol* preprocessingToken_symbol, std::string::size_type idx);
 
     class PreprocessingToken_Symbol* conPreprocessingToken_Symbol();
@@ -35,6 +37,7 @@ private:
     class OctalEscapeSequence* conOctalEscapeSequence();
     class Other* conOther();
     class PpNumber* conPpNumber(class PpNumber* bef = nullptr);
+    class Punctuator* conPunctuator();
     class QChar* conQChar();
     class QCharSequence* conQCharSequence(class QCharSequence* bef = nullptr);
     class SChar* conSChar();
@@ -50,6 +53,7 @@ private:
     void process(class CCharSequence* cCharSequence, std::string& data) const;
     void process(class CharacterConstant* characterConstant, std::string& data) const;
     void process(class Digit* digit, std::string& data) const;
+    void process(class EncodingPrefix* encodingPrefix, std::string& data) const;
     void process(class EscapeSequence* escapeSequence, std::string& data) const;
     void process(class HChar* hChar, std::string& data) const;
     void process(class HCharSequence* hCharSequence, std::string& data) const;
@@ -64,10 +68,14 @@ private:
     void process(class OctalEscapeSequence* octalEscapeSequence, std::string& data) const;
     void process(class Other* other, std::string& data) const;
     void process(class PpNumber* ppNumber, std::string& data) const;
+    void process(class Punctuator* punctuator, std::string& data) const;
     void process(class QChar* qChar, std::string& data) const;
     void process(class QCharSequence* qCharSequence, std::string& data) const;
+    void process(class SChar* sChar, std::string& data) const;
+    void process(class SCharSequence* sCharSequence, std::string& data) const;
     void process(class Sign* sign, std::string& data) const;
     void process(class SimpleEscapeSequence* simpleEscapeSequence, std::string& data) const;
+    void process(class StringLiteral* stringLiteral, std::string& data) const;
     void process(class UniversalCharacterName* universalCharacterName, std::string& data) const;
 
     void processError(const char* message, const std::string& data) const;

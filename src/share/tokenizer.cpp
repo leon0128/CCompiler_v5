@@ -17,7 +17,13 @@ void Tokenizer::execute()
 {
     while(mIdx < mSrc.size())
     {
-        if(mSrc.at(mIdx) != ' ')
+        deleteComment();
+
+        if(mSrc[mIdx] != ' ' &&
+           mSrc[mIdx] != '\t' &&
+           mSrc[mIdx] != '\v' &&
+           mSrc[mIdx] != '\f' &&
+           mSrc[mIdx] != '\n')
         {
             auto idx = mIdx;
             PreprocessingToken_Symbol* symbol = conPreprocessingToken_Symbol();
@@ -34,6 +40,51 @@ void Tokenizer::execute()
                   << "\n    class: "
                   << e->eClass
                   << std::endl;
+}
+
+void Tokenizer::deleteComment()
+{
+    // // comment
+    if(mSrc[mIdx] == '/' &&
+       mSrc[mIdx + 1] == '/' &&
+       mIdx + 1 < mSrc.size())
+    {
+        mIdx += 2;
+        while(mIdx < mSrc.size())
+        {
+            if(mSrc[mIdx] == '\n')
+                break;
+            else
+                mIdx++;
+        }
+    }
+    // /* */ comment
+    else if(mSrc[mIdx] == '/' &&
+            mSrc[mIdx + 1] == '*' &&
+            mIdx + 1 < mSrc.size())
+    {
+        auto idx = mIdx;
+        bool isValid = false;
+
+        mIdx += 2;
+
+        while(mIdx + 1 < mSrc.size())
+        {
+            if(mSrc[mIdx] == '*' &&
+               mSrc[mIdx + 1] == '/')
+            {
+                mIdx += 2;
+
+                isValid = true;
+                break;
+            }
+            else
+                mIdx++;
+        }
+
+        if(!isValid)
+            mIdx = idx;
+    }
 }
 
 void Tokenizer::addPreprocessingToken(PreprocessingToken_Symbol* symbol, std::string::size_type idx)
@@ -130,15 +181,25 @@ PreprocessingToken_Symbol* Tokenizer::conPreprocessingToken_Symbol()
                     }
                     else
                     {
-                        Other* other = conOther();
-                        if(other)
+                        Punctuator* punctuator = conPunctuator();
+                        if(punctuator)
                         {
                             preprocessingToken_symbol = new PreprocessingToken_Symbol();
-                            preprocessingToken_symbol->ePreprocessingToken = PreprocessingToken_Symbol::OTHER;
-                            preprocessingToken_symbol->uPreprocessingToken.sOther = {other};
+                            preprocessingToken_symbol->ePreprocessingToken = PreprocessingToken_Symbol::PUNCTUATOR;
+                            preprocessingToken_symbol->uPreprocessingToken.sPunctuator = {punctuator};
                         }
                         else
-                            isValid = false;
+                        {
+                            Other* other = conOther();
+                            if(other)
+                            {
+                                preprocessingToken_symbol = new PreprocessingToken_Symbol();
+                                preprocessingToken_symbol->ePreprocessingToken = PreprocessingToken_Symbol::OTHER;
+                                preprocessingToken_symbol->uPreprocessingToken.sOther = {other};
+                            }
+                            else
+                                isValid = false;
+                        }
                     }
                 }
             }
@@ -993,6 +1054,168 @@ PpNumber* Tokenizer::conPpNumber(PpNumber* bef)
     }
 }
 
+Punctuator* Tokenizer::conPunctuator()
+{
+    if(mIdx >= mSrc.size())
+        return nullptr;
+    
+    std::string data;
+    if(mIdx + 3 < mSrc.size())
+    {
+        if(mSrc[mIdx] == '%' &&
+           mSrc[mIdx + 1] == ':' &&
+           mSrc[mIdx + 2] == '%' &&
+           mSrc[mIdx + 3] == ':')
+            data = "##";
+
+        if(!data.empty())
+            mIdx += 4;
+    }
+    if(mIdx + 2 < mSrc.size() &&
+       data.empty())
+    {
+        if(mSrc[mIdx] == '.' &&
+           mSrc[mIdx + 1] == '.' &&
+           mSrc[mIdx + 2] == '.')
+            data = "...";
+        else if(mSrc[mIdx] == '<' &&
+                mSrc[mIdx + 1] == '<' &&
+                mSrc[mIdx + 2] == '=')
+            data = "<<=";
+        else if(mSrc[mIdx] == '>' &&
+                mSrc[mIdx + 1] == '>' &&
+                mSrc[mIdx + 2] == '=')
+            data = ">>=";
+
+        if(!data.empty())
+            mIdx += 3;
+    }
+    if(mIdx + 1 < mSrc.size() &&
+       data.empty())
+    {
+        if(mSrc[mIdx] == '-' &&
+           mSrc[mIdx + 1] == '>')
+            data = "->";
+        else if(mSrc[mIdx] == '+' &&
+                mSrc[mIdx + 1] == '+')
+            data = "++";
+        else if(mSrc[mIdx] == '-' &&
+                mSrc[mIdx + 1] == '-')
+            data = "--";
+        else if(mSrc[mIdx] == '<' &&
+                mSrc[mIdx + 1] == '<')
+            data = "<<";
+        else if(mSrc[mIdx] == '>' &&
+                mSrc[mIdx + 1] == '>')
+            data = ">>";
+        else if(mSrc[mIdx] == '<' &&
+                mSrc[mIdx + 1] == '=')
+            data = "<=";
+        else if(mSrc[mIdx] == '>' &&
+                mSrc[mIdx + 1] == '=')
+            data = ">=";
+        else if(mSrc[mIdx] == '=' &&
+                mSrc[mIdx + 1] == '=')
+            data = "==";
+        else if(mSrc[mIdx] == '!' &&
+                mSrc[mIdx + 1] == '=')
+            data = "!=";
+        else if(mSrc[mIdx] == '&' &&
+                mSrc[mIdx + 1] == '&')
+            data = "&&";
+        else if(mSrc[mIdx] == '|' &&
+                mSrc[mIdx + 1] == '|')
+            data = "||";
+        else if(mSrc[mIdx] == '*' &&
+                mSrc[mIdx + 1] == '=')
+            data = "*=";
+        else if(mSrc[mIdx] == '/' &&
+                mSrc[mIdx + 1] == '=')
+            data = "/=";
+        else if(mSrc[mIdx] == '%' &&
+                mSrc[mIdx + 1] == '=')
+            data = "%=";
+        else if(mSrc[mIdx] == '+' &&
+                mSrc[mIdx + 1] == '=')
+            data = "+=";
+        else if(mSrc[mIdx] == '-' &&
+                mSrc[mIdx + 1] == '=')
+            data = "-=";
+        else if(mSrc[mIdx] == '&' &&
+                mSrc[mIdx + 1] == '=')
+            data = "&=";
+        else if(mSrc[mIdx] == '^' &&
+                mSrc[mIdx + 1] == '=')
+            data = "^=";
+        else if(mSrc[mIdx] == '|' &&
+                mSrc[mIdx + 1] == '=')
+            data = "|=";
+        else if(mSrc[mIdx] == '#' &&
+                mSrc[mIdx + 1] == '#')
+            data = "##";
+        else if(mSrc[mIdx] == '<' &&
+                mSrc[mIdx + 1] == ':')
+            data = "[";
+        else if(mSrc[mIdx] == ':' &&
+                mSrc[mIdx + 1] == '>')
+            data = "]";
+        else if(mSrc[mIdx] == '<' &&
+                mSrc[mIdx + 1] == '%')
+            data = "{";
+        else if(mSrc[mIdx] == '%' &&
+                mSrc[mIdx + 1] == '>')
+            data = "}";
+        else if(mSrc[mIdx] == '%' &&
+                mSrc[mIdx + 1] == ':')
+            data = "#";
+
+        if(!data.empty())
+            mIdx += 2;
+    }
+    if(data.empty())
+    {
+        char c = mSrc[mIdx];
+        if(c == '[' ||
+           c == ']' ||
+           c == '(' ||
+           c == ')' ||
+           c == '{' ||
+           c == '}' ||
+           c == '.' ||
+           c == '&' ||
+           c == '*' ||
+           c == '+' ||
+           c == '-' ||
+           c == '~' ||
+           c == '!' ||
+           c == '/' ||
+           c == '%' ||
+           c == '<' ||
+           c == '>' ||
+           c == '^' ||
+           c == '|' ||
+           c == '?' ||
+           c == ':' ||
+           c == ';' ||
+           c == '=' ||
+           c == ',' ||
+           c == '#')
+            data = c;
+
+        if(!data.empty())
+            mIdx += 1;
+    }
+
+    if(!data.empty())
+    {
+        Punctuator* punctuator = new Punctuator();
+        punctuator->element = std::move(data);
+        return punctuator;
+    }
+    else
+        return nullptr;
+}
+
 QChar* Tokenizer::conQChar()
 {
     if(mIdx >= mSrc.size())
@@ -1307,12 +1530,18 @@ void Tokenizer::process(PreprocessingToken_Symbol* preprocessingToken_symbol, st
         case(PreprocessingToken_Symbol::CHARACTER_CONSTANT):
             process(preprocessingToken_symbol->uPreprocessingToken.sCharacterConstant.characterConstant, data);
             break;
+        case(PreprocessingToken_Symbol::STRING_LITERAL):
+            process(preprocessingToken_symbol->uPreprocessingToken.sStringLiteral.stringLiteral, data);
+            break;
+        case(PreprocessingToken_Symbol::PUNCTUATOR):
+            process(preprocessingToken_symbol->uPreprocessingToken.sPunctuator.punctuator, data);
+            break;
         case(PreprocessingToken_Symbol::OTHER):
             process(preprocessingToken_symbol->uPreprocessingToken.sOther.other, data);
             break;
 
-        default:
-            std::cout << "tmp" << std::endl;
+        case(PreprocessingToken_Symbol::NONE):
+            processError("PreprocessingToken_Symbol", data);
             break;
     }
 }
@@ -1389,6 +1618,11 @@ void Tokenizer::process(CharacterConstant* characterConstant, std::string& data)
 void Tokenizer::process(Digit* digit, std::string& data) const
 {
     data.push_back(digit->element);
+}
+
+void Tokenizer::process(EncodingPrefix* encodingPrefix, std::string& data) const
+{
+    data.append(encodingPrefix->element);
 }
 
 void Tokenizer::process(EscapeSequence* escapeSequence, std::string& data) const
@@ -1618,6 +1852,11 @@ void Tokenizer::process(PpNumber* ppNumber, std::string& data) const
     }
 }
 
+void Tokenizer::process(Punctuator* punctuator, std::string& data) const
+{
+    data.append(punctuator->element);
+}
+
 void Tokenizer::process(QChar* qChar, std::string& data) const
 {
     data.push_back(qChar->element);
@@ -1641,6 +1880,41 @@ void Tokenizer::process(QCharSequence* qCharSequence, std::string& data) const
     }
 }
 
+void Tokenizer::process(SChar* sChar, std::string& data) const
+{
+    switch(sChar->eSChar)
+    {
+        case(SChar::ANY_MEMBER):
+            data.push_back(sChar->uSChar.sAnyMember.element);
+            break;
+        case(SChar::ESCAPE_SEQUENCE):
+            process(sChar->uSChar.sEscapeSequence.escapeSequence, data);
+            break;
+        
+        case(SChar::NONE):
+            processError("SChar", data);
+            break;
+    }
+}
+
+void Tokenizer::process(SCharSequence* sCharSequence, std::string& data) const
+{
+    switch(sCharSequence->eSCharSequence)
+    {
+        case(SCharSequence::S_CHAR):
+            process(sCharSequence->uSCharSequence.sSChar.sChar, data);
+            break;
+        case(SCharSequence::S_CHAR_SEQUENCE_S_CHAR):
+            process(sCharSequence->uSCharSequence.sSCharSequenceSChar.sCharSequence, data);
+            process(sCharSequence->uSCharSequence.sSCharSequenceSChar.sChar, data);
+            break;
+
+        case(SCharSequence::NONE):
+            processError("SCharSequence", data);
+            break;
+    }
+}
+
 void Tokenizer::process(Sign* sign, std::string& data) const
 {
     data.push_back(sign->element);
@@ -1650,6 +1924,19 @@ void Tokenizer::process(SimpleEscapeSequence* simpleEscapeSequence, std::string&
 {
     data.push_back('\\');
     data.push_back(simpleEscapeSequence->element);
+}
+
+void Tokenizer::process(StringLiteral* stringLiteral, std::string& data) const
+{
+    if(stringLiteral->encodingPrefix)
+        process(stringLiteral->encodingPrefix, data);
+    
+    data.push_back('"');
+
+    if(stringLiteral->sCharSequence)
+        process(stringLiteral->sCharSequence, data);
+    
+    data.push_back('"');
 }
 
 void Tokenizer::process(UniversalCharacterName* universalCharacterName, std::string& data) const

@@ -93,7 +93,7 @@ public:
         } sCharacterConstant;
         struct SStringLiteral
         {
-            StringLiteral* stringLitera;
+            StringLiteral* stringLiteral;
         } sStringLiteral;
         struct SPunctuator
         {
@@ -724,6 +724,16 @@ public:
         Symbol(),
         ePpNumber(NONE),
         uPpNumber(){}
+};
+
+class Punctuator : public Symbol
+{
+public:
+    std::string element;
+
+    Punctuator():
+        Symbol(),
+        element(){}
 };
 
 class QChar : public Symbol
