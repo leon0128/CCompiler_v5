@@ -6,10 +6,11 @@
 #include <string>
 #include <iostream>
 
-Tokenizer::Tokenizer(const std::string& src):
+Tokenizer::Tokenizer(const std::string& src,
+                     std::vector<PreprocessingToken*>& ppTokens):
     mSrc(src),
     mIdx(0),
-    mTokens()
+    mPpTokens(ppTokens)
 {
 }
 
@@ -33,13 +34,7 @@ void Tokenizer::execute()
             mIdx++;
     }
 
-    for(auto&& e : mTokens)
-        std::cout << "token: "
-                  << "\n    data: "
-                  << e->data
-                  << "\n    class: "
-                  << e->eClass
-                  << std::endl;
+    
 }
 
 void Tokenizer::deleteComment()
@@ -124,7 +119,7 @@ void Tokenizer::addPreprocessingToken(PreprocessingToken_Symbol* symbol, std::st
     }
 
     token->push();
-    mTokens.push_back(token);
+    mPpTokens.push_back(token);
 }
 
 PreprocessingToken_Symbol* Tokenizer::conPreprocessingToken_Symbol()
@@ -552,11 +547,11 @@ HCharSequence* Tokenizer::conHCharSequence(HCharSequence* bef)
 HeaderName* Tokenizer::conHeaderName()
 {
     if(mIdx >= mSrc.size() ||
-       mTokens.size() <= 1)
+       mPpTokens.size() <= 1)
         return nullptr;
 
-    if(*mTokens.at(mTokens.size() - 1) != PreprocessingToken("include", PreprocessingToken::IDENTIFIER) ||
-       *mTokens.at(mTokens.size() - 2) != PreprocessingToken("#", PreprocessingToken::PUNCTUATOR))
+    if(*mPpTokens.at(mPpTokens.size() - 1) != PreprocessingToken("include", PreprocessingToken::IDENTIFIER) ||
+       *mPpTokens.at(mPpTokens.size() - 2) != PreprocessingToken("#", PreprocessingToken::PUNCTUATOR))
         return nullptr;
 
     auto idx = mIdx;

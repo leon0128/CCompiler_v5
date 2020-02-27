@@ -16,10 +16,10 @@ Preprocessor::Preprocessor(const std::string& filename,
     mDir(directory),
     mSrc(),
     mESearch(eSearch),
-    mTokens()
+    mPpTokens()
 {
     mInitializer = new Initializer(this);
-    mTokenizer = new Tokenizer(mSrc);
+    mTokenizer = new Tokenizer(mSrc, mPpTokens);
 }
 
 Preprocessor::~Preprocessor()
@@ -32,4 +32,7 @@ void Preprocessor::execute()
 {
     mInitializer->execute();
     mTokenizer->execute();
+
+    for(auto&& e : mPpTokens)
+        std::cout << e->data << std::endl;
 }

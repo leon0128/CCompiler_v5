@@ -7,7 +7,8 @@
 class Tokenizer
 {
 public:
-    Tokenizer(const std::string& src);
+    Tokenizer(const std::string& src,
+              std::vector<class PreprocessingToken*>& ppTokens);
 
     void execute();
 
@@ -82,5 +83,5 @@ private:
 
     const std::string& mSrc;
     std::string::size_type mIdx;
-    std::vector<class PreprocessingToken*> mTokens;
+    std::vector<class PreprocessingToken*>& mPpTokens;
 };

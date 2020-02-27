@@ -7,7 +7,6 @@ class Preprocessor
 {
 public:
     friend class Initializer;
-    friend class Tokenizer;
 
     // kind of search
     enum ESearch
@@ -35,5 +34,5 @@ private:
     std::string mSrc;
     ESearch mESearch;
     // for tokenizer
-    std::vector<class PreprocessingToken*> mTokens;
+    std::vector<class PreprocessingToken*> mPpTokens;
 };
