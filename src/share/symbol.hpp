@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <string>
 #include <array>
 
 class Symbol;
@@ -12,6 +13,7 @@ class CharacterConstant;
 class Constant;
 class DecimalConstant;
 class Digit;
+class EncodingPrefix;
 class EnumerationConstant;
 class EscapeSequence;
 class FloatingConstant;
@@ -36,6 +38,8 @@ class PpNumber;
 class Punctuator;
 class QChar;
 class QCharSequence;
+class SChar;
+class SCharSequence;
 class Sign;
 class SimpleEscapeSequence;
 class StringLiteral;
@@ -295,6 +299,16 @@ public:
     Digit():
         Symbol(),
         element(0){}
+};
+
+class EncodingPrefix : public Symbol
+{
+public:
+    std::string element;
+
+    EncodingPrefix():
+        Symbol(),
+        element(){}
 };
 
 class EscapeSequence : public Symbol
@@ -754,6 +768,69 @@ public:
         uQCharSequence(){}
 };
 
+class SChar : public Symbol
+{
+public:
+    enum ESChar
+    {
+        NONE,
+        ANY_MEMBER,
+        ESCAPE_SEQUENCE
+    } eSChar;
+
+    union USChar
+    {
+        struct SAnyMember
+        {
+            char element;
+        } sAnyMember;
+        struct SEscapeSequence
+        {
+            EscapeSequence* escapeSequence;
+        } sEscapeSequence;
+
+        USChar():
+            sAnyMember{0}{}
+    } uSChar;
+
+    SChar():
+        Symbol(),
+        eSChar(NONE),
+        uSChar(){}
+};
+
+class SCharSequence : public Symbol
+{
+public:
+    enum ESCharSequence
+    {
+        NONE,
+        S_CHAR,
+        S_CHAR_SEQUENCE_S_CHAR
+    } eSCharSequence;
+
+    union USCharSequence
+    {
+        struct SSChar
+        {
+            SChar* sChar;
+        } sSChar;
+        struct SSCharSequenceSChar
+        {
+            SCharSequence* sCharSequence;
+            SChar* sChar;
+        } sSCharSequenceSChar;
+
+        USCharSequence():
+            sSChar{nullptr}{}
+    } uSCharSequence;
+
+    SCharSequence():
+        Symbol(),
+        eSCharSequence(NONE),
+        uSCharSequence(){}
+};
+
 class Sign : public Symbol
 {
 public:
@@ -772,6 +849,18 @@ public:
     SimpleEscapeSequence():
         Symbol(),
         element(0){}
+};
+
+class StringLiteral : public Symbol
+{
+public:
+    EncodingPrefix* encodingPrefix;
+    SCharSequence* sCharSequence;
+
+    StringLiteral():
+        Symbol(),
+        encodingPrefix(nullptr),
+        sCharSequence(nullptr){}
 };
 
 class UniversalCharacterName : public Symbol

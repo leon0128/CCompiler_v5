@@ -2,6 +2,8 @@
 #include "preprocessing_token.hpp"
 #include "symbol.hpp"
 #include <array>
+#include <utility>
+#include <string>
 #include <iostream>
 
 Tokenizer::Tokenizer(const std::string& src):
@@ -13,14 +15,16 @@ Tokenizer::Tokenizer(const std::string& src):
 
 void Tokenizer::execute()
 {
-    for(; mIdx < mSrc.size(); mIdx++)
+    while(mIdx < mSrc.size())
     {
         if(mSrc.at(mIdx) != ' ')
         {
             auto idx = mIdx;
-            PreprocessingToken_Symbol* preprocessingToken_Symbol = conPreprocessingToken_Symbol();
-            addPreprocessingToken(preprocessingToken_Symbol, idx);
+            PreprocessingToken_Symbol* symbol = conPreprocessingToken_Symbol();
+            addPreprocessingToken(symbol, idx);
         }
+        else
+            mIdx++;
     }
 
     for(auto&& e : mTokens)
@@ -90,42 +94,52 @@ PreprocessingToken_Symbol* Tokenizer::conPreprocessingToken_Symbol()
     }
     else
     {
-        Identifier* identifier = conIdentifier();
-        if(identifier)
+        CharacterConstant* characterConstant = conCharacterConstant();
+        if(characterConstant)
         {
             preprocessingToken_symbol = new PreprocessingToken_Symbol();
-            preprocessingToken_symbol->ePreprocessingToken = PreprocessingToken_Symbol::IDENTIFIER;
-            preprocessingToken_symbol->uPreprocessingToken.sIdentifier = {identifier};
+            preprocessingToken_symbol->ePreprocessingToken = PreprocessingToken_Symbol::CHARACTER_CONSTANT;
+            preprocessingToken_symbol->uPreprocessingToken.sCharacterConstant = {characterConstant};
         }
         else
         {
-            PpNumber* ppNumber = conPpNumber();
-            if(ppNumber)
+            StringLiteral* stringLiteral = conStringLiteral();
+            if(stringLiteral)
             {
                 preprocessingToken_symbol = new PreprocessingToken_Symbol();
-                preprocessingToken_symbol->ePreprocessingToken = PreprocessingToken_Symbol::PP_NUMBER;
-                preprocessingToken_symbol->uPreprocessingToken.sPpNumber = {ppNumber};
+                preprocessingToken_symbol->ePreprocessingToken = PreprocessingToken_Symbol::STRING_LITERAL;
+                preprocessingToken_symbol->uPreprocessingToken.sStringLiteral = {stringLiteral};
             }
             else
             {
-                CharacterConstant* characterConstant = conCharacterConstant();
-                if(characterConstant)
+                PpNumber* ppNumber = conPpNumber();
+                if(ppNumber)
                 {
                     preprocessingToken_symbol = new PreprocessingToken_Symbol();
-                    preprocessingToken_symbol->ePreprocessingToken = PreprocessingToken_Symbol::CHARACTER_CONSTANT;
-                    preprocessingToken_symbol->uPreprocessingToken.sCharacterConstant = {characterConstant};
+                    preprocessingToken_symbol->ePreprocessingToken = PreprocessingToken_Symbol::PP_NUMBER;
+                    preprocessingToken_symbol->uPreprocessingToken.sPpNumber = {ppNumber};
                 }
                 else
                 {
-                    Other* other = conOther();
-                    if(other)
+                    Identifier* identifier = conIdentifier();
+                    if(identifier)
                     {
                         preprocessingToken_symbol = new PreprocessingToken_Symbol();
-                        preprocessingToken_symbol->ePreprocessingToken = PreprocessingToken_Symbol::OTHER;
-                        preprocessingToken_symbol->uPreprocessingToken.sOther = {other};
+                        preprocessingToken_symbol->ePreprocessingToken = PreprocessingToken_Symbol::IDENTIFIER;
+                        preprocessingToken_symbol->uPreprocessingToken.sIdentifier = {identifier};
                     }
                     else
-                        isValid = false;
+                    {
+                        Other* other = conOther();
+                        if(other)
+                        {
+                            preprocessingToken_symbol = new PreprocessingToken_Symbol();
+                            preprocessingToken_symbol->ePreprocessingToken = PreprocessingToken_Symbol::OTHER;
+                            preprocessingToken_symbol->uPreprocessingToken.sOther = {other};
+                        }
+                        else
+                            isValid = false;
+                    }
                 }
             }
         }
@@ -150,8 +164,8 @@ CChar* Tokenizer::conCChar()
     CChar* cChar = nullptr;
 
     char c = mSrc.at(mIdx);
-    if(c != '\'' ||
-       c != '\\' ||
+    if(c != '\'' &&
+       c != '\\' &&
        c != '\n')
     {
         mIdx++;
@@ -309,6 +323,51 @@ Digit* Tokenizer::conDigit()
     
     mIdx++;
     return digit;
+}
+
+EncodingPrefix* Tokenizer::conEncodingPrefix()
+{
+    if(mIdx >= mSrc.size())
+        return nullptr;
+    
+    auto idx = mIdx;
+    bool isValid = true;
+    std::string element;
+
+    char c = mSrc.at(mIdx);
+    if(c == 'u')
+    {
+        mIdx++;
+
+        element.push_back(c);
+        
+        if(mSrc[mIdx] == '8' &&
+           mIdx < mSrc.size())
+        {
+            mIdx++;
+            element.push_back('8');
+        }    
+    }
+    else if(c == 'U' ||
+            c == 'L')
+    {
+        mIdx++;
+        element.push_back(c);
+    }
+    else
+        isValid = false;
+
+    if(isValid)
+    {
+        EncodingPrefix* encodingPrefix = new EncodingPrefix();
+        encodingPrefix->element = std::move(element);
+        return encodingPrefix;
+    }
+    else
+    {
+        mIdx = idx;
+        return nullptr;
+    }
 }
 
 EscapeSequence* Tokenizer::conEscapeSequence()
@@ -994,6 +1053,97 @@ QCharSequence* Tokenizer::conQCharSequence(QCharSequence* bef)
     }
 }
 
+SChar* Tokenizer::conSChar()
+{
+    if(mIdx >= mSrc.size())
+        return nullptr;
+
+    auto idx = mIdx;
+    bool isValid = true;
+    SChar* sChar = nullptr;
+
+    char c = mSrc.at(mIdx);
+    if(c != '"' &&
+       c != '\\' &&
+       c != '\n')
+    {
+        mIdx++;
+
+        sChar = new SChar();
+        sChar->eSChar = SChar::ANY_MEMBER;
+        sChar->uSChar.sAnyMember = {c};
+    }
+    else
+    {
+        EscapeSequence* escapeSequence = conEscapeSequence();
+        if(escapeSequence)
+        {
+            sChar = new SChar();
+            sChar->eSChar = SChar::ESCAPE_SEQUENCE;
+            sChar->uSChar.sEscapeSequence = {escapeSequence};
+        }
+        else
+            isValid = false;
+    }
+
+    if(isValid)
+        return sChar;
+    else
+    {
+        mIdx = idx;
+        return nullptr;
+    }
+}
+
+SCharSequence* Tokenizer::conSCharSequence(SCharSequence* bef)
+{
+    if(mIdx >= mSrc.size())
+        return nullptr;
+
+    auto idx = mIdx;
+    bool isValid = true;
+    SCharSequence* sCharSequence = nullptr;
+
+    if(!bef)
+    {
+        SChar* sChar = conSChar();
+        if(sChar)
+        {
+            sCharSequence = new SCharSequence();
+            sCharSequence->eSCharSequence = SCharSequence::S_CHAR;
+            sCharSequence->uSCharSequence.sSChar = {sChar};
+        }
+        else
+            isValid = false;
+    }
+    else
+    {
+        SChar* sChar = conSChar();
+        if(sChar)
+        {
+            sCharSequence = new SCharSequence();
+            sCharSequence->eSCharSequence = SCharSequence::S_CHAR_SEQUENCE_S_CHAR;
+            sCharSequence->uSCharSequence.sSCharSequenceSChar = {bef, sChar}; 
+        }
+        else
+            isValid = false;
+    }
+
+    if(isValid)
+    {
+        SCharSequence* aft = conSCharSequence(sCharSequence);
+        if(aft)
+            return aft;
+        else
+            return sCharSequence;
+    }
+    else
+    {
+        mIdx = idx;
+        return nullptr;
+    }
+}
+
 Sign* Tokenizer::conSign()
 {
     if(mIdx >= mSrc.size())
@@ -1038,6 +1188,48 @@ SimpleEscapeSequence* Tokenizer::conSimpleEscapeSequence()
 
     mIdx += 2;
     return simpleEscapeSequence;
+}
+
+StringLiteral* Tokenizer::conStringLiteral()
+{
+    if(mIdx >= mSrc.size())
+        return nullptr;
+
+    auto idx = mIdx;
+    bool isValid = true;
+    StringLiteral* stringLiteral = nullptr;
+
+    EncodingPrefix* encodingPrefix = conEncodingPrefix();
+    
+    if(mSrc[mIdx] == '"' &&
+       mIdx < mSrc.size())
+    {
+        mIdx++;
+
+        SCharSequence* sCharSequence = conSCharSequence();
+        
+        if(mSrc[mIdx] == '"' &&
+           mIdx < mSrc.size())
+        {
+            mIdx++;
+
+            stringLiteral = new StringLiteral();
+            stringLiteral->encodingPrefix = encodingPrefix;
+            stringLiteral->sCharSequence = sCharSequence;
+        }
+        else
+            isValid = false;
+    }
+    else
+        isValid = false;
+
+    if(isValid)
+        return stringLiteral;
+    else
+    {
+        mIdx = idx;
+        return nullptr;
+    }
 }
 
 UniversalCharacterName* Tokenizer::conUniversalCharacterName()

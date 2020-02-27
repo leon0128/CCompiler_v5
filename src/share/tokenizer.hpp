@@ -20,6 +20,7 @@ private:
     class CCharSequence* conCCharSequence(class CCharSequence* bef = nullptr);
     class CharacterConstant* conCharacterConstant();
     class Digit* conDigit();
+    class EncodingPrefix* conEncodingPrefix();
     class EscapeSequence* conEscapeSequence();
     class HChar* conHChar();
     class HCharSequence* conHCharSequence(class HCharSequence* bef = nullptr);
@@ -36,8 +37,11 @@ private:
     class PpNumber* conPpNumber(class PpNumber* bef = nullptr);
     class QChar* conQChar();
     class QCharSequence* conQCharSequence(class QCharSequence* bef = nullptr);
+    class SChar* conSChar();
+    class SCharSequence* conSCharSequence(class SCharSequence* bef = nullptr);
     class Sign* conSign();
     class SimpleEscapeSequence* conSimpleEscapeSequence();
+    class StringLiteral* conStringLiteral();
     class UniversalCharacterName* conUniversalCharacterName();
 
     void process(class PreprocessingToken_Symbol* preprocessingToken_symbol, std::string& data) const;
