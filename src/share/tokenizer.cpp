@@ -16,6 +16,7 @@ Tokenizer::Tokenizer(const std::string& src,
 
 void Tokenizer::execute()
 {
+    // tokenize to pp-token from source
     while(mIdx < mSrc.size())
     {
         deleteComment();
@@ -23,8 +24,7 @@ void Tokenizer::execute()
         if(mSrc[mIdx] != ' ' &&
            mSrc[mIdx] != '\t' &&
            mSrc[mIdx] != '\v' &&
-           mSrc[mIdx] != '\f' &&
-           mSrc[mIdx] != '\n')
+           mSrc[mIdx] != '\f')
         {
             auto idx = mIdx;
             PreprocessingToken_Symbol* symbol = conPreprocessingToken_Symbol();
@@ -34,7 +34,9 @@ void Tokenizer::execute()
             mIdx++;
     }
 
-    
+    // tokenize to pp-file to pp-token
+    mIdx = 0;
+    mPreprocessingFile = conPreprocessingFile();
 }
 
 void Tokenizer::deleteComment()
@@ -118,8 +120,16 @@ void Tokenizer::addPreprocessingToken(PreprocessingToken_Symbol* symbol, std::st
             break;
     }
 
+    token->symbol = symbol;
     token->push();
     mPpTokens.push_back(token);
+}
+
+PreprocessingFile* Tokenizer::conPreprocessingFile()
+{
+    PreprocessingFile* preprocessingFile = new PreprocessingFile();
+    preprocessingFile->group = conGroup();
+    return preprocessingFile;
 }
 
 PreprocessingToken_Symbol* Tokenizer::conPreprocessingToken_Symbol()
@@ -365,6 +375,259 @@ CharacterConstant* Tokenizer::conCharacterConstant()
     }
 }
 
+ConditionalExpression* Tokenizer::conConditionalExpression()
+{
+    return nullptr;
+}
+
+ConstantExpression* Tokenizer::conConstantExpression()
+{
+    auto idx = mIdx;
+    bool isValid = true;
+    ConstantExpression* constantExpression = nullptr;
+
+    PpTokens* ppTokens = conPpTokens();
+
+    if(ppTokens)
+    {
+        constantExpression = new ConstantExpression();
+    }
+    else
+        isValid = false;
+
+    if(isValid)
+        return constantExpression;
+    else
+    {
+        mIdx = idx;
+        return nullptr;
+    }
+}
+
+ControlLine* Tokenizer::conControlLine()
+{
+    auto idx = mIdx;
+    bool isValid = true;
+    ControlLine* controlLine = nullptr;
+
+    std::cout << "idx: " << mIdx << std::endl;
+
+    if(isEquality(mIdx, PreprocessingToken("#", PreprocessingToken::PUNCTUATOR)))
+    {
+        mIdx++;
+
+        if(isEquality(mIdx, PreprocessingToken("include", PreprocessingToken::IDENTIFIER)))
+        {
+            mIdx++;
+
+            PpTokens* ppTokens = conPpTokens();
+            if(ppTokens)
+            {
+                NewLine* newLine = conNewLine();
+                if(newLine)
+                {
+                    controlLine = new ControlLine();
+                    controlLine->eControlLine = ControlLine::INCLUDE_PP_TOKENS_NEW_LINE;
+                    controlLine->uControlLine.sIncludePpTokensNewLine = {ppTokens, newLine};
+                }
+                else
+                    isValid = false;
+            }
+            else
+                isValid = false;
+        }
+        else if(isEquality(mIdx, PreprocessingToken("define", PreprocessingToken::IDENTIFIER)) &&
+                isEquality(mIdx + 1, PreprocessingToken::IDENTIFIER))
+        {
+            PreprocessingToken* identifier = mPpTokens[mIdx + 1];
+
+            mIdx += 2;
+
+            Lparen* lparen = conLparen();
+            if(lparen)
+            {
+                if(isEquality(mIdx, PreprocessingToken("...", PreprocessingToken::PUNCTUATOR)) &&
+                   isEquality(mIdx + 1, PreprocessingToken(")", PreprocessingToken::PUNCTUATOR)))
+                {
+                    mIdx += 2;
+
+                    ReplacementList* replacementList = conReplacementList();
+                    if(replacementList)
+                    {
+                        NewLine* newLine = conNewLine();
+                        if(newLine)
+                        {
+                            controlLine = new ControlLine();
+                            controlLine->eControlLine = ControlLine::DEFINE_IDENTIFIER_LPAREN_DOTDOTDOT_RPAREN_REPLACEMENT_LIST_NEW_LINE;
+                            controlLine->uControlLine.sDefineIdentifierLparenDotdotdotRparenReplacementListNewLine = {identifier, lparen, replacementList, newLine};
+                        }
+                        else
+                            isValid = false;
+                    }
+                    else
+                        isValid =false;
+                }
+                else
+                {
+                    IdentifierList* identifierList = conIdentifierList();
+                    if(identifierList &&
+                       isEquality(mIdx, PreprocessingToken(",", PreprocessingToken::PUNCTUATOR)) &&
+                       isEquality(mIdx + 1, PreprocessingToken("...", PreprocessingToken::PUNCTUATOR)) &&
+                       isEquality(mIdx + 2, PreprocessingToken(")", PreprocessingToken::PUNCTUATOR)))
+                    {
+                        mIdx += 3;
+
+                        ReplacementList* replacementList = conReplacementList();
+                        if(replacementList)
+                        {
+                            NewLine* newLine = conNewLine();
+                            if(newLine)
+                            {
+                                controlLine = new ControlLine();
+                                controlLine->eControlLine = ControlLine::DEFINE_IDENTIFIER_LPAREN_IDENTIFIER_LIST_COMMA_DOTDOTDOT_RPAREN_REPLACEMENT_LIST_NEW_LINE;
+                                controlLine->uControlLine.sDefineIdentifierLparenIdentifierListCommaDotdotdotRparenReplacementListNewLine = {identifier, lparen, identifierList, replacementList, newLine};
+                            }
+                            else
+                                isValid = false;
+                        }
+                        else
+                            isValid = false;
+                    }
+                    else if(isEquality(mIdx, PreprocessingToken(")", PreprocessingToken::PUNCTUATOR)))
+                    {
+                        mIdx++;
+
+                        ReplacementList* replacementList = conReplacementList();
+                        if(replacementList)
+                        {
+                            NewLine* newLine = conNewLine();
+                            if(newLine)
+                            {
+                                controlLine = new ControlLine();
+                                controlLine->eControlLine = ControlLine::DEFINE_IDENTIFIER_LPAREN_IDENTIFIER_LIST_RPAREN_REPLACEMENT_LIST_NEW_LINE;
+                                controlLine->uControlLine.sDefineIdentifierLparenIdentifierListRparenReplacementListNewLine = {identifier, lparen, identifierList, replacementList, newLine};
+                            }
+                            else
+                                isValid = false;
+                        }
+                        else
+                            isValid = false;
+                    }
+                    else
+                        isValid = false;
+                }
+            }
+            else
+            {
+                ReplacementList* replacementList = conReplacementList();
+                if(replacementList)
+                {
+                    NewLine* newLine = conNewLine();
+                    if(newLine)
+                    {
+                        controlLine = new ControlLine();
+                        controlLine->eControlLine = ControlLine::DEFINE_IDENTIFIER_REPLACEMENT_LIST_NEW_LINE;
+                        controlLine->uControlLine.sDefineIdentifierReplacementListNewLine = {identifier, replacementList, newLine};
+                    }
+                    else
+                        isValid = false;
+                }
+                else
+                    isValid = false;
+            }
+        }
+        else if(isEquality(mIdx, PreprocessingToken("undef", PreprocessingToken::IDENTIFIER)) &&
+                isEquality(mIdx + 1, PreprocessingToken::IDENTIFIER))
+        {
+            PreprocessingToken* identifier = mPpTokens[mIdx + 1];
+
+            mIdx += 2;
+
+            NewLine* newLine = conNewLine();
+            if(newLine)
+            {
+                controlLine = new ControlLine();
+                controlLine->eControlLine = ControlLine::UNDEF_IDENTIFIER_NEW_LINE;
+                controlLine->uControlLine.sUndefIdentifierNewLine = {identifier, newLine};
+            }
+            else
+                isValid = false;
+        }
+        else if(isEquality(mIdx, PreprocessingToken("line", PreprocessingToken::IDENTIFIER)))
+        {
+            mIdx++;
+
+            PpTokens* ppTokens = conPpTokens();
+            if(ppTokens)
+            {
+                NewLine* newLine = conNewLine();
+                if(newLine)
+                {
+                    controlLine = new ControlLine();
+                    controlLine->eControlLine = ControlLine::LINE_PP_TOKENS_NEW_LINE;
+                    controlLine->uControlLine.sLinePpTokensNewLine = {ppTokens, newLine};
+                }
+                else
+                    isValid = false;
+            }
+            else
+                isValid = false;
+        }
+        else if(isEquality(mIdx, PreprocessingToken("error", PreprocessingToken::IDENTIFIER)))
+        {
+            mIdx++;
+
+            PpTokens* ppTokens = conPpTokens();
+            NewLine* newLine = conNewLine();
+            if(newLine)
+            {
+                controlLine = new ControlLine();
+                controlLine->eControlLine = ControlLine::ERROR_PP_TOKENS_NEW_LINE;
+                controlLine->uControlLine.sErrorPptokensNewLine = {ppTokens, newLine};
+            }
+            else
+                isValid = false;
+        }
+        else if(isEquality(mIdx, PreprocessingToken("line", PreprocessingToken::IDENTIFIER)))
+        {
+            mIdx++;
+
+            PpTokens* ppTokens = conPpTokens();
+            NewLine* newLine = conNewLine();
+            if(newLine)
+            {
+                controlLine = new ControlLine();
+                controlLine->eControlLine = ControlLine::PRAGMA_PP_TOKENS_NEW_LINE;
+                controlLine->uControlLine.sPragmaPpTokensNewLine = {ppTokens, newLine};
+            }
+            else
+                isValid = false;
+        }
+        else
+        {
+            NewLine* newLine = conNewLine();
+            if(newLine)
+            {
+                controlLine = new ControlLine();
+                controlLine->eControlLine = ControlLine::NEW_LINE;
+                controlLine->uControlLine.sNewLine = {newLine};
+            }
+            else
+                isValid = false;
+        }
+    }
+    else
+        isValid = false;
+
+    if(isValid)
+        return controlLine;
+    else
+    {
+        mIdx = idx;
+        return nullptr;
+    }
+}
+
 Digit* Tokenizer::conDigit()
 {
     if(mIdx >= mSrc.size())
@@ -379,6 +642,129 @@ Digit* Tokenizer::conDigit()
     
     mIdx++;
     return digit;
+}
+
+ElifGroup* Tokenizer::conElifGroup()
+{
+    auto idx = mIdx;
+    bool isValid = true;
+    ElifGroup* elifGroup = nullptr;
+
+    if(isEquality(mIdx, PreprocessingToken("#", PreprocessingToken::PUNCTUATOR)) &&
+       isEquality(mIdx + 1, PreprocessingToken("elif", PreprocessingToken::IDENTIFIER)))
+    {
+        mIdx += 2;
+
+        ConstantExpression* constantExpression = conConstantExpression();
+        if(constantExpression)
+        {
+            NewLine* newLine = conNewLine();
+            if(newLine)
+            {
+                Group* group = conGroup();
+                
+                elifGroup = new ElifGroup();
+                elifGroup->constantExpression = constantExpression;
+                elifGroup->newLine = newLine;
+                elifGroup->group = group;
+            }
+            else
+                isValid = false;
+        }
+        else
+            isValid = false;
+    }
+    else
+        isValid = false;
+
+    if(isValid)
+        return elifGroup;
+    else
+    {
+        mIdx = idx;
+        return nullptr;
+    }
+}
+
+ElifGroups* Tokenizer::conElifGroups(ElifGroups* bef)
+{
+    auto idx = mIdx;
+    bool isValid = true;
+    ElifGroups* elifGroups = nullptr;
+
+    if(!bef)
+    {
+        ElifGroup* elifGroup = conElifGroup();
+        if(elifGroup)
+        {
+            elifGroups = new ElifGroups();
+            elifGroups->eElifGroups = ElifGroups::ELIF_GROUP;
+            elifGroups->uElifGroups.sElifGroup = {elifGroup};
+        }
+        else
+            isValid = false;
+    }
+    else
+    {
+        ElifGroup* elifGroup = conElifGroup();
+        if(elifGroup)
+        {
+            elifGroups = new ElifGroups();
+            elifGroups->eElifGroups = ElifGroups::ELIF_GROUPS_ELIF_GROUP;
+            elifGroups->uElifGroups.sElifGroupsElifGroup = {bef, elifGroup};
+        }
+        else
+            isValid = false;
+    }
+
+    if(isValid)
+    {
+        ElifGroups* aft = conElifGroups(elifGroups);
+        if(aft)
+            return aft;
+        else
+            return elifGroups;
+    }
+    else
+    {
+        mIdx = idx;
+        return nullptr;
+    }
+}
+
+ElseGroup* Tokenizer::conElseGroup()
+{
+    auto idx = mIdx;
+    bool isValid = true;
+    ElseGroup* elseGroup = nullptr;
+
+    if(isEquality(mIdx, PreprocessingToken("#", PreprocessingToken::PUNCTUATOR)) &&
+       isEquality(mIdx + 1, PreprocessingToken("else", PreprocessingToken::IDENTIFIER)))
+    {
+        mIdx += 2;
+
+        NewLine* newLine = conNewLine();
+        if(newLine)
+        {
+            Group* group = conGroup();
+
+            elseGroup = new ElseGroup();
+            elseGroup->newLine = newLine;
+            elseGroup->group = group;
+        }
+        else
+            isValid = false;
+    }
+    else
+        isValid = false;
+
+    if(isValid)
+        return elseGroup;
+    else
+    {
+        mIdx = idx;
+        return nullptr;
+    }
 }
 
 EncodingPrefix* Tokenizer::conEncodingPrefix()
@@ -425,6 +811,38 @@ EncodingPrefix* Tokenizer::conEncodingPrefix()
         return nullptr;
     }
 }
+
+EndifLine* Tokenizer::conEndifLine()
+{
+    auto idx = mIdx;
+    bool isValid = true;
+    EndifLine* endifLine = nullptr;
+
+    if(isEquality(mIdx, PreprocessingToken("#", PreprocessingToken::PUNCTUATOR)) &&
+       isEquality(mIdx + 1, PreprocessingToken("endif", PreprocessingToken::IDENTIFIER)))
+    {
+        mIdx += 2;
+
+        NewLine* newLine = conNewLine();
+        if(newLine)
+        {
+            endifLine = new EndifLine();
+            endifLine->newLine = newLine;
+        }
+        else
+            isValid = false;
+    }
+    else
+        isValid = false;
+
+    if(isValid)
+        return endifLine;
+    else
+    {
+        mIdx = idx;
+        return nullptr;
+    }
+} 
 
 EscapeSequence* Tokenizer::conEscapeSequence()
 {
@@ -477,6 +895,113 @@ EscapeSequence* Tokenizer::conEscapeSequence()
 
     if(isValid)
         return escapeSequence;
+    else
+    {
+        mIdx = idx;
+        return nullptr;
+    }
+}
+
+Group* Tokenizer::conGroup(Group* bef)
+{
+    auto idx = mIdx;
+    bool isValid = true;
+    Group* group = nullptr;
+
+    if(!bef)
+    {
+        GroupPart* groupPart = conGroupPart();
+        if(groupPart)
+        {
+            group = new Group();
+            group->eGroup = Group::GROUP_PART;
+            group->uGroup.sGroupPart = {groupPart};
+        }
+        else
+            isValid = false;
+    }
+    else
+    {
+        GroupPart* groupPart = conGroupPart();
+        if(groupPart)
+        {
+            group = new Group();
+            group->eGroup = Group::GROUP_GROUP_PART;
+            group->uGroup.sGroupGroupPart = {bef, groupPart};
+        }
+        else
+            isValid = false;
+    }
+
+    if(isValid)
+    {
+        Group* aft = conGroup(group);
+        if(aft)
+            return aft;
+        else
+            return group;
+    }
+    else
+    {
+        mIdx = idx;
+        return nullptr;
+    }
+}
+
+GroupPart* Tokenizer::conGroupPart()
+{
+    auto idx = mIdx;
+    bool isValid = true;
+    GroupPart* groupPart = nullptr;
+
+    IfSection* ifSection = conIfSection();
+    if(ifSection)
+    {
+        groupPart = new GroupPart();
+        groupPart->eGroupPart = GroupPart::IF_SECTION;
+        groupPart->uGroupPart.sIfSection = {ifSection};
+    }
+    else
+    {
+        ControlLine* controlLine = conControlLine();
+        if(controlLine)
+        {
+            groupPart = new GroupPart();
+            groupPart->eGroupPart = GroupPart::CONTROL_LINE;
+            groupPart->uGroupPart.sControlLine = {controlLine};
+        }
+        else
+        {
+            TextLine* textLine = conTextLine();
+            if(textLine)
+            {
+                groupPart = new GroupPart();
+                groupPart->eGroupPart = GroupPart::TEXT_LINE;
+                groupPart->uGroupPart.sTextLine = {textLine};
+            }
+            else
+            {
+                if(isEquality(mIdx, PreprocessingToken("#", PreprocessingToken::PUNCTUATOR)))
+                {
+                    mIdx++;
+                    NonDirective* nonDirective = conNonDirective();
+                    if(nonDirective)
+                    {
+                        groupPart = new GroupPart();
+                        groupPart->eGroupPart = GroupPart::NON_DIRECTIVE;
+                        groupPart->uGroupPart.sNonDirective = {nonDirective};
+                    }
+                    else
+                        isValid = false;
+                }
+                else
+                    isValid = false;
+            }
+        }
+    }
+
+    if(isValid)
+        return groupPart;
     else
     {
         mIdx = idx;
@@ -773,6 +1298,57 @@ Identifier* Tokenizer::conIdentifier(Identifier* bef)
     }
 }
 
+IdentifierList* Tokenizer::conIdentifierList(IdentifierList* bef)
+{
+    auto idx = mIdx;
+    bool isValid = true;
+    IdentifierList* identifierList = nullptr;
+
+    if(!bef)
+    {
+        if(mPpTokens[mIdx]->eClass == PreprocessingToken::IDENTIFIER &&
+           mIdx < mPpTokens.size())
+        {
+            mIdx++;
+
+            identifierList = new IdentifierList();
+            identifierList->eIdentifierList = IdentifierList::IDENTIFIER;
+            identifierList->uIdentifierList.sIdentifier = {mPpTokens[mIdx - 1]};
+        }
+        else
+            isValid = false;
+    }
+    else
+    {
+        if((*mPpTokens[mIdx]) == PreprocessingToken(",", PreprocessingToken::PUNCTUATOR) &&
+           mPpTokens[mIdx + 1]->eClass == PreprocessingToken::IDENTIFIER &&
+           mIdx + 1 < mPpTokens.size())
+        {
+            mIdx += 2;
+
+            identifierList = new IdentifierList();
+            identifierList->eIdentifierList = IdentifierList::IDENTIFIER_LIST_IDENTIFIER;
+            identifierList->uIdentifierList.sIdentifierListIdentifier = {bef, mPpTokens[mIdx - 1]};
+        }
+        else
+            isValid = false;
+    }
+
+    if(isValid)
+    {
+        IdentifierList* aft = conIdentifierList(identifierList);
+        if(aft)
+            return aft;
+        else
+            return identifierList;
+    }
+    else
+    {
+        mIdx = idx;
+        return nullptr;
+    }
+}
+
 IdentifierNondigit* Tokenizer::conIdentifierNondigit()
 {
     if(mIdx >= mSrc.size())
@@ -811,6 +1387,194 @@ IdentifierNondigit* Tokenizer::conIdentifierNondigit()
     }
 }
 
+IfGroup* Tokenizer::conIfGroup()
+{
+    auto idx = mIdx;
+    bool isValid = true;
+    IfGroup* ifGroup = nullptr;
+
+    if(isEquality(mIdx, PreprocessingToken("#", PreprocessingToken::PUNCTUATOR)))
+    {
+        mIdx++;
+        
+        if(isEquality(mIdx, PreprocessingToken("if", PreprocessingToken::IDENTIFIER)))
+        {
+            mIdx++;
+
+            ConstantExpression* constantExpression = conConstantExpression();
+            if(constantExpression)
+            {
+                NewLine* newLine = conNewLine();
+                if(newLine)
+                {
+                    Group* group = conGroup();
+                    
+                    ifGroup = new IfGroup();
+                    ifGroup->eIfGroup = IfGroup::IF_CONSTANT_EXPRESSION_NEW_LINE_GROUP;
+                    ifGroup->uIfGroup.sIfConstantExpressionNewLineGroup = {constantExpression, newLine, group};
+                }
+                else
+                    isValid = false;
+            }
+            else
+                isValid = false;
+        }
+        else if(isEquality(mIdx, PreprocessingToken("ifdef", PreprocessingToken::IDENTIFIER)))
+        {
+            mIdx++;
+
+            PreprocessingToken* identifier = nullptr;
+            if(isEquality(mIdx, PreprocessingToken::IDENTIFIER))
+            {
+                identifier = mPpTokens[mIdx];
+                mIdx++;
+
+                NewLine* newLine = conNewLine();
+                if(newLine)
+                {
+                    Group* group = conGroup();
+
+                    ifGroup = new IfGroup();
+                    ifGroup->eIfGroup = IfGroup::IFDEF_IDENTIFIER_NEW_LINE_GROUP;
+                    ifGroup->uIfGroup.sIfdefIdentifierNewLineGroup = {identifier, newLine, group};
+                }
+                else
+                    isValid = false;
+            }
+            else
+                isValid = false;
+        }
+        else if(isEquality(mIdx, PreprocessingToken("ifndef", PreprocessingToken::IDENTIFIER)))
+        {
+            mIdx++;
+
+            PreprocessingToken* identifier = nullptr;
+            if(isEquality(mIdx, PreprocessingToken::IDENTIFIER))
+            {
+                identifier = mPpTokens[mIdx];
+                mIdx++;
+
+                NewLine* newLine = conNewLine();
+                if(newLine)
+                {
+                    Group* group = conGroup();
+
+                    ifGroup = new IfGroup();
+                    ifGroup->eIfGroup = IfGroup::IFNDEF_IDENTIFIER_NEW_LINE_GROUP;
+                    ifGroup->uIfGroup.sIfndefIdentifierNewLineGroup = {identifier, newLine, group};
+                }
+                else
+                    isValid = false;
+            }
+            else
+                isValid = false;
+        }
+        else
+            isValid = false;
+    }
+    else
+        isValid = false;
+
+    if(isValid)
+        return ifGroup;
+    else
+    {
+        mIdx = idx;
+        return nullptr;
+    }
+}
+
+IfSection* Tokenizer::conIfSection()
+{
+    auto idx = mIdx;
+    bool isValid = true;
+    IfSection* ifSection = nullptr;
+
+    IfGroup* ifGroup = conIfGroup();
+    if(ifGroup)
+    {
+        ElifGroups* elifGroups = conElifGroups();
+        ElseGroup* elseGroup = conElseGroup();
+        EndifLine* endifLine = conEndifLine();
+        if(endifLine)
+        {
+            ifSection = new IfSection();
+            ifSection->elifGroups = elifGroups;
+            ifSection->elseGroup = elseGroup;
+            ifSection->endifLine = endifLine;
+        }
+        else
+            isValid = false;
+    }
+    else
+        isValid = false;
+
+    if(isValid)
+        return ifSection;
+    else
+    {
+        mIdx = idx;
+        return nullptr;
+    }
+}
+
+Lparen* Tokenizer::conLparen()
+{
+    auto idx = mIdx;
+    bool isValid = true;
+    Lparen* lparen = nullptr;
+
+    if(mIdx >= 1 &&
+       isEquality(mIdx, PreprocessingToken("(", PreprocessingToken::PUNCTUATOR)))
+    {
+        if(mPpTokens[mIdx - 1]->pos + mPpTokens[mIdx - 1]->data.size() ==
+           mPpTokens[mIdx]->pos)
+        {
+            mIdx++;
+
+            lparen = new Lparen();
+            lparen->element = '(';
+        }
+        else
+            isValid = false;
+    }
+    else
+        isValid = false;
+
+    if(isValid)
+        return lparen;
+    else
+    {
+        mIdx = idx;
+        return nullptr;
+    }
+}
+
+NewLine* Tokenizer::conNewLine()
+{
+    auto idx = mIdx;
+    bool isValid = true;
+    NewLine* newLine = nullptr;
+
+    if(isEquality(mIdx, PreprocessingToken("\n", PreprocessingToken::OTHER)))
+    {
+        mIdx++;
+
+        newLine = new NewLine();
+        newLine->element = '\n';
+    }
+    else
+        isValid = false;
+
+    if(isValid)
+        return newLine;
+    else
+    {
+        mIdx = idx;
+        return nullptr;
+    }
+}
+
 Nondigit* Tokenizer::conNondigit()
 {
     if(mIdx >= mSrc.size())
@@ -827,6 +1591,37 @@ Nondigit* Tokenizer::conNondigit()
 
     mIdx++;
     return nondigit;
+}
+
+NonDirective* Tokenizer::conNonDirective()
+{
+    auto idx = mIdx;
+    bool isValid = true;
+    NonDirective* nonDirective = nullptr;
+
+    PpTokens* ppTokens = conPpTokens();
+    if(ppTokens)
+    {
+        NewLine* newLine = conNewLine();
+        if(newLine)
+        {
+            nonDirective = new NonDirective();
+            nonDirective->ppTokens = ppTokens;
+            nonDirective->newLine = newLine;
+        }
+        else
+            isValid = false;
+    }
+    else
+        isValid = false;
+
+    if(isValid)
+        return nonDirective;
+    else
+    {
+        mIdx = idx;
+        return nullptr;
+    }
 }
 
 OctalDigit* Tokenizer::conOctalDigit()
@@ -1041,6 +1836,54 @@ PpNumber* Tokenizer::conPpNumber(PpNumber* bef)
             return aft;
         else
             return ppNumber;
+    }
+    else
+    {
+        mIdx = idx;
+        return nullptr;
+    }
+}
+
+PpTokens* Tokenizer::conPpTokens(PpTokens* bef)
+{
+    auto idx = mIdx;
+    bool isValid = true;
+    PpTokens* ppTokens = nullptr;
+
+    if(!bef)
+    {
+        if(!isEquality(mIdx, PreprocessingToken("\n", PreprocessingToken::OTHER)))
+        {
+            ppTokens = new PpTokens();
+            ppTokens->ePpTokens = PpTokens::PREPROCESSING_TOKEN;
+            ppTokens->uPpTokens.sPreprocessingToken = {mPpTokens[mIdx]};
+
+            mIdx++;
+        }
+        else
+            isValid = false;
+    }
+    else
+    {
+        if(!isEquality(mIdx, PreprocessingToken("\n", PreprocessingToken::OTHER)))
+        {
+            ppTokens = new PpTokens();
+            ppTokens->ePpTokens = PpTokens::PP_TOKENS_PREPROCESSING_TOKEN;
+            ppTokens->uPpTokens.sPpTokensPreprocessingToken = {bef, mPpTokens[mIdx]};
+        
+            mIdx++;
+        }
+        else
+            isValid = false;
+    }
+
+    if(isValid)
+    {
+        PpTokens* aft = conPpTokens(ppTokens);
+        if(aft)
+            return aft;
+        else
+            return ppTokens;
     }
     else
     {
@@ -1271,6 +2114,15 @@ QCharSequence* Tokenizer::conQCharSequence(QCharSequence* bef)
     }
 }
 
+ReplacementList* Tokenizer::conReplacementList()
+{
+    PpTokens* ppTokens = conPpTokens();
+    ReplacementList* replacementList = new ReplacementList();
+    replacementList->ppTokens = ppTokens;
+
+    return replacementList;
+}
+
 SChar* Tokenizer::conSChar()
 {
     if(mIdx >= mSrc.size())
@@ -1443,6 +2295,32 @@ StringLiteral* Tokenizer::conStringLiteral()
 
     if(isValid)
         return stringLiteral;
+    else
+    {
+        mIdx = idx;
+        return nullptr;
+    }
+}
+
+TextLine* Tokenizer::conTextLine()
+{
+    auto idx = mIdx;
+    bool isValid = true;
+    TextLine* textLine = nullptr;
+
+    PpTokens* ppTokens = conPpTokens();
+    NewLine* newLine = conNewLine();
+    if(newLine)
+    {
+        textLine = new TextLine();
+        textLine->ppTokens = ppTokens;
+        textLine->newLine = newLine;
+    }
+    else
+        isValid = false;
+
+    if(isValid)
+        return textLine;
     else
     {
         mIdx = idx;
@@ -1962,4 +2840,20 @@ void Tokenizer::processError(const char* message, const std::string& data) const
               << "\n    data: "
               << data
               << std::endl;
+}
+
+bool Tokenizer::isEquality(std::size_t idx, PreprocessingToken&& ppToken) const
+{
+    if(idx < mPpTokens.size())
+        return (*mPpTokens[mIdx]) == std::forward<PreprocessingToken&&>(ppToken);
+    else
+        return false;
+}
+
+bool Tokenizer::isEquality(std::size_t idx, PreprocessingToken::EClass eClass) const
+{
+    if(idx < mPpTokens.size())
+        return mPpTokens[mIdx]->eClass == eClass;
+    else
+        return false;
 }

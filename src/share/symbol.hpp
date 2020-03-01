@@ -1806,13 +1806,13 @@ public:
         } sIfConstantExpressionNewLineGroup;
         struct SIfdefIdentifierNewLineGroup
         {
-            Identifier* identifier;
+            PreprocessingToken* identifier;
             NewLine* newLine;
             Group* group;
         } sIfdefIdentifierNewLineGroup;
         struct SIfndefIdentifierNewLineGroup
         {
-            Identifier* identifier;
+            PreprocessingToken* identifier;
             NewLine* newLine;
             Group* group;
         } sIfndefIdentifierNewLineGroup;

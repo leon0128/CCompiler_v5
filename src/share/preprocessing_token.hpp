@@ -27,13 +27,15 @@ public:
                        std::string::size_type inPos = std::string::npos):
         data(inData),
         eClass(inEClass),
-        pos(inPos){}
+        pos(inPos),
+        symbol(nullptr){}
     PreprocessingToken(std::string&& inData,
                        EClass inEClass,
                        std::string::size_type inPos = std::string::npos):
         data(std::forward<std::string>(inData)),
         eClass(inEClass),
-        pos(inPos){}
+        pos(inPos),
+        symbol(nullptr){}
 
     void push(){PREPROCESSING_TOKENS.push_back(this);}
 
@@ -49,6 +51,7 @@ public:
     std::string data;
     EClass eClass;
     std::string::size_type pos;
+    class PreprocessingToken_Symbol* symbol;
 };
 
 bool operator==(const PreprocessingToken& lhs, const PreprocessingToken& rhs)

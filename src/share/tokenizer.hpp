@@ -17,14 +17,24 @@ private:
 
     void addPreprocessingToken(class PreprocessingToken_Symbol* preprocessingToken_symbol, std::string::size_type idx);
 
+    class PreprocessingFile* conPreprocessingFile();
     class PreprocessingToken_Symbol* conPreprocessingToken_Symbol();
 
     class CChar* conCChar();
     class CCharSequence* conCCharSequence(class CCharSequence* bef = nullptr);
     class CharacterConstant* conCharacterConstant();
+    class ConditionalExpression* conConditionalExpression();
+    class ConstantExpression* conConstantExpression();
+    class ControlLine* conControlLine();
     class Digit* conDigit();
+    class ElifGroup* conElifGroup();
+    class ElifGroups* conElifGroups(class ElifGroups* bef = nullptr);
+    class ElseGroup* conElseGroup();
     class EncodingPrefix* conEncodingPrefix();
+    class EndifLine* conEndifLine();
     class EscapeSequence* conEscapeSequence();
+    class Group* conGroup(class Group* bef = nullptr);
+    class GroupPart* conGroupPart();
     class HChar* conHChar();
     class HCharSequence* conHCharSequence(class HCharSequence* bef = nullptr);
     class HeaderName* conHeaderName();
@@ -32,20 +42,29 @@ private:
     class HexadecimalEscapeSequence* conHexadecimalEscapeSequence(class HexadecimalEscapeSequence* bef = nullptr);
     class HexQuad* conHexQuad();
     class Identifier* conIdentifier(class Identifier* bef = nullptr);
+    class IdentifierList* conIdentifierList(class IdentifierList* bef = nullptr);
     class IdentifierNondigit* conIdentifierNondigit();
+    class IfGroup* conIfGroup();
+    class IfSection* conIfSection();
+    class Lparen* conLparen();
+    class NewLine* conNewLine();
     class Nondigit* conNondigit();
+    class NonDirective* conNonDirective();
     class OctalDigit* conOctalDigit();
     class OctalEscapeSequence* conOctalEscapeSequence();
     class Other* conOther();
     class PpNumber* conPpNumber(class PpNumber* bef = nullptr);
+    class PpTokens* conPpTokens(class PpTokens* bef = nullptr);
     class Punctuator* conPunctuator();
     class QChar* conQChar();
     class QCharSequence* conQCharSequence(class QCharSequence* bef = nullptr);
+    class ReplacementList* conReplacementList();
     class SChar* conSChar();
     class SCharSequence* conSCharSequence(class SCharSequence* bef = nullptr);
     class Sign* conSign();
     class SimpleEscapeSequence* conSimpleEscapeSequence();
     class StringLiteral* conStringLiteral();
+    class TextLine* conTextLine();
     class UniversalCharacterName* conUniversalCharacterName();
 
     void process(class PreprocessingToken_Symbol* preprocessingToken_symbol, std::string& data) const;
@@ -81,7 +100,11 @@ private:
 
     void processError(const char* message, const std::string& data) const;
 
+    bool isEquality(std::size_t idx, PreprocessingToken&& ppToken) const;
+    bool isEquality(std::size_t idx, PreprocessingToken::EClass eClass) const;
+
     const std::string& mSrc;
     std::string::size_type mIdx;
+    class PreprocessingFile* mPreprocessingFile;
     std::vector<class PreprocessingToken*>& mPpTokens;
 };
