@@ -1,7 +1,5 @@
 #pragma once
 
-#include <string>
-
 class Compiler
 {
 public:
@@ -11,5 +9,12 @@ public:
     bool execute(int argc, char** argv);
 
 private:
+    void checkArgs(int argc, char** argv);
+    void preprocess(const char* file);
+
+    void error(const char* message) const;
+
+    class Preprocessor* mPP;
+
     bool mIsValid;
 };
