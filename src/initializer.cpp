@@ -15,25 +15,15 @@ const std::unordered_map<char, char> Initializer::TRIGRAPH_MAP
        {'!', '|'},
        {'-', '~'}};
 
-Initializer::Initializer():
-    mFile(),
-    mDir(),
-    mSrc(),
+Initializer::Initializer(Preprocessor* pp):
+    mPP(pp),
     mIsValid(true)
 {
 }
 
-bool Initializer::execute(std::string& ppfile,
-                          std::string& ppdir,
-                          Preprocessor::ESearch eSearch)
+bool Initializer::execute()
 {
-    mFile = ppfile;
-    mDir = ppdir;
-
-    openFile(eSearch);
-
-    ppfile = mFile;
-    ppdir = mDir;
+    openFile();
 
     if(mIsValid)
     {
@@ -44,12 +34,12 @@ bool Initializer::execute(std::string& ppfile,
     return mIsValid;
 }
 
-void Initializer::openFile(Preprocessor::ESearch eSearch)
+void Initializer::openFile()
 {
     std::string result;
     bool isFound = false;
 
-    switch(eSearch)
+    switch(mPP->mESearch)
     {
         case(Preprocessor::CURRENT_ONLY):
             if(isFoundCurrentPath(result))
@@ -74,14 +64,14 @@ void Initializer::openFile(Preprocessor::ESearch eSearch)
         auto pos = result.rfind('/');
         if(pos != std::string::npos)
         {
-            mDir = result.substr(0, pos + 1);
-            mFile = result.substr(pos + 1, result.size() - pos - 1);
+            mPP->mDir = result.substr(0, pos + 1);
+            mPP->mFile = result.substr(pos + 1, result.size() - pos - 1);
         }
         else
-            mFile = result;
+            mPP->mFile = result;
 
-        FileManager::read(result.c_str(), mSrc);
-        mSrc.push_back('\n');
+        FileManager::read(result.c_str(), mPP->mSrc);
+        mPP->mSrc.push_back('\n');
     }
     else
     {
@@ -94,10 +84,10 @@ bool Initializer::isFoundCurrentPath(std::string& result) const
 {
     result.clear();
 
-    if(mDir.empty())
-        result = mFile;
+    if(mPP->mDir.empty())
+        result = mPP->mFile;
     else
-        result = mDir + mFile;
+        result = mPP->mDir + mPP->mFile;
 
     if(FileManager::isExisted(result.c_str()))
         return true;
@@ -112,7 +102,7 @@ bool Initializer::isFoundSystemPath(std::string& result) const
     bool isExisted = false;
     for(auto&& path : config().sys_include_pathname_vec)
     {
-        result = path + mFile;
+        result = path + mPP->mFile;
         
         if(FileManager::isExisted(result.c_str()))
         {
@@ -127,55 +117,55 @@ bool Initializer::isFoundSystemPath(std::string& result) const
         return false;
 }
 
-void Initializer::replaceTrigraph()
+void Initializer::replaceTrigraph() const
 {
     if(config().pp_is_replaced_trigraph)
     {
-        for(auto pos = mSrc.find("??");
+        for(auto pos = mPP->mSrc.find("??");
             pos != std::string::npos;
-            pos = mSrc.find("??", pos + 1))
+            pos = mPP->mSrc.find("??", pos + 1))
         {
-            if(pos + 2 >= mSrc.size())
+            if(pos + 2 >= mPP->mSrc.size())
                 break;
             
-            auto iter = TRIGRAPH_MAP.find(mSrc[pos + 2]);
+            auto iter = TRIGRAPH_MAP.find(mPP->mSrc[pos + 2]);
             if(iter != TRIGRAPH_MAP.end())
             {
                 char c = iter->second;
-                mSrc.replace(pos, 3, 1, c);
+                mPP->mSrc.replace(pos, 3, 1, c);
             }
         }
     }
 }
 
-void Initializer::joinLine()
+void Initializer::joinLine() const
 {
-    for(auto pos = mSrc.find('\\');
+    for(auto pos = mPP->mSrc.find('\\');
         pos != std::string::npos;
-        pos = mSrc.find('\\', pos))
+        pos = mPP->mSrc.find('\\', pos))
     {
         auto end = pos + 1;
 
         if(config().pp_is_ignored_space)
         {
-            for(; end < mSrc.size(); end++)
+            for(; end < mPP->mSrc.size(); end++)
             {
-                if(mSrc[end] != ' ')
+                if(mPP->mSrc[end] != ' ')
                     break;
             }
         }
 
-        if(end >= mSrc.size())
+        if(end >= mPP->mSrc.size())
             break;
 
-        if(mSrc[end] == '\n')
-            mSrc.replace(pos, end - pos + 1, "");
+        if(mPP->mSrc[end] == '\n')
+            mPP->mSrc.replace(pos, end - pos + 1, "");
         else
             pos++;
     }
 
-    if(mSrc.back() != '\n')
-        mSrc.push_back('\n');
+    if(mPP->mSrc.back() != '\n')
+        mPP->mSrc.push_back('\n');
 }
 
 void Initializer::error(const char* message) const

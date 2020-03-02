@@ -1,21 +1,27 @@
 #include "preprocessor.hpp"
 #include "initializer.hpp"
+#include "pp_tokenizer.hpp"
 #include <iostream>
 #include <utility>
 
 Preprocessor::Preprocessor():
     mInitializer(nullptr),
+    mPPTokenizer(nullptr),
     mFile(),
     mDir(),
+    mSrc(),
     mESearch(CURRENT_ONLY),
+    mPPTokens(),
     mIsValid(true)
 {
-    mInitializer = new Initializer();
+    mInitializer = new Initializer(this);
+    mPPTokenizer = new PPTokenizer(this);
 }
 
 Preprocessor::~Preprocessor()
 {
     delete mInitializer;
+    delete mPPTokenizer;
 }
 
 bool Preprocessor::execute(const std::string& file,
@@ -27,6 +33,9 @@ bool Preprocessor::execute(const std::string& file,
     mESearch = eSearch;
 
     initialize();
+
+    if(mIsValid)
+        ppTokenize();
 
     return mIsValid;
 }
@@ -43,10 +52,18 @@ bool Preprocessor::execute(std::string&& file,
 
 void Preprocessor::initialize()
 {
-    mIsValid = mInitializer->execute(mFile, mDir, mESearch);
+    mIsValid = mInitializer->execute();
 
     if(!mIsValid)
-        error("failed to initialize source.");
+        error("failed to initialize source code.");
+}
+
+void Preprocessor::ppTokenize()
+{
+    mIsValid = mPPTokenizer->execute();
+
+    if(!mIsValid)
+        error("failed to tokenize source code.");
 }
 
 void Preprocessor::error(const char* message) const

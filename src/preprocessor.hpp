@@ -1,10 +1,17 @@
 #pragma once
 
 #include <string>
+#include <vector>
+
+class Initializer;
+class PPTokenizer;
 
 class Preprocessor
 {
 public:
+    friend Initializer;
+    friend PPTokenizer;
+
     enum ESearch
     {
         CURRENT_ONLY,
@@ -24,14 +31,19 @@ public:
 
 private:
     void initialize();
+    void ppTokenize();
 
     void error(const char* message) const;
 
-    class Initializer* mInitializer;
+    Initializer* mInitializer;
+    PPTokenizer* mPPTokenizer; 
 
     std::string mFile;
     std::string mDir;
+    std::string mSrc;
     ESearch mESearch;
+
+    std::vector<class BaseToken*> mPPTokens;
 
     bool mIsValid;
 };

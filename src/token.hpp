@@ -54,7 +54,7 @@ public:
     {
         NONE,
         ANY_MEMBER,
-        ESCAPE_CEQUENCE
+        ESCAPE_SEQUENCE
     } eCChar;
 
     union UCChar

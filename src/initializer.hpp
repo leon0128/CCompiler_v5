@@ -10,24 +10,19 @@ private:
     static const std::unordered_map<char, char> TRIGRAPH_MAP;
 
 public:
-    Initializer();
+    Initializer(Preprocessor* pp);
 
-    bool execute(std::string& ppfile,
-                 std::string& ppdir,
-                 Preprocessor::ESearch eSearch);
+    bool execute();
 
 private:
-    void openFile(Preprocessor::ESearch eSearch);
+    void openFile();
         bool isFoundCurrentPath(std::string& result) const;
         bool isFoundSystemPath(std::string& result) const;
-    void replaceTrigraph();
-    void joinLine();
+    void replaceTrigraph() const;
+    void joinLine() const;
 
     void error(const char* message) const;
 
-    std::string mFile;
-    std::string mDir;
-    std::string mSrc;
-
+    Preprocessor* mPP;
     bool mIsValid;
 };
