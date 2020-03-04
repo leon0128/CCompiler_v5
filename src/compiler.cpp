@@ -1,5 +1,6 @@
 #include "compiler.hpp"
 #include "preprocessor.hpp"
+#include "token.hpp"
 #include <iostream>
 
 Compiler::Compiler():
@@ -12,6 +13,8 @@ Compiler::Compiler():
 Compiler::~Compiler()
 {
     delete mPP;
+
+    BaseToken::destroy();
 }
 
 bool Compiler::execute(int argc, char** argv)

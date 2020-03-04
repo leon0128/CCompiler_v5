@@ -36,15 +36,12 @@ class UniversalCharacterName;
 
 class BaseToken
 {
-private:
-    static std::vector<BaseToken*> TOKENS;
-
 protected:
-    BaseToken();
+    BaseToken(){}
     virtual ~BaseToken(){}
 
 public:
-    void destroy();
+    static void destroy(){}
 };
 
 class CChar : public BaseToken
@@ -350,7 +347,7 @@ public:
     {
         NONE,
         IDENTIFIER_NONDIGIT,
-        IDENTIFIER_IDENTIFIER_NODIGIT,
+        IDENTIFIER_IDENTIFIER_NONDIGIT,
         IDENTIFIER_DIGIT
     } eIdentifier;
 

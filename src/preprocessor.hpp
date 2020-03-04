@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <utility>
 
 class Initializer;
 class PPTokenizer;
@@ -43,7 +44,7 @@ private:
     std::string mSrc;
     ESearch mESearch;
 
-    std::vector<class BaseToken*> mPPTokens;
+    std::vector<std::pair<class PreprocessingToken*, std::string::size_type>> mPPTokens;
 
     bool mIsValid;
 };
