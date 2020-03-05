@@ -33,21 +33,6 @@ bool PPTokenizer::execute()
         else
             mIdx++;
     }
-
-    for(auto&& e : mPP->mPPTokens)
-    {
-        std::cout << "token:\n    "
-                  << "enum: "
-                  << static_cast<int>(e.first->ePreprocessingToken)
-                  << std::endl;
-        if(e.first->ePreprocessingToken == PreprocessingToken::IDENTIFIER ||
-           e.first->ePreprocessingToken == PreprocessingToken::PUNCTUATOR)
-        {
-            std::string data;
-            getString(e.first, data);
-            std::cout << "    data: " << data << std::endl;
-        }
-    }
         
     return mIsValid;
 }

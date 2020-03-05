@@ -79,7 +79,7 @@ void Preprocessor::ppDirectiveTokenize()
     mIsValid = mPPDirectiveTokenizer->execute();
     
     if(!mIsValid)
-        error("failed to tokenizer preprocessing token.");
+        error("failed to tokenize preprocessing token.");
 }
 
 void Preprocessor::error(const char* message) const
