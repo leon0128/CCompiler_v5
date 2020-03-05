@@ -1,27 +1,32 @@
 #include "preprocessor.hpp"
 #include "initializer.hpp"
 #include "pp_tokenizer.hpp"
+#include "pp_directive_tokenizer.hpp"
 #include <iostream>
 #include <utility>
 
 Preprocessor::Preprocessor():
     mInitializer(nullptr),
     mPPTokenizer(nullptr),
+    mPPDirectiveTokenizer(nullptr),
     mFile(),
     mDir(),
     mSrc(),
     mESearch(CURRENT_ONLY),
     mPPTokens(),
+    mPreprocessingFile(nullptr),
     mIsValid(true)
 {
     mInitializer = new Initializer(this);
     mPPTokenizer = new PPTokenizer(this);
+    mPPDirectiveTokenizer = new PPDirectiveTokenizer(this);
 }
 
 Preprocessor::~Preprocessor()
 {
     delete mInitializer;
     delete mPPTokenizer;
+    delete mPPDirectiveTokenizer;
 }
 
 bool Preprocessor::execute(const std::string& file,
@@ -36,6 +41,9 @@ bool Preprocessor::execute(const std::string& file,
 
     if(mIsValid)
         ppTokenize();
+    
+    if(mIsValid)
+        ppDirectiveTokenize();
 
     return mIsValid;
 }
@@ -64,6 +72,14 @@ void Preprocessor::ppTokenize()
 
     if(!mIsValid)
         error("failed to tokenize source code.");
+}
+
+void Preprocessor::ppDirectiveTokenize()
+{
+    mIsValid = mPPDirectiveTokenizer->execute();
+    
+    if(!mIsValid)
+        error("failed to tokenizer preprocessing token.");
 }
 
 void Preprocessor::error(const char* message) const

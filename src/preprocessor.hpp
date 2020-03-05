@@ -6,12 +6,14 @@
 
 class Initializer;
 class PPTokenizer;
+class PPDirectiveTokenizer;
 
 class Preprocessor
 {
 public:
     friend Initializer;
     friend PPTokenizer;
+    friend PPDirectiveTokenizer;
 
     enum ESearch
     {
@@ -33,11 +35,13 @@ public:
 private:
     void initialize();
     void ppTokenize();
+    void ppDirectiveTokenize();
 
     void error(const char* message) const;
 
     Initializer* mInitializer;
     PPTokenizer* mPPTokenizer; 
+    PPDirectiveTokenizer* mPPDirectiveTokenizer;
 
     std::string mFile;
     std::string mDir;
@@ -45,6 +49,8 @@ private:
     ESearch mESearch;
 
     std::vector<std::pair<class PreprocessingToken*, std::string::size_type>> mPPTokens;
+
+    class PreprocessingFile* mPreprocessingFile;
 
     bool mIsValid;
 };

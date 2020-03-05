@@ -8,9 +8,16 @@ class BaseToken;
 class CChar;
 class CCharSequence;
 class CharacterConstant;
+class ControlLine;
 class Digit;
+class ElifGroup;
+class ElifGroups;
+class ElseGroup;
+class EndifLine;
 class EncodingPrefix;
 class EscapeSequence;
+class Group;
+class GroupPart;
 class HChar;
 class HCharSequence;
 class HeaderName;
@@ -18,21 +25,82 @@ class HexadecimalDigit;
 class HexadecimalEscapeSequence;
 class HexQuad;
 class Identifier;
+class IdentifierList;
 class IdentifierNondigit;
+class IfGroup;
+class IfSection;
+class Lparen;
+class NewLine;
 class Nondigit;
+class NonDirective;
 class OctalDigit;
 class OctalEscapeSequence;
 class PPNumber;
+class PPTokens;
+class PreprocessingFile;
 class PreprocessingToken;
 class Punctuator;
 class QChar;
 class QCharSequence;
+class ReplacementList;
 class SChar;
 class SCharSequence;
 class Sign;
 class SimpleEscapeSequence;
 class StringLiteral;
+class TextLine;
 class UniversalCharacterName;
+
+namespace TOKEN
+{
+    void error(const char* message);
+
+    void getString(CChar*, std::string& data);
+    void getString(CCharSequence*, std::string& data);
+    void getString(CharacterConstant*, std::string& data);
+    void getString(ControlLine*, std::string& data);
+    void getString(Digit*, std::string& digit);
+    void getString(ElifGroup*, std::string& data);
+    void getString(ElifGroups*, std::string& data);
+    void getString(ElseGroup*, std::string& data);
+    void getString(EndifLine*, std::string& data);
+    void getString(EncodingPrefix*, std::string& data);
+    void getString(EscapeSequence*, std::string& data);
+    void getString(Group*, std::string& data);
+    void getString(GroupPart*, std::string& data);
+    void getString(HChar*, std::string& data);
+    void getString(HCharSequence*, std::string& data);
+    void getString(HeaderName*, std::string& data);
+    void getString(HexadecimalDigit*, std::string& data);
+    void getString(HexadecimalEscapeSequence*, std::string& data);
+    void getString(HexQuad*, std::string& data);
+    void getString(Identifier*, std::string& data);
+    void getString(IdentifierList*, std::string& data);
+    void getString(IdentifierNondigit*, std::string& data);
+    void getString(IfGroup*, std::string& data);
+    void getString(IfSection*, std::string& data);
+    void getString(Lparen*, std::string& data);
+    void getString(NewLine*, std::string& data);
+    void getString(Nondigit*, std::string& data);
+    void getString(NonDirective*, std::string& data);
+    void getString(OctalDigit*, std::string& data);
+    void getString(OctalEscapeSequence*, std::string& data);
+    void getString(PPNumber*, std::string& data);
+    void getString(PPTokens*, std::string& data);
+    void getString(PreprocessingFile*, std::string& data);
+    void getString(PreprocessingToken*, std::string& data);
+    void getString(Punctuator*, std::string& data);
+    void getString(QChar*, std::string& data);
+    void getString(QCharSequence*, std::string& data);
+    void getString(ReplacementList*, std::string& data);
+    void getString(SChar*, std::string& data);
+    void getString(SCharSequence*, std::string& data);
+    void getString(Sign*, std::string& data);
+    void getString(SimpleEscapeSequence*, std::string& data);
+    void getString(StringLiteral*, std::string& data);
+    void getString(TextLine*, std::string& data);
+    void getString(UniversalCharacterName*, std::string& data);
+};
 
 class BaseToken
 {
@@ -148,6 +216,95 @@ public:
         uCharacterConstant(){}
 };
 
+class ControlLine : public BaseToken
+{
+public:
+    enum EControlLine
+    {
+        NONE,
+        INCLUDE_PP_TOKENS_NEW_LINE,
+        DEFINE_IDENTIFIER_REPLACEMENT_LIST_NEW_LINE,
+        DEFINE_IDENTIFIER_LPAREN_IDENTIFIER_LIST_RPAREN_REPLACEMENT_LIST_NEW_LINE,
+        DEFINE_IDENTIFIER_LPAREN_DOTDOTDOT_RPAREN_REPLACEMENT_LIST_NEW_LINE,
+        DEFINE_IDENTIFIER_LPAREN_IDENTIFIER_LIST_COMMA_DOTDOTDOT_RPAREN_REPLACEMENT_LIST_NEW_LINE,
+        UNDEF_IDENTIFIER_NEW_LINE,
+        LINE_PP_TOKENS_NEW_LINE,
+        ERROR_PP_TOKENS_NEW_LINE,
+        PRAGMA_PP_TOKENS_NEW_LINE,
+        NEW_LINE
+    } eControlLine;
+
+    union UControlLine
+    {
+        struct SIncludePPTokensNewLine
+        {
+            PPTokens* ppTokens;
+            NewLine* newLine;
+        } sIncludePPTokensNewLine;
+        struct SDefineIdentifierReplacementListNewLine
+        {
+            Identifier* identifier;
+            ReplacementList* replacementList;
+            NewLine* newLine;
+        } sDefineIdentifierReplacementListNewLine;
+        struct SDefineIdentifierLparenIdentifierListRparenReplacementListNewLine
+        {
+            Identifier* identifier;
+            Lparen* lparen;
+            IdentifierList* identifierList;
+            ReplacementList* replacementList;
+            NewLine* newLine;
+        } sDefineIdentifierLparenIdentifierListRparenReplacementListNewLine;
+        struct SDefineIdentifierLparenDotdotdotRparenReplacementListNewLine
+        {
+            Identifier* identifier;
+            Lparen* lparen;
+            ReplacementList* replacementList;
+            NewLine* newLine;
+        } sDefineIdentifierLparenDotdotdotRparenReplacementListNewLine;
+        struct SDefineIdentifierLparenIdentifierListCommaDotdotdotRparenReplacementListNewLine
+        {
+            Identifier* identifier;
+            Lparen* lparen;
+            IdentifierList* identifierList;
+            ReplacementList* replacementList;
+            NewLine* newLine;
+        } sDefineIdentifierLparenIdentifierListCommaDotdotdotRparenReplacementListNewLine;
+        struct SUndefIdentifierNewLine
+        {
+            Identifier* identifier;
+            NewLine* newLine;
+        } sUndefIdentifierNewLine;
+        struct SLinePPTokensNewLine
+        {
+            PPTokens* ppTokens;
+            NewLine* newLine;
+        } sLinePPTokensNewLine;
+        struct SErrorPpTokensNewLine
+        {
+            PPTokens* ppTokens;
+            NewLine* newLine;
+        } sErrorPPtokensNewLine;
+        struct SPragmaPPTokensNewLine
+        {
+            PPTokens* ppTokens;
+            NewLine* newLine;
+        } sPragmaPPTokensNewLine;
+        struct SNewLine
+        {
+            NewLine* newLine;
+        } sNewLine;
+
+        UControlLine():
+            sIncludePPTokensNewLine{nullptr, nullptr}{}
+    } uControlLine;
+
+    ControlLine():
+        BaseToken(),
+        eControlLine(NONE),
+        uControlLine(){}
+};
+
 class Digit : public BaseToken
 {
 public:
@@ -156,6 +313,74 @@ public:
     Digit():
         BaseToken(),
         element(0){}
+};
+
+class ElifGroup : public BaseToken
+{
+public:
+    PPTokens* ppTokens;
+    NewLine* newLine;
+    Group* group;
+
+    ElifGroup():
+        BaseToken(),
+        ppTokens(nullptr),
+        newLine(nullptr),
+        group(nullptr){}
+};
+
+class ElifGroups : public BaseToken
+{
+public:
+    enum EElifGroups
+    {
+        NONE,
+        ELIF_GROUP,
+        ELIF_GROUPS_ELIF_GROUP
+    } eElifGroups;
+
+    union UElifGroups
+    {
+        struct SElifGroup
+        {
+            ElifGroup* elifGroup;
+        } sElifGroup;
+        struct SElifGroupsElifGroup
+        {
+            ElifGroups* elifGroups;
+            ElifGroup* elifGroup;
+        } sElifGroupsElifGroup;
+
+        UElifGroups():
+            sElifGroup{nullptr}{}
+    } uElifGroups;
+
+    ElifGroups():
+        BaseToken(),
+        eElifGroups(NONE),
+        uElifGroups(){}
+};
+
+class ElseGroup : public BaseToken
+{
+public:
+    NewLine* newLine;
+    Group* group;
+
+    ElseGroup():
+        BaseToken(),
+        newLine(nullptr),
+        group(nullptr){}
+};
+
+class EndifLine : public BaseToken
+{
+public:
+    NewLine* newLine;
+    
+    EndifLine():
+        BaseToken(),
+        newLine(nullptr){}
 };
 
 class EncodingPrefix : public BaseToken
@@ -207,6 +432,79 @@ public:
         BaseToken(),
         eEscapeSequence(NONE),
         uEscapeSequence(){}
+};
+
+class Group : public BaseToken
+{
+public:
+    enum EGroup
+    {
+        NONE,
+        GROUP_PART,
+        GROUP_GROUP_PART
+    } eGroup;
+
+    union UGroup
+    {
+        struct SGroupPart
+        {
+            GroupPart* groupPart;
+        } sGroupPart;
+        struct SGroupGroupPart
+        {
+            Group* group;
+            GroupPart* groupPart;
+        } sGroupGroupPart;
+
+        UGroup():
+            sGroupGroupPart{nullptr}{}
+    } uGroup;
+
+    Group():
+        BaseToken(),
+        eGroup(NONE),
+        uGroup(){}
+};
+
+class GroupPart : public BaseToken
+{
+public:
+    enum EGroupPart
+    {
+        NONE,
+        IF_SECTION,
+        CONTROL_LINE,
+        TEXT_LINE,
+        NON_DIRECTIVE
+    } eGroupPart;
+
+    union UGroupPart
+    {
+        struct SIfSection
+        {
+            IfSection* ifSection;
+        } sIfSection;
+        struct SControlLine
+        {
+            ControlLine* controlLine;
+        } sControlLine;
+        struct STextLine
+        {
+            TextLine* textLine;
+        } sTextLine;
+        struct SNonDirective
+        {
+            NonDirective* nonDirective;
+        } sNonDirective;
+
+        UGroupPart():
+            sIfSection{nullptr}{}
+    } uGroupPart;
+
+    GroupPart():
+        BaseToken(),
+        eGroupPart(NONE),
+        uGroupPart(){}
 };
 
 class HChar : public BaseToken
@@ -378,6 +676,38 @@ public:
         uIdentifier(){}
 };
 
+class IdentifierList : public BaseToken
+{
+public:
+    enum EIdentifierList
+    {
+        NONE,
+        IDENTIFIER,
+        IDENTIFIER_LIST_IDENTIFIER
+    } eIdentifierList;
+
+    union UIdentifierList
+    {
+        struct SIdentifier
+        {
+            Identifier* identifier;
+        } sIdentifier;
+        struct SIdentifierListIdentifier
+        {
+            IdentifierList* identifierList;
+            Identifier* identifier;
+        } sIdentifierListIdentifier;
+
+        UIdentifierList():
+            sIdentifier{nullptr}{}
+    } uIdentifierList;
+
+    IdentifierList():
+        BaseToken(),
+        eIdentifierList(NONE),
+        uIdentifierList(){}
+};
+
 class IdentifierNondigit : public BaseToken
 {
 public:
@@ -409,6 +739,84 @@ public:
         uIdentifierNondigit(){}
 };
 
+class IfGroup : public BaseToken
+{
+public:
+    enum EIfGroup
+    {
+        NONE,
+        IF_PP_TOKENS_NEW_LINE_GROUP,
+        IFDEF_IDENTIFIER_NEW_LINE_GROUP,
+        IFNDEF_IDENTIFIER_NEW_LINE_GROUP
+    } eIfGroup;
+
+    union UIfGroup
+    {
+        struct SIfPPTokensNewLineGroup
+        {
+            PPTokens* ppTokens;
+            NewLine* newLine;
+            Group* group;
+        } sIfPPTokensNewLineGroup;
+        struct SIfdefIdentifierNewLineGroup
+        {
+            Identifier* identifier;
+            NewLine* newLine;
+            Group* group;
+        } sIfdefIdentifierNewLineGroup;
+        struct SIfndefIdentifierNewLineGroup
+        {
+            Identifier* identifier;
+            NewLine* newLine;
+            Group* group;
+        } sIfndefIdentifierNewLineGroup;
+
+        UIfGroup():
+            sIfPPTokensNewLineGroup{nullptr, nullptr, nullptr}{}
+    } uIfGroup;
+
+    IfGroup():
+        BaseToken(),
+        eIfGroup(NONE),
+        uIfGroup(){}
+};
+
+class IfSection : public BaseToken
+{
+public:
+    IfGroup* ifGroup;
+    ElifGroups* elifGroups;
+    ElseGroup* elseGroup;
+    EndifLine* endifLine;
+
+    IfSection():
+        BaseToken(),
+        ifGroup(nullptr),
+        elifGroups(nullptr),
+        elseGroup(nullptr),
+        endifLine(nullptr){}
+};
+
+class Lparen : public BaseToken
+{
+public:
+    char element;
+
+    Lparen():
+        BaseToken(),
+        element(0){}
+};
+
+class NewLine : public BaseToken
+{
+public:
+    char element;
+
+    NewLine():
+        BaseToken(),
+        element(0){}
+};
+
 class Nondigit : public BaseToken
 {
 public:
@@ -417,6 +825,18 @@ public:
     Nondigit():
         BaseToken(),
         element(0){}
+};
+
+class NonDirective : public BaseToken
+{
+public:
+    PPTokens* ppTokens;
+    NewLine* newLine;
+
+    NonDirective():
+        BaseToken(),
+        ppTokens(nullptr),
+        newLine(nullptr){}
 };
 
 class OctalDigit : public BaseToken
@@ -540,6 +960,48 @@ public:
         uPPNumber(){}
 };
 
+class PPTokens : public BaseToken
+{
+public:
+    enum EPPTokens
+    {
+        NONE,
+        PREPROCESSING_TOKEN,
+        PP_TOKENS_PREPROCESSING_TOKEN
+    } ePPTokens;
+
+    union UPPTokens
+    {
+        struct SPreprocessingToken
+        {
+            PreprocessingToken* preprocessingToken;
+        } sPreprocessingToken;
+        struct SPPTokensPreprocessingToken
+        {
+            PPTokens* ppTokens;
+            PreprocessingToken* preprocessingToken;
+        } sPPTokensPreprocessingToken;
+
+        UPPTokens():
+            sPreprocessingToken{nullptr}{}
+    } uPPTokens;
+
+    PPTokens():
+        BaseToken(),
+        ePPTokens(NONE),
+        uPPTokens(){}
+};
+
+class PreprocessingFile : public BaseToken
+{
+public:
+    Group* group;
+
+    PreprocessingFile():
+        BaseToken(),
+        group(nullptr){}
+};
+
 class PreprocessingToken : public BaseToken
 {
 public:
@@ -648,6 +1110,16 @@ public:
         uQCharSequence(){}
 };
 
+class ReplacementList : public BaseToken
+{
+public:
+    PPTokens* ppTokens;
+
+    ReplacementList():
+        BaseToken(),
+        ppTokens(nullptr){}
+};
+
 class SChar : public BaseToken
 {
 public:
@@ -741,6 +1213,18 @@ public:
         BaseToken(),
         encodingPrefix(nullptr),
         sCharSequence(nullptr){}
+};
+
+class TextLine : public BaseToken
+{
+public:
+    PPTokens* ppTokens;
+    NewLine* newLine;
+
+    TextLine():
+        BaseToken(),
+        ppTokens(nullptr),
+        newLine(nullptr){}
 };
 
 class UniversalCharacterName : public BaseToken
