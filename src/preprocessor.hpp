@@ -7,6 +7,7 @@
 class Initializer;
 class PPTokenizer;
 class PPDirectiveTokenizer;
+class PPDirectiveProcessor;
 
 class Preprocessor
 {
@@ -14,6 +15,7 @@ public:
     friend Initializer;
     friend PPTokenizer;
     friend PPDirectiveTokenizer;
+    friend PPDirectiveProcessor;
 
     enum ESearch
     {
@@ -36,12 +38,16 @@ private:
     void initialize();
     void ppTokenize();
     void ppDirectiveTokenize();
+    void ppDirectiveProcess();
 
     void error(const char* message) const;
+
+    static std::vector<class ControlLine*> MACROS; 
 
     Initializer* mInitializer;
     PPTokenizer* mPPTokenizer; 
     PPDirectiveTokenizer* mPPDirectiveTokenizer;
+    PPDirectiveProcessor* mPPDirectiveProcessor;
 
     std::string mFile;
     std::string mDir;
@@ -51,6 +57,8 @@ private:
     std::vector<std::pair<class PreprocessingToken*, std::string::size_type>> mPPTokens;
 
     class PreprocessingFile* mPreprocessingFile;
+
+    std::vector<class PreprocessingToken*> mProcessedPPTokens;
 
     bool mIsValid;
 };
