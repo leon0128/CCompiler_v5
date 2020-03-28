@@ -34,6 +34,8 @@ public:
                  std::string&& dir = std::string(),
                  ESearch eSearch = CURRENT_ONLY);
 
+    bool retokenize(std::string& src);
+
 private:
     void initialize();
     void ppTokenize();

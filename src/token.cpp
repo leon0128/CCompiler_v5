@@ -85,18 +85,18 @@ void TOKEN::getString(ControlLine* controlLine, std::string& data)
     switch(controlLine->eControlLine)
     {
         case(ControlLine::INCLUDE_PP_TOKENS_NEW_LINE):
-            data += "include ";
+            data += "include";
             getString(controlLine->uControlLine.sIncludePPTokensNewLine.ppTokens, data);
             getString(controlLine->uControlLine.sIncludePPTokensNewLine.newLine, data);
             break;
         case(ControlLine::DEFINE_IDENTIFIER_REPLACEMENT_LIST_NEW_LINE):
-            data += "define ";
+            data += "define";
             getString(controlLine->uControlLine.sDefineIdentifierReplacementListNewLine.identifier, data);
             getString(controlLine->uControlLine.sDefineIdentifierReplacementListNewLine.replacementList, data);
             getString(controlLine->uControlLine.sDefineIdentifierReplacementListNewLine.newLine, data);
             break;
         case(ControlLine::DEFINE_IDENTIFIER_LPAREN_IDENTIFIER_LIST_RPAREN_REPLACEMENT_LIST_NEW_LINE):
-            data += "define ";
+            data += "define";
             getString(controlLine->uControlLine.sDefineIdentifierLparenIdentifierListRparenReplacementListNewLine.identifier, data);
             getString(controlLine->uControlLine.sDefineIdentifierLparenIdentifierListRparenReplacementListNewLine.lparen, data);
             if(controlLine->uControlLine.sDefineIdentifierLparenIdentifierListRparenReplacementListNewLine.identifierList)
@@ -106,14 +106,14 @@ void TOKEN::getString(ControlLine* controlLine, std::string& data)
             getString(controlLine->uControlLine.sDefineIdentifierLparenIdentifierListRparenReplacementListNewLine.newLine, data);
             break;
         case(ControlLine::DEFINE_IDENTIFIER_LPAREN_DOTDOTDOT_RPAREN_REPLACEMENT_LIST_NEW_LINE):
-            data += "define ";
+            data += "define";
             getString(controlLine->uControlLine.sDefineIdentifierLparenDotdotdotRparenReplacementListNewLine.identifier, data);
             data += "...)";
             getString(controlLine->uControlLine.sDefineIdentifierLparenDotdotdotRparenReplacementListNewLine.replacementList, data);
             getString(controlLine->uControlLine.sDefineIdentifierLparenDotdotdotRparenReplacementListNewLine.newLine, data);
             break;
         case(ControlLine::DEFINE_IDENTIFIER_LPAREN_IDENTIFIER_LIST_COMMA_DOTDOTDOT_RPAREN_REPLACEMENT_LIST_NEW_LINE):
-            data += "define ";
+            data += "define";
             getString(controlLine->uControlLine.sDefineIdentifierLparenIdentifierListCommaDotdotdotRparenReplacementListNewLine.identifier, data);
             getString(controlLine->uControlLine.sDefineIdentifierLparenIdentifierListCommaDotdotdotRparenReplacementListNewLine.lparen, data);
             getString(controlLine->uControlLine.sDefineIdentifierLparenIdentifierListCommaDotdotdotRparenReplacementListNewLine.identifierList, data);
@@ -122,22 +122,22 @@ void TOKEN::getString(ControlLine* controlLine, std::string& data)
             getString(controlLine->uControlLine.sDefineIdentifierLparenIdentifierListCommaDotdotdotRparenReplacementListNewLine.newLine, data);
             break;
         case(ControlLine::UNDEF_IDENTIFIER_NEW_LINE):
-            data += "undef ";
+            data += "undef";
             getString(controlLine->uControlLine.sUndefIdentifierNewLine.identifier, data);
             getString(controlLine->uControlLine.sUndefIdentifierNewLine.newLine, data);
             break;
         case(ControlLine::LINE_PP_TOKENS_NEW_LINE):
-            data += "line ";
+            data += "line";
             getString(controlLine->uControlLine.sLinePPTokensNewLine.ppTokens, data);
             getString(controlLine->uControlLine.sLinePPTokensNewLine.newLine, data);
             break;
         case(ControlLine::ERROR_PP_TOKENS_NEW_LINE):
-            data += "error ";
+            data += "error";
             getString(controlLine->uControlLine.sErrorPPtokensNewLine.ppTokens, data);
             getString(controlLine->uControlLine.sErrorPPtokensNewLine.newLine, data);
             break;
         case(ControlLine::PRAGMA_PP_TOKENS_NEW_LINE):
-            data += "pragma ";
+            data += "pragma";
             getString(controlLine->uControlLine.sPragmaPPTokensNewLine.ppTokens, data);
             getString(controlLine->uControlLine.sPragmaPPTokensNewLine.newLine, data);
             break;
@@ -158,7 +158,7 @@ void TOKEN::getString(Digit* digit, std::string& data)
 
 void TOKEN::getString(ElifGroup* elifGroup, std::string& data)
 {
-    data += "#elif ";
+    data += "#elif";
     getString(elifGroup->ppTokens, data);
     getString(elifGroup->newLine, data);
     if(elifGroup->group)
@@ -185,7 +185,7 @@ void TOKEN::getString(ElifGroups* elifGroups, std::string& data)
 
 void TOKEN::getString(ElseGroup* elseGroup, std::string& data)
 {
-    data += "#else ";
+    data += "#else";
     getString(elseGroup->newLine, data);
     if(elseGroup->group)
         getString(elseGroup->group, data);
@@ -193,7 +193,7 @@ void TOKEN::getString(ElseGroup* elseGroup, std::string& data)
 
 void TOKEN::getString(EndifLine* endifLine, std::string& data)
 {
-    data += "#endif ";
+    data += "#endif";
     getString(endifLine->newLine, data);
 }
 
@@ -408,21 +408,21 @@ void TOKEN::getString(IfGroup* ifGroup, std::string& data)
     switch(ifGroup->eIfGroup)
     {
         case(IfGroup::IF_PP_TOKENS_NEW_LINE_GROUP):
-            data += "if ";
+            data += "if";
             getString(ifGroup->uIfGroup.sIfPPTokensNewLineGroup.ppTokens, data);
             getString(ifGroup->uIfGroup.sIfPPTokensNewLineGroup.newLine, data);
             if(ifGroup->uIfGroup.sIfPPTokensNewLineGroup.group)
                 getString(ifGroup->uIfGroup.sIfPPTokensNewLineGroup.group, data);
             break;
         case(IfGroup::IFDEF_IDENTIFIER_NEW_LINE_GROUP):
-            data += "ifdef ";
+            data += "ifdef";
             getString(ifGroup->uIfGroup.sIfdefIdentifierNewLineGroup.identifier, data);
             getString(ifGroup->uIfGroup.sIfdefIdentifierNewLineGroup.newLine, data);
             if(ifGroup->uIfGroup.sIfdefIdentifierNewLineGroup.group)
                 getString(ifGroup->uIfGroup.sIfdefIdentifierNewLineGroup.group, data);
             break;
         case(IfGroup::IFNDEF_IDENTIFIER_NEW_LINE_GROUP):
-            data += "ifndef ";
+            data += "ifndef";
             getString(ifGroup->uIfGroup.sIfndefIdentifierNewLineGroup.identifier, data);
             getString(ifGroup->uIfGroup.sIfndefIdentifierNewLineGroup.newLine, data);
             if(ifGroup->uIfGroup.sIfndefIdentifierNewLineGroup.group)
@@ -555,7 +555,6 @@ void TOKEN::getString(PPTokens* ppTokens, std::string& data)
             break;
         case(PPTokens::PP_TOKENS_PREPROCESSING_TOKEN):
             getString(ppTokens->uPPTokens.sPPTokensPreprocessingToken.ppTokens, data);
-            data.push_back(' ');
             getString(ppTokens->uPPTokens.sPPTokensPreprocessingToken.preprocessingToken, data);
             break;
         

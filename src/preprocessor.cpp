@@ -68,6 +68,15 @@ bool Preprocessor::execute(std::string&& file,
     return execute(f, d, eSearch);
 }
 
+bool Preprocessor::retokenize(std::string& src)
+{
+    mSrc = src;
+    
+    ppTokenize();
+    
+    return mIsValid;
+}
+
 void Preprocessor::initialize()
 {
     mIsValid = mInitializer->execute();

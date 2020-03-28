@@ -761,7 +761,7 @@ PPNumber* PPTokenizer::getPPNumber(PPNumber* bef)
         if(aft)
             return aft;
         else
-            return nullptr;
+            return retVal;
     }
     else
     {
