@@ -3,9 +3,9 @@
 
 void TOKEN::error(const char* message)
 {
-    std::cerr << "impl-error: dont set a token enum"
-              << "\n    class: "
-              << message
+    std::cerr << "implementation error:\n"
+              << "    what: token is not setted enumeration.\n"
+              << "    class: " << message
               << std::endl; 
 }
 

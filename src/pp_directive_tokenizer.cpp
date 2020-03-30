@@ -50,33 +50,65 @@ ControlLine* PPDirectiveTokenizer::getControlLine()
             Identifier* identifier = mPP->mPPTokens[mIdx + 1].first->uPreprocessingToken.sIdentifier.identifier;
             mIdx += 2;
 
-            if(controlLine.uControlLine.sDefineIdentifierReplacementListNewLine.replacementList = getReplacementList())
+            Lparen* lparen = getLparen();
+            if(lparen)
             {
-                if(controlLine.uControlLine.sDefineIdentifierReplacementListNewLine.newLine = getNewLine())
+                if(isMatched(mIdx, PreprocessingToken::PUNCTUATOR, "...") &&
+                   isMatched(mIdx + 1, PreprocessingToken::PUNCTUATOR, ")"))
                 {
-                    controlLine.uControlLine.sDefineIdentifierReplacementListNewLine.identifier = identifier;
-                    controlLine.eControlLine = ControlLine::DEFINE_IDENTIFIER_REPLACEMENT_LIST_NEW_LINE;
+                    mIdx += 2;
+
+                    if(controlLine.uControlLine.sDefineIdentifierLparenDotdotdotRparenReplacementListNewLine.replacementList = getReplacementList())
+                    {
+                        if(controlLine.uControlLine.sDefineIdentifierLparenDotdotdotRparenReplacementListNewLine.newLine = getNewLine())
+                        {
+                            controlLine.eControlLine = ControlLine::DEFINE_IDENTIFIER_LPAREN_DOTDOTDOT_RPAREN_REPLACEMENT_LIST_NEW_LINE;
+                            controlLine.uControlLine.sDefineIdentifierLparenDotdotdotRparenReplacementListNewLine.identifier = identifier;
+                            controlLine.uControlLine.sDefineIdentifierLparenDotdotdotRparenReplacementListNewLine.lparen = lparen;
+                        }
+                        else
+                            isValid = false;
+                    }
+                    else
+                        isValid = false;
                 }
                 else
-                    isValid = false;
-            }
-            else
-            {
-                Lparen* lparen = getLparen();
-                if(lparen)
                 {
-                    if(isMatched(mIdx, PreprocessingToken::PUNCTUATOR, "...") &&
-                       isMatched(mIdx + 1, PreprocessingToken::PUNCTUATOR, ")"))
+                    IdentifierList* identifierList = getIdentifierList();
+                    if(identifierList &&
+                       isMatched(mIdx, PreprocessingToken::PUNCTUATOR, ",") &&
+                       isMatched(mIdx + 1, PreprocessingToken::PUNCTUATOR, "...") &&
+                       isMatched(mIdx + 2, PreprocessingToken::PUNCTUATOR, ")"))
                     {
-                        mIdx += 2;
+                        mIdx += 3;
 
-                        if(controlLine.uControlLine.sDefineIdentifierLparenDotdotdotRparenReplacementListNewLine.replacementList = getReplacementList())
+                        if(controlLine.uControlLine.sDefineIdentifierLparenIdentifierListCommaDotdotdotRparenReplacementListNewLine.replacementList = getReplacementList())
                         {
-                            if(controlLine.uControlLine.sDefineIdentifierLparenDotdotdotRparenReplacementListNewLine.newLine = getNewLine())
+                            if(controlLine.uControlLine.sDefineIdentifierLparenIdentifierListCommaDotdotdotRparenReplacementListNewLine.newLine = getNewLine())
                             {
-                                controlLine.eControlLine = ControlLine::DEFINE_IDENTIFIER_LPAREN_DOTDOTDOT_RPAREN_REPLACEMENT_LIST_NEW_LINE;
-                                controlLine.uControlLine.sDefineIdentifierLparenDotdotdotRparenReplacementListNewLine.identifier = identifier;
-                                controlLine.uControlLine.sDefineIdentifierLparenDotdotdotRparenReplacementListNewLine.lparen = lparen;
+                                controlLine.eControlLine = ControlLine::DEFINE_IDENTIFIER_LPAREN_IDENTIFIER_LIST_COMMA_DOTDOTDOT_RPAREN_REPLACEMENT_LIST_NEW_LINE;
+                                controlLine.uControlLine.sDefineIdentifierLparenIdentifierListCommaDotdotdotRparenReplacementListNewLine.lparen = lparen;
+                                controlLine.uControlLine.sDefineIdentifierLparenIdentifierListCommaDotdotdotRparenReplacementListNewLine.identifier = identifier;
+                                controlLine.uControlLine.sDefineIdentifierLparenIdentifierListCommaDotdotdotRparenReplacementListNewLine.identifierList = identifierList;
+                            }
+                            else
+                                isValid = false;
+                        }
+                        else
+                            isValid = false;
+                    }
+                    else if(isMatched(mIdx, PreprocessingToken::PUNCTUATOR, ")"))
+                    {
+                        mIdx++;
+
+                        if(controlLine.uControlLine.sDefineIdentifierLparenIdentifierListRparenReplacementListNewLine.replacementList = getReplacementList())
+                        {
+                            if(controlLine.uControlLine.sDefineIdentifierLparenIdentifierListRparenReplacementListNewLine.newLine = getNewLine())
+                            {
+                                controlLine.eControlLine = ControlLine::DEFINE_IDENTIFIER_LPAREN_IDENTIFIER_LIST_RPAREN_REPLACEMENT_LIST_NEW_LINE;
+                                controlLine.uControlLine.sDefineIdentifierLparenIdentifierListRparenReplacementListNewLine.identifier = identifier;
+                                controlLine.uControlLine.sDefineIdentifierLparenIdentifierListRparenReplacementListNewLine.lparen = lparen;
+                                controlLine.uControlLine.sDefineIdentifierLparenIdentifierListRparenReplacementListNewLine.identifierList;
                             }
                             else
                                 isValid = false;
@@ -85,56 +117,21 @@ ControlLine* PPDirectiveTokenizer::getControlLine()
                             isValid = false;
                     }
                     else
-                    {
-                        IdentifierList* identifierList = getIdentifierList();
-                        if(identifierList &&
-                           isMatched(mIdx, PreprocessingToken::PUNCTUATOR, ",") &&
-                           isMatched(mIdx + 1, PreprocessingToken::PUNCTUATOR, "...") &&
-                           isMatched(mIdx + 2, PreprocessingToken::PUNCTUATOR, ")"))
-                        {
-                            mIdx += 3;
-
-                            if(controlLine.uControlLine.sDefineIdentifierLparenIdentifierListCommaDotdotdotRparenReplacementListNewLine.replacementList = getReplacementList())
-                            {
-                                if(controlLine.uControlLine.sDefineIdentifierLparenIdentifierListCommaDotdotdotRparenReplacementListNewLine.newLine = getNewLine())
-                                {
-                                    controlLine.eControlLine = ControlLine::DEFINE_IDENTIFIER_LPAREN_IDENTIFIER_LIST_COMMA_DOTDOTDOT_RPAREN_REPLACEMENT_LIST_NEW_LINE;
-                                    controlLine.uControlLine.sDefineIdentifierLparenIdentifierListCommaDotdotdotRparenReplacementListNewLine.lparen = lparen;
-                                    controlLine.uControlLine.sDefineIdentifierLparenIdentifierListCommaDotdotdotRparenReplacementListNewLine.identifier = identifier;
-                                    controlLine.uControlLine.sDefineIdentifierLparenIdentifierListCommaDotdotdotRparenReplacementListNewLine.identifierList = identifierList;
-                                }
-                                else
-                                    isValid = false;
-                            }
-                            else
-                                isValid = false;
-                        }
-                        else if(isMatched(mIdx, PreprocessingToken::PUNCTUATOR, ")"))
-                        {
-                            mIdx++;
-
-                            if(controlLine.uControlLine.sDefineIdentifierLparenIdentifierListRparenReplacementListNewLine.replacementList = getReplacementList())
-                            {
-                                if(controlLine.uControlLine.sDefineIdentifierLparenIdentifierListRparenReplacementListNewLine.newLine = getNewLine())
-                                {
-                                    controlLine.eControlLine = ControlLine::DEFINE_IDENTIFIER_LPAREN_IDENTIFIER_LIST_RPAREN_REPLACEMENT_LIST_NEW_LINE;
-                                    controlLine.uControlLine.sDefineIdentifierLparenIdentifierListRparenReplacementListNewLine.identifier = identifier;
-                                    controlLine.uControlLine.sDefineIdentifierLparenIdentifierListRparenReplacementListNewLine.lparen = lparen;
-                                    controlLine.uControlLine.sDefineIdentifierLparenIdentifierListRparenReplacementListNewLine.identifierList;
-                                }
-                                else
-                                    isValid = false;
-                            }
-                            else
-                                isValid = false;
-                        }
-                        else
-                            isValid = false;
-                    }
-                }   
-                else 
-                    isValid = false;
+                        isValid = false;
+                }
+            }   
+            else if(controlLine.uControlLine.sDefineIdentifierReplacementListNewLine.replacementList = getReplacementList())
+            {
+                if(controlLine.uControlLine.sDefineIdentifierReplacementListNewLine.newLine = getNewLine())
+                {
+                    controlLine.uControlLine.sDefineIdentifierReplacementListNewLine.identifier = identifier;
+                    controlLine.eControlLine = ControlLine::DEFINE_IDENTIFIER_REPLACEMENT_LIST_NEW_LINE;
+                }
+                else
+                    isValid = false;   
             }
+            else
+                isValid = false;
         }
         else if(isMatched(mIdx, PreprocessingToken::IDENTIFIER, "undef") &&
                 isMatched(mIdx + 1, PreprocessingToken::IDENTIFIER))
@@ -261,7 +258,7 @@ ElifGroups* PPDirectiveTokenizer::getElifGroups(ElifGroups* bef)
         if(aft)
             return aft;
         else
-            retVal;
+            return retVal;
     }
     else
         return nullptr;
@@ -427,7 +424,14 @@ IdentifierList* PPDirectiveTokenizer::getIdentifierList(IdentifierList* bef)
     }
 
     if(isValid)
-        return new IdentifierList(identifierList);
+    {
+        IdentifierList* retVal = new IdentifierList(identifierList);
+        IdentifierList* aft = getIdentifierList(retVal);
+        if(aft)
+            return aft;
+        else
+            return retVal;
+    }
     else
     {
         mIdx = idx;

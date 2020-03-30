@@ -281,10 +281,10 @@ void PPDirectiveProcessor::replaceMacro(std::vector<PreprocessingToken*>& ppToke
     {
         if(ppTokenVec[i]->ePreprocessingToken == PreprocessingToken::IDENTIFIER)
         {
+            std::string identifier;
+            TOKEN::getString(ppTokenVec[i]->uPreprocessingToken.sIdentifier.identifier, identifier);
             for(auto&& macro : Macro::MACROS)
             {
-                std::string identifier;
-                TOKEN::getString(ppTokenVec[i]->uPreprocessingToken.sIdentifier.identifier, identifier);
                 if(identifier == macro.identifier)
                 {
                     // object-like
@@ -300,10 +300,7 @@ void PPDirectiveProcessor::replaceMacro(std::vector<PreprocessingToken*>& ppToke
                     // function-like
                     else
                     {
-                        std::cerr << "implementation error:\n"
-                                  << "    what: function-like macro is not implemented."
-                                  << "    macro-name: " << identifier
-                                  << std::endl;
+                        
                     }
                 }
             }
@@ -468,7 +465,7 @@ void PPDirectiveProcessor::ctrlDefine(ControlLine* controlLine)
     bool isDuplication = false;
     for(auto&& e : Macro::MACROS)
     {
-        if(macro.identifier == macro.identifier)
+        if(macro.identifier == e.identifier)
         {
             if(macro.isFunction == e.isFunction &&
                macro.isVariable == e.isVariable)
@@ -492,7 +489,7 @@ void PPDirectiveProcessor::ctrlDefine(ControlLine* controlLine)
                   << "    macro-name: " << macro.identifier
                   << std::endl;
     }
-    else
+    else     
         Macro::MACROS.push_back(std::move(macro));
 }
 
@@ -504,7 +501,10 @@ void PPDirectiveProcessor::ctrlUndef(ControlLine* controlLine)
     for(std::size_t i = 0; i < Macro::MACROS.size(); i++)
     {
         if(identifier == Macro::MACROS[i].identifier)
+        {
             Macro::MACROS.erase(Macro::MACROS.begin() + i);
+            break;
+        }
     }
 }
 
@@ -624,7 +624,19 @@ bool PPDirectiveProcessor::evalCastExpression(const std::vector<PreprocessingTok
 
 bool PPDirectiveProcessor::evalCharacterConstant(CharacterConstant* characterConstant, std::uintmax_t& val)
 {
+    if(characterConstant->eCharacterConstant != CharacterConstant::C_CHAR_SEQUENCE)
+    {
+        std::cerr << "implementation error:\n"
+                  << "    what: prefix for character constant is not available."
+                  << std::endl;
+        return false;
+    }
+
+    std::cerr << "implementation error:\n"
+              << "    what: character constant is not implemented."
+              << std::endl;
     
+    return false;
 }
 
 bool PPDirectiveProcessor::evalConditionalExpression(const std::vector<PreprocessingToken*>& vec, std::size_t& idx, std::uintmax_t& val)
@@ -1015,7 +1027,7 @@ bool PPDirectiveProcessor::evalLogicalANDExpression(const std::vector<Preprocess
 
     bool isValid = true;
 
-    if(evalLogicalANDExpression(vec, idx, val))
+    if(evalInclusiveORExpression(vec, idx, val))
     {
         while(isValid &&
               isMatched(vec, idx, PreprocessingToken::PUNCTUATOR, "&&"))
@@ -1344,7 +1356,7 @@ bool PPDirectiveProcessor::evalUnaryExpression(const std::vector<PreprocessingTo
             else if(tag == 3)
                 val = ~val;
             else if(tag == 4)
-                val = !val;
+                val = !static_cast<bool>(res);
         }
         else
             isValid = false;
@@ -1415,7 +1427,7 @@ bool PPDirectiveProcessor::isNonzero(PPTokens* ppTokens)
     }
 
     // replace macro
-    replaceMacro(ppTokenVec);
+    replaceMacro(ppTokenVec);   
 
     // remained identifier is converted to 0
     for(auto&& e : ppTokenVec)
@@ -1448,7 +1460,12 @@ bool PPDirectiveProcessor::isNonzero(PPTokens* ppTokens)
         }
     }
     else
+    {
         mIsValid = false;
+        std::cerr << "PPDirectiveProcessor error:\n"
+                  << "    what: constant expression is not evaluated."
+                  << std::endl;
+    }
 
     return value != 0;
 }
