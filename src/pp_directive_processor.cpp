@@ -310,7 +310,7 @@ void PPDirectiveProcessor::replaceMacro(std::vector<PreprocessingToken*>& ppToke
                         if(isMatched(ppTokenVec, i + 1, PreprocessingToken::PUNCTUATOR, "("))
                         {
                             int numParen = 0;
-                            for(std::size_t j = i + 2; i < ppTokenVec.size(); i++)
+                            for(std::size_t j = i + 2; j < ppTokenVec.size(); j++)
                             {
                                 if(isMatched(ppTokenVec, j, PreprocessingToken::PUNCTUATOR, "("))
                                     numParen++;
@@ -339,8 +339,27 @@ void PPDirectiveProcessor::replaceMacro(std::vector<PreprocessingToken*>& ppToke
                             isValid = false;
 
                         // check number of arguments
-                        std::cout << "num of arguments: "
-                                  << macro.arguments.size() << std::endl;
+                        if(isValid)
+                        {
+                            if(macro.arguments.empty() &&
+                               !macro.isVariable)
+                            {
+                                if(argsVec.size() == 1)
+                                {
+                                    if(!argsVec.front().empty())
+                                        isValid = false;
+                                }
+                                else
+                                    isValid = false;
+                            }
+                            else
+                            {
+                                if(macro.isVariable)
+                                    isValid = argsVec.size() >= macro.arguments.size();
+                                else
+                                    isValid = argsVec.size() == macro.arguments.size();
+                            }
+                        }
 
                         // expand arguments
                         if(isValid)
@@ -349,8 +368,117 @@ void PPDirectiveProcessor::replaceMacro(std::vector<PreprocessingToken*>& ppToke
                                 replaceMacro(e);
                         }
 
+                        // replace parameters
+                        auto replaceParameter = [&](std::vector<PreprocessingToken*>& rep,
+                                                    std::size_t& idx,
+                                                    Macro& m,
+                                                    std::vector<std::vector<PreprocessingToken*>>& av)
+                        {
+                            std::string d;
+                            TOKEN::getString(rep[idx], d);
+                            for(std::size_t j = 0; j < m.arguments.size(); j++)
+                            {
+                                if(d == m.arguments[j])
+                                {
+                                    rep.erase(rep.begin() + idx);
+                                    rep.insert(rep.begin() + idx,
+                                               av[j].begin(),
+                                               av[j].end());
+                                    idx = (idx + av[j].size()) - 1;
+                                    return;
+                                }
+                            }
+
+                            if(d == "__VA_ARGS__" &&
+                               m.isVariable)
+                            {
+                                std::vector<PreprocessingToken*> t;
+                                PreprocessingToken* p = new PreprocessingToken();
+                                p->ePreprocessingToken = PreprocessingToken::PUNCTUATOR;
+                                p->uPreprocessingToken.sPunctuator.punctuator = new Punctuator();
+                                p->uPreprocessingToken.sPunctuator.punctuator->element = ",";
+                                for(std::size_t j = m.arguments.size(); j < av.size(); j++)
+                                {
+                                    t.insert(t.end(),
+                                             av[j].begin(),
+                                             av[j].end());
+                                    if(j + 1 != av.size())
+                                        t.push_back(p);
+                                }
+                                rep.erase(rep.begin() + idx);
+                                rep.insert(rep.begin() + idx,
+                                           t.begin(),
+                                           t.end());
+                                idx = (idx + t.size()) - 1;
+                                return;
+                            }
+                        };
+                        
+                        std::vector<PreprocessingToken*> replacements = macro.replacements;
                         if(isValid)
                         {
+                            for(std::size_t j = 0; j < replacements.size(); j++)
+                            {
+                                if(isMatched(replacements, j, PreprocessingToken::PUNCTUATOR, "#") &&
+                                   isMatched(replacements, j + 1, PreprocessingToken::IDENTIFIER))
+                                {
+                                    std::cout << "PPDirectiveProcessor caution:\n"
+                                              << "    what: Macro replacement is not implemented '#' operator."
+                                              << std::endl;
+                                    replacements.erase(replacements.begin() + j,
+                                                       replacements.begin() + j + 2);
+                                    j--;
+                                }
+                                else if(isMatched(replacements, j, PreprocessingToken::PUNCTUATOR, "##") &&
+                                        j > 0)
+                                {
+                                    bool isEmpty = false;
+                                    if(isMatched(replacements, j + 1, PreprocessingToken::IDENTIFIER))
+                                    {
+                                        std::size_t idx = j + 1;
+                                        replaceParameter(replacements, idx, macro, argsVec);
+                                        if(idx == (j - 1))
+                                            isEmpty = true;
+                                    }
+
+                                    std::string d;
+                                    TOKEN::getString(replacements[j - 1], d);
+                                    if(!isEmpty)
+                                        TOKEN::getString(replacements[j + 1], d);
+
+                                    Preprocessor p;
+                                    p.retokenize(d);
+
+                                    if(p.mPPTokens.size() == 1)
+                                    {
+                                        replacements.erase(replacements.begin() + j - 1,
+                                                           replacements.begin() + j + 2);
+                                        replacements.insert(replacements.begin() + j - 1,
+                                                            p.mPPTokens.front().first);
+                                        j -= 1;
+                                    }
+                                    else
+                                    {
+                                        isValid = false;
+                                        std::cerr << "PPDirectiveProcessor error:\n"
+                                                  << "    what: '##' operator is invalid."
+                                                  << std::endl;
+                                        break;
+                                    }
+                                }
+                                else if(replacements[j]->ePreprocessingToken == PreprocessingToken::IDENTIFIER)
+                                    replaceParameter(replacements, j, macro, argsVec);
+                            }
+                        }    
+
+                        if(isValid)
+                        {
+                            ppTokenVec.erase(ppTokenVec.begin() + i,
+                                             ppTokenVec.begin() + endPos + 1);
+                            ppTokenVec.insert(ppTokenVec.begin() + i,
+                                              replacements.begin(),
+                                              replacements.end());
+                            i--;
                         }
                         else
                         {
@@ -483,7 +611,7 @@ void PPDirectiveProcessor::ctrlDefine(ControlLine* controlLine)
 
         vec.resize(inversedList.size());        
         for(std::size_t i = inversedList.size(); i > 0; i--)
-            TOKEN::getString(inversedList[i - 1], vec[i - 1]);
+            TOKEN::getString(inversedList[inversedList.size() - i], vec[i - 1]);
     };
 
     Macro macro;

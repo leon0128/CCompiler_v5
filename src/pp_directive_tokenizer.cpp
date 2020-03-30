@@ -108,7 +108,7 @@ ControlLine* PPDirectiveTokenizer::getControlLine()
                                 controlLine.eControlLine = ControlLine::DEFINE_IDENTIFIER_LPAREN_IDENTIFIER_LIST_RPAREN_REPLACEMENT_LIST_NEW_LINE;
                                 controlLine.uControlLine.sDefineIdentifierLparenIdentifierListRparenReplacementListNewLine.identifier = identifier;
                                 controlLine.uControlLine.sDefineIdentifierLparenIdentifierListRparenReplacementListNewLine.lparen = lparen;
-                                controlLine.uControlLine.sDefineIdentifierLparenIdentifierListRparenReplacementListNewLine.identifierList;
+                                controlLine.uControlLine.sDefineIdentifierLparenIdentifierListRparenReplacementListNewLine.identifierList = identifierList;
                             }
                             else
                                 isValid = false;
