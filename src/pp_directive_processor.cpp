@@ -300,7 +300,66 @@ void PPDirectiveProcessor::replaceMacro(std::vector<PreprocessingToken*>& ppToke
                     // function-like
                     else
                     {
-                        
+                        bool isValid = true;
+
+                        std::size_t endPos = i + 2;
+                        std::size_t sepPos = i + 1;
+                        std::vector<std::vector<PreprocessingToken*>> argsVec;
+
+                        // separate arguments
+                        if(isMatched(ppTokenVec, i + 1, PreprocessingToken::PUNCTUATOR, "("))
+                        {
+                            int numParen = 0;
+                            for(std::size_t j = i + 2; i < ppTokenVec.size(); i++)
+                            {
+                                if(isMatched(ppTokenVec, j, PreprocessingToken::PUNCTUATOR, "("))
+                                    numParen++;
+                                else if(isMatched(ppTokenVec, j, PreprocessingToken::PUNCTUATOR, ")"))
+                                {
+                                    if(numParen > 0)
+                                        numParen--;
+                                    else if(numParen == 0)
+                                    {
+                                        endPos = j;
+                                        argsVec.emplace_back(ppTokenVec.begin() + sepPos + 1,
+                                                             ppTokenVec.begin() + j);
+                                        break;
+                                    }
+                                }
+                                else if(isMatched(ppTokenVec, j, PreprocessingToken::PUNCTUATOR, ",") &&
+                                        numParen == 0)
+                                {
+                                    argsVec.emplace_back(ppTokenVec.begin() + sepPos + 1,
+                                                         ppTokenVec.begin() + j);
+                                    sepPos = j;
+                                }
+                            }
+                        }
+                        else
+                            isValid = false;
+
+                        // check number of arguments
+                        std::cout << "num of arguments: "
+                                  << macro.arguments.size() << std::endl;
+
+                        // expand arguments
+                        if(isValid)
+                        {
+                            for(auto&& e : argsVec)
+                                replaceMacro(e);
+                        }
+
+                        if(isValid)
+                        {
+                        }
+                        else
+                        {
+                            mIsValid = false;
+                            std::cerr << "Macro Replacement error:\n"
+                                      << "    what: function-like macor replacement is invalid.\n"
+                                      << "    macro-name: " << macro.identifier
+                                      << std::endl;
+                        }
                     }
                 }
             }
