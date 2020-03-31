@@ -12,15 +12,6 @@ PPDirectiveProcessor::PPDirectiveProcessor(Preprocessor* pp):
 bool PPDirectiveProcessor::execute()
 {
     process(mPP->mPreprocessingFile);
-
-    std::string data;
-    for(auto&& e : mPP->mProcessedPPTokens)
-    {
-        data.clear();
-        TOKEN::getString(e, data);
-        std::cout << data << std::endl;
-    }
-
     return mIsValid;
 }
 

@@ -8,6 +8,7 @@ class Initializer;
 class PPTokenizer;
 class PPDirectiveTokenizer;
 class PPDirectiveProcessor;
+class PPCharacterConverter;
 
 class Preprocessor
 {
@@ -16,6 +17,7 @@ public:
     friend PPTokenizer;
     friend PPDirectiveTokenizer;
     friend PPDirectiveProcessor;
+    friend PPCharacterConverter;
 
     enum ESearch
     {
@@ -43,6 +45,7 @@ private:
     void ppTokenize();
     void ppDirectiveTokenize();
     void ppDirectiveProcess();
+    void ppCharacterConvert();
 
     void error(const char* message) const;
 
@@ -52,6 +55,7 @@ private:
     PPTokenizer* mPPTokenizer; 
     PPDirectiveTokenizer* mPPDirectiveTokenizer;
     PPDirectiveProcessor* mPPDirectiveProcessor;
+    PPCharacterConverter* mPPCharacterConverter;
 
     std::string mFile;
     std::string mDir;

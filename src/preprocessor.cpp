@@ -3,6 +3,7 @@
 #include "pp_tokenizer.hpp"
 #include "pp_directive_tokenizer.hpp"
 #include "pp_directive_processor.hpp"
+#include "pp_character_converter.hpp"
 #include <iostream>
 #include <utility>
 
@@ -19,6 +20,7 @@ Preprocessor::Preprocessor():
     mPPTokenizer(nullptr),
     mPPDirectiveTokenizer(nullptr),
     mPPDirectiveProcessor(nullptr),
+    mPPCharacterConverter(nullptr),
     mFile(),
     mDir(),
     mSrc(),
@@ -32,6 +34,7 @@ Preprocessor::Preprocessor():
     mPPTokenizer = new PPTokenizer(this);
     mPPDirectiveTokenizer = new PPDirectiveTokenizer(this);
     mPPDirectiveProcessor = new PPDirectiveProcessor(this);
+    mPPCharacterConverter = new PPCharacterConverter(this);
 }
 
 Preprocessor::~Preprocessor()
@@ -40,6 +43,7 @@ Preprocessor::~Preprocessor()
     delete mPPTokenizer;
     delete mPPDirectiveTokenizer;
     delete mPPDirectiveProcessor;
+    delete mPPCharacterConverter;
 }
 
 bool Preprocessor::execute(const std::string& file,
@@ -60,6 +64,9 @@ bool Preprocessor::execute(const std::string& file,
 
     if(mIsValid)
         ppDirectiveProcess();
+
+    if(mIsValid)
+        ppCharacterConvert();
 
     return mIsValid;
 }
@@ -113,6 +120,14 @@ void Preprocessor::ppDirectiveProcess()
 
     if(!mIsValid)
         error("failed to process preprocessing directive.");
+}
+
+void Preprocessor::ppCharacterConvert()
+{
+    mIsValid = mPPCharacterConverter->execute();
+
+    if(!mIsValid)
+        error("failed to convert from character escape sequence to character.");
 }
 
 void Preprocessor::error(const char* message) const
