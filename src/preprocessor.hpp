@@ -36,6 +36,8 @@ public:
 
     bool retokenize(std::string& src);
 
+    static void includePredefinedMacro();
+
 private:
     void initialize();
     void ppTokenize();

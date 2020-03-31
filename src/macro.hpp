@@ -8,7 +8,7 @@ class PreprocessingToken;
 struct Macro
 {
     static std::vector<Macro> MACROS;
-
+    
     std::string identifier;
     
     std::vector<std::string> arguments;

@@ -8,6 +8,12 @@
 
 std::vector<class ControlLine*> Preprocessor::MACROS;
 
+void Preprocessor::includePredefinedMacro()
+{
+    Preprocessor p;
+    p.execute("predefined_macro.h");
+}
+
 Preprocessor::Preprocessor():
     mInitializer(nullptr),
     mPPTokenizer(nullptr),

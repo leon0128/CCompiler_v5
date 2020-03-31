@@ -20,7 +20,8 @@ Compiler::~Compiler()
 bool Compiler::execute(int argc, char** argv)
 {
     checkArgs(argc, argv);
-    
+
+    Preprocessor::includePredefinedMacro();    
     if(mIsValid)
         preprocess(argv[1]);
 
