@@ -11,11 +11,28 @@ PPCharacterConverter::PPCharacterConverter(Preprocessor* pp):
 
 bool PPCharacterConverter::execute()
 {
+    // convert to character from escapesequence
     for(auto&& e : mPP->mProcessedPPTokens)
     {
         if(e->ePreprocessingToken == PreprocessingToken::CHARACTER_CONSTANT ||
            e->ePreprocessingToken == PreprocessingToken::STRING_LITERAL)
             convert(e);
+    }
+
+    // concatenate stringliterals
+    for(std::size_t i = 0; i + 1 < mPP->mProcessedPPTokens.size(); i++)
+    {
+        if(mPP->mProcessedPPTokens[i]->ePreprocessingToken == PreprocessingToken::STRING_LITERAL &&
+           mPP->mProcessedPPTokens[i + 1]->ePreprocessingToken == PreprocessingToken::STRING_LITERAL)
+        {
+            StringLiteral* stringLiteral = concatenateStringLiteral(mPP->mProcessedPPTokens[i]->uPreprocessingToken.sStringLiteral.stringLiteral,
+                                                                    mPP->mProcessedPPTokens[i + 1]->uPreprocessingToken.sStringLiteral.stringLiteral);
+            
+            mPP->mProcessedPPTokens.erase(mPP->mProcessedPPTokens.begin() + i);
+            mPP->mProcessedPPTokens[i]->uPreprocessingToken.sStringLiteral.stringLiteral = stringLiteral;
+        
+            i--;
+        }
     }
 
     return mIsValid;
@@ -76,6 +93,64 @@ void PPCharacterConverter::convert(PreprocessingToken* preprocessingToken)
             }
         }
     }
+}
+
+StringLiteral* PPCharacterConverter::concatenateStringLiteral(StringLiteral* bef, StringLiteral* aft)
+{
+    if(bef->encodingPrefix ||
+       aft->encodingPrefix)
+    {
+        std::string d;
+        if(bef->encodingPrefix)
+            TOKEN::getString(bef, d);
+        else
+            TOKEN::getString(aft, d);
+
+        mIsValid = false;
+        std::cerr << "PPCharacterConverter error:\n"
+                  << "    what: does not support string literals with encoding prefix.\n"
+                  << "    data: " << d
+                  << std::endl;
+
+        return bef; 
+    }
+
+    if(!bef->sCharSequence)
+        return aft;
+    else if(!aft->sCharSequence)
+        return bef;
+    
+    SCharSequence* aftLast = aft->sCharSequence;
+    
+    bool isContinued = true;
+    while(isContinued)
+    {
+        switch(aftLast->eSCharSequence)
+        {
+            case(SCharSequence::S_CHAR):
+                isContinued = false;
+                break;
+            case(SCharSequence::S_CHAR_SEQUENCE_S_CHAR):
+                aftLast = aftLast->uSCharSequence.sSCharSequenceSChar.sCharSequence;
+                break;
+            
+            default:
+                mIsValid = false;
+                isContinued = false;
+                std::cerr << "implementation error:\n"
+                          << "    what: unexpected enumuration.\n"
+                          << "    enum: " << aftLast->eSCharSequence
+                          << std::endl;
+                break;
+        }
+    }
+
+    SChar* tmp = aftLast->uSCharSequence.sSChar.sChar;
+
+    aftLast->eSCharSequence = SCharSequence::S_CHAR_SEQUENCE_S_CHAR;
+    aftLast->uSCharSequence.sSCharSequenceSChar = {bef->sCharSequence, tmp};
+
+    return aft;
 }
 
 bool PPCharacterConverter::simpleEscapeSequence(std::string& data, std::size_t idx)

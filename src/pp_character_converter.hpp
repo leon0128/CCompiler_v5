@@ -14,6 +14,7 @@ public:
 
 private:
     void convert(PreprocessingToken*);
+    StringLiteral* concatenateStringLiteral(StringLiteral* bef, StringLiteral* aft);
 
     bool simpleEscapeSequence(std::string& data, std::size_t idx);
     bool octalEscapeSequence(std::string& data, std::size_t idx);
