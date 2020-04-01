@@ -5,34 +5,54 @@
 
 class BaseToken;
 
+class BinaryExponentPart;
 class CChar;
 class CCharSequence;
 class CharacterConstant;
+class Constant;
 class ControlLine;
+class DecimalConstant;
+class DecimalFloatingConstant;
 class Digit;
+class DigitSequence;
 class ElifGroup;
 class ElifGroups;
 class ElseGroup;
 class EndifLine;
 class EncodingPrefix;
+class EnumerationConstant;
 class EscapeSequence;
+class ExponentPart;
+class FloatingConstant;
+class FloatingSuffix;
+class FractionalConstant;
 class Group;
 class GroupPart;
 class HChar;
 class HCharSequence;
 class HeaderName;
+class HexadecimalConstant;
 class HexadecimalDigit;
+class HexadecimalDigitSequence;
 class HexadecimalEscapeSequence;
+class HexadecimalFloatingConstant;
+class HexadecimalFractionalConstant;
+class HexadecimalPrefix;
 class HexQuad;
 class Identifier;
 class IdentifierList;
 class IdentifierNondigit;
 class IfGroup;
 class IfSection;
+class IntegerConstant;
+class IntegerSuffix;
+class Keyword;
 class Lparen;
 class NewLine;
 class Nondigit;
 class NonDirective;
+class NonzeroDigit;
+class OctalConstant;
 class OctalDigit;
 class OctalEscapeSequence;
 class PPNumber;
@@ -49,6 +69,7 @@ class Sign;
 class SimpleEscapeSequence;
 class StringLiteral;
 class TextLine;
+class Token;
 class UniversalCharacterName;
 
 namespace TOKEN
@@ -110,6 +131,39 @@ protected:
 
 public:
     static void destroy(){}
+};
+
+class BinaryExponentPart : public BaseToken
+{
+public:
+    enum EBinaryExponentPart
+    {
+        NONE,
+        p_SIGN_DIGIT_SEQUENCE,
+        P_SIGN_DIGIT_SEQUENCE
+    } eBinaryExponentPart;
+
+    union UBinaryExponentPart
+    {
+        struct S_p_SignDigitSequence
+        {
+            Sign* sign;
+            DigitSequence* digitSequence;
+        } s_p_SignDigitSequence;
+        struct S_P_SignDigitSequence
+        {
+            Sign* sign;
+            DigitSequence* digitSequence;
+        } s_P_SignDigitSequence;
+
+        UBinaryExponentPart():
+            s_p_SignDigitSequence{nullptr, nullptr}{}
+    } uBinaryExponentPart;
+
+    BinaryExponentPart():
+        BaseToken(),
+        eBinaryExponentPart(NONE),
+        uBinaryExponentPart(){}
 };
 
 class CChar : public BaseToken
@@ -216,6 +270,47 @@ public:
         uCharacterConstant(){}
 };
 
+class Constant : public BaseToken
+{
+public:
+    enum EConstant
+    {
+        NONE,
+        INTEGER_CONSTANT,
+        FLOATING_CONSTANT,
+        ENUMERATION_CONSTANT,
+        CHARACTER_CONSTANT
+    } eConstant;
+
+    union UConstant
+    {
+        struct SIntegerConstant
+        {
+            IntegerConstant* integerConstant;
+        } sIntegerConstant;
+        struct SFloatingConstant
+        {
+            FloatingConstant* floatingConstant;
+        } sFloatingConstant;
+        struct SEnumerationConstant
+        {
+            EnumerationConstant* enumerationConstant;
+        } sEnumerationConstant;
+        struct SCharacterConstant
+        {
+            CharacterConstant* characterConstant;
+        } sCharacterConstant;
+
+        UConstant():
+            sIntegerConstant{nullptr}{}
+    } uConstant;
+
+    Constant():
+        BaseToken(),
+        eConstant(NONE),
+        uConstant(){}
+};
+
 class ControlLine : public BaseToken
 {
 public:
@@ -305,6 +400,73 @@ public:
         uControlLine(){}
 };
 
+class DecimalConstant : public BaseToken
+{
+public:
+    enum EDecimalConstant
+    {
+        NONE,
+        NONZERO_DIGIT,
+        DECIMAL_CONSTANT_DIGIT
+    } eDecimalConstant;
+
+    union UDecimalConstant
+    {
+        struct SNonzeroDigit
+        {
+            NonzeroDigit* nonzeroDigit;
+        } sNonzeroDigit;
+        struct SDecimalConstantDigit
+        {
+            DecimalConstant* decimalConstant;
+            Digit* digit;
+        } sDecimalConstantDigit;
+
+        UDecimalConstant():
+            sNonzeroDigit{nullptr}{}
+    } uDecimalConstant;
+
+    DecimalConstant():
+        BaseToken(),
+        eDecimalConstant(NONE),
+        uDecimalConstant(){}
+};
+
+class DecimalFloatingConstant : public BaseToken
+{
+public:
+    enum EDecimalFloatingConstant
+    {
+        NONE,
+        FRACTIONAL_CONSTANT_EXPONENT_PART_FLOATING_SUFFIX,
+        DIGIT_SEQUENCE_EXPONENT_PART_FLOATING_SUFFIX
+    } eDecimalFloatingConstant;
+
+    union UDecimalFloatingConstant
+    {
+        struct SFractionalConstantExponentPartFloatingSuffix
+        {
+            FractionalConstant* fractionalConstant;
+            ExponentPart* exponentPart;
+            FloatingSuffix* floatingSuffix;
+        } sFractionalConstantExponentPartFloatingSuffix;
+        struct SDigitSequenceExponentPartFloatingSuffix
+        {
+            DigitSequence* digitSequence;
+            ExponentPart* exponentPart;
+            FloatingSuffix* floatingSuffix;
+        } sDigitSequenceExponentPartFloatingSuffix;
+
+        UDecimalFloatingConstant():
+            sFractionalConstantExponentPartFloatingSuffix{nullptr, nullptr, nullptr}{}
+    } uDecimalFloatingConstant;
+
+    DecimalFloatingConstant():
+        BaseToken(),
+        eDecimalFloatingConstant(NONE),
+        uDecimalFloatingConstant(){}
+};
+
 class Digit : public BaseToken
 {
 public:
@@ -313,6 +475,38 @@ public:
     Digit():
         BaseToken(),
         element(0){}
+};
+
+class DigitSequence : public BaseToken
+{
+public:
+    enum EDigitSequence
+    {
+        NONE,
+        DIGIT,
+        DIGIT_SEQUENCE_DIGIT
+    } eDigitSequence;
+
+    union UDigitSequence
+    {
+        struct SDigit
+        {
+            Digit* digit;
+        } sDigit;
+        struct SDigitSequenceDigit
+        {
+            DigitSequence* digitSequence;
+            Digit* digit;
+        } sDigitSequenceDigit;
+    
+        UDigitSequence():
+            sDigit{nullptr}{}
+    } uDigitSequence;
+
+    DigitSequence():
+        BaseToken(),
+        eDigitSequence(NONE),
+        uDigitSequence(){}
 };
 
 class ElifGroup : public BaseToken
@@ -393,6 +587,16 @@ public:
         element(){}
 };
 
+class EnumerationConstant : public BaseToken
+{
+public:
+    Identifier* identifier;
+
+    EnumerationConstant():
+        BaseToken(),
+        identifier(nullptr){}
+};
+
 class EscapeSequence : public BaseToken
 {
 public:
@@ -432,6 +636,112 @@ public:
         BaseToken(),
         eEscapeSequence(NONE),
         uEscapeSequence(){}
+};
+
+class ExponentPart : public BaseToken
+{
+public:
+    enum EExponentPart
+    {
+        NONE,
+        e_SIGN_DIGIT_SEQUENCE,
+        E_SIGN_DIGIT_SEQUENCE
+    } eExponentPart;
+
+    union UExponentPart
+    {
+        struct S_e_SignDigitSequence
+        {
+            Sign* sign;
+            DigitSequence* digitSequence;
+        } s_e_SignDigitSequence;
+        struct S_E_SignDigitSequence
+        {
+            Sign* sign;
+            DigitSequence* digitSequence;
+        } s_E_SignDigitSequence;
+    
+        UExponentPart():
+            s_e_SignDigitSequence{nullptr, nullptr}{}
+    } uExponentPart;
+
+    ExponentPart():
+        BaseToken(),
+        eExponentPart(NONE),
+        uExponentPart(){}
+};
+
+class FloatingConstant : public BaseToken
+{
+public:
+    enum EFloatingConstant
+    {
+        NONE,
+        DECIMAL_FLOATING_CONSTANT,
+        HEXADECIMAL_FLOATING_CONSTANT
+    } eFloatingConstant;
+
+    union UFloatingConstant
+    {
+        struct SDecimalFloatingConstant
+        {
+            DecimalFloatingConstant* decimalFloatingConstant;
+        } sDecimalFloatingConstant;
+        struct SHexadecimalFloatingConstant
+        {
+            HexadecimalFloatingConstant* hexadecimalFloatingConstant;
+        } sHexadecimalFloatingConstant;
+
+        UFloatingConstant():
+            sDecimalFloatingConstant{nullptr}{}
+    } uFloatingConstant;
+
+    FloatingConstant():
+        BaseToken(),
+        eFloatingConstant(NONE),
+        uFloatingConstant(){}
+};
+
+class FloatingSuffix : public BaseToken
+{
+public:
+    char element;
+
+    FloatingSuffix():
+        BaseToken(),
+        element(0){}
+};
+
+class FractionalConstant : public BaseToken
+{
+public:
+    enum EFractionalConstant
+    {
+        NONE,
+        DIGIT_SEQUENCE_DIGIT_SEQUENCE,
+        DIGIT_SEQUENCE
+    } eFractionalConstant;
+
+    union UFractionalConstant
+    {
+        struct SDigitSequenceDigitSequence
+        {
+            DigitSequence* digitSequence;
+            DigitSequence* digitSequence_1;
+        } sDigitSequenceDigitSequence;
+        struct SDigitSequence
+        {
+            DigitSequence* digitSequence;
+        } sDigitSequence;
+
+        UFractionalConstant():
+            sDigitSequenceDigitSequence{nullptr, nullptr}{}
+    } uFractionalConstant;
+
+    FractionalConstant():
+        BaseToken(),
+        eFractionalConstant(NONE),
+        uFractionalConstant(){}
 };
 
 class Group : public BaseToken
@@ -590,6 +900,38 @@ public:
         element(0){}
 };
 
+class HexadecimalDigitSequence : public BaseToken
+{
+public:
+    enum EHexadecimalDigitSequence
+    {
+        NONE,
+        HEXADECIMAL_DIGIT,
+        HEXADECIMAL_DIGIT_SEQUENCE_HEXADECIMAL_DIGIT
+    } eHexadecimalDigitSequence;
+
+    union UHexadecimalDigitSequence
+    {
+        struct SHexadecimalDigit
+        {
+            HexadecimalDigit* hexadecimalDigit;
+        } sHexadecimalDigit;
+        struct SHexadecimalDigitSequenceHexadecimalDigit
+        {
+            HexadecimalDigitSequence* hexadecimalDigitSequence;
+            HexadecimalDigit* hexadecimalDigit;
+        } sHexadecimalDigitSequenceHexadecimalDigit;
+
+        UHexadecimalDigitSequence():
+            sHexadecimalDigit{nullptr}{}
+    } uHexadecimalDigitSequence;
+
+    HexadecimalDigitSequence():
+        BaseToken(),
+        eHexadecimalDigitSequence(NONE),
+        uHexadecimalDigitSequence(){}
+};
+
 class HexadecimalEscapeSequence : public BaseToken
 {
 public:
@@ -620,6 +962,85 @@ public:
         BaseToken(),
         eHexadecimalEscapeSequence(NONE),
         uHexadecimalEscapeSequence(){}
+};
+
+class HexadecimalFloatingConstant : public BaseToken
+{
+public:
+    enum EHexadecimalFloatingConstant
+    {
+        NONE,
+        HEXADECIMAL_PREFIX_HEXADECIMAL_FRACTIONAL_CONSTANT_BINARY_EXPONENT_PART_FLOATING_SUFFIX,
+        HEXADECIMAL_PREFIX_HEXADECIMAL_DIGIT_SEQUENCE_BINARY_EXPONENT_PART_FLOATING_SUFFIX
+    } eHexadecimalFloatingConstant;
+
+    union UHexadecimalFloatingConstant
+    {
+        struct SHexadecimalPrefixHexadecimalFractionalConstantBinaryExponentPartFloatingSuffix
+        {
+            HexadecimalPrefix* hexadecimalPrefix;
+            HexadecimalFractionalConstant* hexadecimalFractionalConstant;
+            BinaryExponentPart* binaryExponentPart;
+            FloatingSuffix* floatingSuffix;
+        } sHexadecimalPrefixHexadecimalFractionalConstantBinaryExponentPartFloatingSuffix;
+        struct SHexadecimalPrefixHexadecimalDigitSequenceBinaryExponentPartFloatingSuffix
+        {
+            HexadecimalPrefix* hexadecimalPrefix;
+            HexadecimalDigitSequence* hexadecimalDigitSequence;
+            BinaryExponentPart* binaryExponentPart;
+            FloatingSuffix* floatingSuffix;
+        } sHexadecimalPrefixHexadecimalDigitSequenceBinaryExponentPartFloatingSuffix;
+    
+        UHexadecimalFloatingConstant():
+            sHexadecimalPrefixHexadecimalFractionalConstantBinaryExponentPartFloatingSuffix{nullptr, nullptr, nullptr, nullptr}{}
+    } uHexadecimalFloatingConstant;
+
+    HexadecimalFloatingConstant():
+        BaseToken(),
+        eHexadecimalFloatingConstant(NONE),
+        uHexadecimalFloatingConstant(){}
+};
+
+class HexadecimalFractionalConstant : public BaseToken
+{
+public:
+    enum EHexadecimalFractionalConstant
+    {
+        NONE,
+        HEXADECIMAL_DIGIT_SEQUENCE_HEXADECIMAL_DIGIT_SEQUENCE,
+        HEXADECIMAL_DIGIT_SEQUENCE
+    } eHexadecimalFractionalConstant;
+
+    union UHexadecimalFractionalConstant
+    {
+        struct SHexadecimalDigitSequenceHexadecimalDigitSequence
+        {
+            HexadecimalDigitSequence* hexadecimalDigitSequence;
+            HexadecimalDigitSequence* hexadecimalDigitSequence_1;
+        } sHexadecimalDigitSequenceHexadecimalDigitSequence;
+        struct SHexadecimalDigitSequence
+        {
+            HexadecimalDigitSequence* hexadecimalDigitSequence;
+        } sHexadecimalDigitSequence;
+
+        UHexadecimalFractionalConstant():
+            sHexadecimalDigitSequenceHexadecimalDigitSequence{nullptr, nullptr}{}
+    } uHexadecimalFractionalConstant;
+
+    HexadecimalFractionalConstant():
+        BaseToken(),
+        eHexadecimalFractionalConstant(NONE),
+        uHexadecimalFractionalConstant(){}
+};
+
+class HexadecimalPrefix : public BaseToken
+{
+public:
+    std::string element;
+
+    HexadecimalPrefix():
+        BaseToken(),
+        element(){}
 };
 
 class HexQuad : public BaseToken
@@ -797,6 +1218,54 @@ public:
         endifLine(nullptr){}
 };
 
+class IntegerConstant : public BaseToken
+{
+    enum EIntegerConstant
+    {
+        NONE,
+        DECIMAL_CONSTANT_INTEGER_SUFFIX,
+        OCTAL_CONSTANT_INTEGER_SUFFIX,
+        HEXADECIMAL_CONSTANT_INTEGER_SUFFIX
+    } eIntegerConstant;
+
+    union UIntegerConstant
+    {
+        struct SDecimalConstantIntegerSuffix
+        {
+            DecimalConstant* decimalConstant;
+            IntegerSuffix* integerSuffix;
+        } sDecimalConstantIntegerSuffix;
+        struct SOctalConstantIntegerSuffix
+        {
+            OctalConstant* octalConstant;
+            IntegerSuffix* integerSuffix;
+        } sOctalConstantIntegerSuffix;
+        struct SHexadecimalConstantIntegerSuffix
+        {
+            HexadecimalConstant* hexadecimalConstant;
+            IntegerSuffix* integerSuffix;
+        } sHexadecimalConstantIntegerSuffix;
+
+        UIntegerConstant():
+            sDecimalConstantIntegerSuffix{nullptr, nullptr}{}
+    } uIntegerConstant;
+
+    IntegerConstant():
+        BaseToken(),
+        eIntegerConstant(NONE),
+        uIntegerConstant(){}
+};
+
+class Keyword : public BaseToken
+{
+public:
+    std::string element;
+
+    Keyword():
+        BaseToken(),
+        element(){}
+};
+
 class Lparen : public BaseToken
 {
 public:
@@ -837,6 +1306,47 @@ public:
         BaseToken(),
         ppTokens(nullptr),
         newLine(nullptr){}
+};
+
+class NonzeroDigit : public BaseToken
+{
+public:
+    char element;
+
+    NonzeroDigit():
+        BaseToken(),
+        element(0){}
+};
+
+class OctalConstant : public BaseToken
+{
+    enum EOctalConstant
+    {
+        NONE,
+        ZERO,
+        OCTAL_CONSTANT_OCTAL_DIGIT
+    } eOctalConstant;
+
+    union UOctalConstant
+    {
+        struct SZero
+        {
+            char element;
+        } sZero;
+        struct SOctalConstantOctalDigit
+        {
+            OctalConstant* octalConstant;
+            OctalDigit* octalDigit;
+        } sOctalConstantOctalDigit;
+
+        UOctalConstant():
+            sZero{0}{}
+    } uOctalConstant;
+
+    OctalConstant():
+        BaseToken(),
+        eOctalConstant(NONE),
+        uOctalConstant(){}
 };
 
 class OctalDigit : public BaseToken
@@ -1225,6 +1735,52 @@ public:
         BaseToken(),
         ppTokens(nullptr),
         newLine(nullptr){}
+};
+
+class Token : public BaseToken
+{
+public:
+    enum EToken
+    {
+        NONE,
+        KEYWORD,
+        IDENTIFIER,
+        CONSTANT,
+        STRING_LITERAL,
+        PUNCTUATOR
+    } eToken;
+
+    union UToken
+    {
+        struct SKeyword
+        {
+            Keyword* keyword;
+        } sKeyword;
+        struct SIdentifier
+        {
+            Identifier* identifier;
+        } sIdentifier;
+        struct SConstant
+        {
+            Constant* constant;
+        } sConstant;
+        struct SStringLiteral
+        {
+            StringLiteral* stringLiteral;
+        } sStringLiteral;
+        struct SPunctuator
+        {
+            Punctuator* punctuator;
+        } sPunctuator;
+
+        UToken():
+            sKeyword{nullptr}{}
+    } uToken;
+
+    Token():
+        BaseToken(),
+        eToken(NONE),
+        uToken(){}
 };
 
 class UniversalCharacterName : public BaseToken
