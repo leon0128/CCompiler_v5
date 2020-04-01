@@ -569,6 +569,7 @@ void PPDirectiveProcessor::ctrlInclude(ControlLine* controlLine)
         mIsValid = false;
         std::cerr << "pp-directive-processor error:\n"
                   << "    what: include directive is invalid."
+                  << "\n    data: " << src
                   << std::endl;
     }
 }

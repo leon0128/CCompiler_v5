@@ -38,6 +38,8 @@ public:
 
     bool retokenize(std::string& src);
 
+    bool characterConvert();
+
     static void includePredefinedMacro();
 
 private:

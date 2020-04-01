@@ -39,16 +39,18 @@ void Compiler::checkArgs(int argc, char** argv)
 
 void Compiler::preprocess(const char* file)
 {
-    if(!mPP->execute(file))
-    {
-        mIsValid = false;
+    mIsValid = mPP->execute(file);
+
+    if(mIsValid)
+        mIsValid = mPP->characterConvert();
+
+    if(!mIsValid)
         error("failed to preprocess.");
-    }
 }
 
 void Compiler::error(const char* message) const
 {
-    std::cerr << "compiler-class-error:\n    "
-              << message
+    std::cerr << "Compiler error:\n"
+              << "    what: " << message
               << std::endl;
 }

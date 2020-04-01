@@ -469,7 +469,7 @@ HexadecimalEscapeSequence* PPTokenizer::getHexadecimalEscapeSequence(Hexadecimal
 HexQuad* PPTokenizer::getHexQuad()
 {
     HexQuad hexQuad;
-    bool isValid = false;
+    bool isValid = true;
     auto idx = mIdx;
 
     if(hexQuad.hexadecimalDigit = getHexadecimalDigit())

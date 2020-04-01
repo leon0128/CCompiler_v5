@@ -170,7 +170,8 @@ void Initializer::joinLine() const
 
 void Initializer::error(const char* message) const
 {
-    std::cerr << "initializer-class-error:\n    "
-              << message
+    std::cerr << "Initializer error:\n"
+              << "    what: " << message
+              << "\n    file: " << mPP->mDir << mPP->mFile
               << std::endl;
 }

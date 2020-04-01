@@ -65,9 +65,6 @@ bool Preprocessor::execute(const std::string& file,
     if(mIsValid)
         ppDirectiveProcess();
 
-    if(mIsValid)
-        ppCharacterConvert();
-
     return mIsValid;
 }
 
@@ -87,6 +84,13 @@ bool Preprocessor::retokenize(std::string& src)
     
     ppTokenize();
     
+    return mIsValid;
+}
+
+bool Preprocessor::characterConvert()
+{
+    ppCharacterConvert();
+
     return mIsValid;
 }
 
@@ -132,7 +136,8 @@ void Preprocessor::ppCharacterConvert()
 
 void Preprocessor::error(const char* message) const
 {
-    std::cerr << "preprocessor-class-error:\n    "
-              << message
+    std::cerr << "Preprocessor error:\n"
+              << "    what: " << message
+              << "\n    file: " << mDir << mFile
               << std::endl;
 }
