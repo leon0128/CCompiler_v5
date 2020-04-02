@@ -1,16 +1,11 @@
 #pragma once
 
-#include <vector>
+#include "token.hpp"
 
 class TokenConverter
 {
 public:
-    TokenConverter();
+    TokenConverter() = delete;
 
-    bool execute();
-
-private:
-
-
-    bool mIsValid;
+    static Token* convert(PreprocessingToken*);
 };

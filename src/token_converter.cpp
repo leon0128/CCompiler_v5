@@ -1,11 +1,6 @@
 #include "token_converter.hpp"
 
-TokenConverter::TokenConverter():
-    mIsValid(true)
+Token* TokenConverter::convert(PreprocessingToken* preprocessingToken)
 {
-}
-
-bool TokenConverter::execute()
-{
-    return mIsValid;
+    return nullptr;
 }

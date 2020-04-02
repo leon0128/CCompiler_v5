@@ -40,6 +40,8 @@ public:
 
     bool characterConvert();
 
+    const std::vector<class PreprocessingToken*>& getPPTokens() const {return mProcessedPPTokens;}
+
     static void includePredefinedMacro();
 
 private:

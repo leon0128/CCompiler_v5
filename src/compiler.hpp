@@ -11,10 +11,12 @@ public:
 private:
     void checkArgs(int argc, char** argv);
     void preprocess(const char* file);
+    void tokenize();
 
     void error(const char* message) const;
 
     class Preprocessor* mPP;
+    class Tokenizer* mTokenizer;
 
     bool mIsValid;
 };
