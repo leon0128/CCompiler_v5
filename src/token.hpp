@@ -5,14 +5,22 @@
 
 class BaseToken;
 
+class AlignmentSpecifier;
+class AtomicTypeSpecifier;
 class BinaryExponentPart;
 class CChar;
 class CCharSequence;
 class CharacterConstant;
+class CompoundStatement; //
 class Constant;
+class ConstantExpression; //
 class ControlLine;
 class DecimalConstant;
 class DecimalFloatingConstant;
+class Declaration;
+class DeclarationList; //
+class DeclarationSpecifiers;
+class Declarator; //
 class Digit;
 class DigitSequence;
 class ElifGroup;
@@ -21,11 +29,16 @@ class ElseGroup;
 class EndifLine;
 class EncodingPrefix;
 class EnumerationConstant;
+class EnumeratorList; //
+class EnumSpecifier;
 class EscapeSequence;
 class ExponentPart;
+class ExternalDeclaration;
 class FloatingConstant;
 class FloatingSuffix;
 class FractionalConstant;
+class FunctionDefinition;
+class FunctionSpecifier;
 class Group;
 class GroupPart;
 class HChar;
@@ -44,9 +57,14 @@ class IdentifierList;
 class IdentifierNondigit;
 class IfGroup;
 class IfSection;
+class InitDeclarator;
+class InitDeclaratorList;
+class Initializer; //
 class IntegerConstant;
 class IntegerSuffix;
 class Keyword;
+class LongSuffix;
+class LongLongSuffix;
 class Lparen;
 class NewLine;
 class Nondigit;
@@ -67,10 +85,21 @@ class SChar;
 class SCharSequence;
 class Sign;
 class SimpleEscapeSequence;
+class StaticAssertDeclaration; //
+class StorageClassSpecifier;
 class StringLiteral;
+class StructDeclarationList; //
+class StructOrUnion; //
+class StructOrUnionSpecifier;
 class TextLine;
 class Token;
+class TranslationUnit;
+class TypedefName;
+class TypeName; //
+class TypeQualifier;
+class TypeSpecifier;
 class UniversalCharacterName;
+class UnsignedSuffix;
 
 namespace TOKEN
 {
@@ -131,6 +160,47 @@ protected:
 
 public:
     static void destroy(){}
+};
+
+class AlignmentSpecifier : public BaseToken
+{
+public:
+    enum EAlignmentSpecifier
+    {
+        NONE,
+        TYPE_NAME,
+        CONSTANT_EXPRESSION
+    } eAlignmentSpecifier;
+
+    union UAlignmentSpecifier
+    {
+        struct STypeName
+        {
+            TypeName* typeName;
+        } sTypeName;
+        struct SConstantExpression
+        {
+            ConstantExpression* constantExpression;
+        } sConstantExpression;
+
+        UAlignmentSpecifier():
+            sTypeName{nullptr}{}
+    } uAlignmentSpecifier;
+
+    AlignmentSpecifier():
+        BaseToken(),
+        eAlignmentSpecifier(NONE),
+        uAlignmentSpecifier(){}
+};
+
+class AtomicTypeSpecifier : public BaseToken
+{
+public:
+    TypeName* typeName;
+
+    AtomicTypeSpecifier():
+        BaseToken(),
+        typeName(nullptr){}
 };
 
 class BinaryExponentPart : public BaseToken
@@ -467,6 +537,89 @@ public:
         uDecimalFloatingConstant(){}
 };
 
+class Declaration : public BaseToken
+{
+public:
+    enum EDeclaration
+    {
+        NONE,
+        DECLARATION_SPECIFIERES_INIT_DECLARATOR_LIST,
+        STATIC_ASSERT_DECLARATION
+    } eDeclaration;
+
+    union UDeclaration
+    {
+        struct SDeclarationSpecifiersInitDeclaratorList
+        {
+            DeclarationSpecifiers* declarationSpecifiers;
+            InitDeclaratorList* initDeclaratorList;
+        } sDeclarationSpecifiersInitDeclaratorList;
+        struct SStaticAssertDeclaration
+        {
+            StaticAssertDeclaration* staticAssertDeclaration;
+        } sStaticAssertDeclaration;
+
+        UDeclaration():
+            sDeclarationSpecifiersInitDeclaratorList{nullptr, nullptr}{}
+    } uDeclaration;
+
+    Declaration():
+        BaseToken(),
+        eDeclaration(NONE),
+        uDeclaration(){}
+};
+
+class DeclarationSpecifiers : public BaseToken
+{
+public:
+    enum EDeclarationSpecifiers
+    {
+        NONE,
+        STORAGE_CLASS_SPECIFIER,
+        TYPE_SPECIFIER,
+        TYPE_QUALIFIER,
+        FUNCTION_SPECIFIER,
+        ALIGNMENT_SPECIFIER
+    } eDeclarationSpecifiers;
+
+    union UDeclarationSpecifiers
+    {
+        struct SStorageClassSpecifier
+        {
+            StorageClassSpecifier* storageClassSpecifier;
+            DeclarationSpecifiers* declarationSpecifier;
+        } sStorageClassSpecifier;
+        struct STypeSpecifier
+        {
+            TypeSpecifier* typeSpecifier;
+            DeclarationSpecifiers* declarationSpecifiers;
+        } sTypeSpecifier;
+        struct STypeQualifier
+        {
+            TypeQualifier* typeQualifier;
+            DeclarationSpecifiers* declarationSpecifiers;
+        } sTypeQualifier;
+        struct SFunctionSpecifier
+        {
+            FunctionSpecifier* functionSpecifier;
+            DeclarationSpecifiers* declarationSpecifiers;
+        } sFunctionSpecifier;
+        struct SAlignmentSpecifier
+        {
+            AlignmentSpecifier* alignmentSpecifier;
+            DeclarationSpecifiers* declarationSpecifiers;
+        } sAlignmentSpecifier;
+
+        UDeclarationSpecifiers():
+            sStorageClassSpecifier{nullptr, nullptr}{}
+    } uDeclarationSpecifiers;
+
+    DeclarationSpecifiers():
+        BaseToken(),
+        eDeclarationSpecifiers(NONE),
+        uDeclarationSpecifiers(){}
+};
+
 class Digit : public BaseToken
 {
 public:
@@ -597,6 +750,44 @@ public:
         identifier(nullptr){}
 };
 
+class EnumSpecifier : public BaseToken
+{
+public:
+    enum EEnumSpecifier
+    {
+        NONE,
+        IDENTIFIER_ENUMERATOR_LIST,
+        IDENTIFIER_ENUMERATOR_LIST_COMMA,
+        IDENTIFIER
+    } eEnumSpecifier;
+
+    union UEnumSpecifier
+    {
+        struct SIdentifierEnumeratorList
+        {
+            Identifier* identifier;
+            EnumeratorList* enumeratorList;
+        } sIdentifierEnumeratorList;
+        struct SIdentifierEnumeratorListComma
+        {
+            Identifier* identifier;
+            EnumeratorList* enumeratorList;
+        } sIdentifierEnumeratorListComma;
+        struct SIdentifier
+        {
+            Identifier* identifier;
+        } sIdentifier;
+
+        UEnumSpecifier():
+            sIdentifierEnumeratorList{nullptr, nullptr}{}
+    } uEnumSpecifier;
+
+    EnumSpecifier():
+        BaseToken(),
+        eEnumSpecifier(NONE),
+        uEnumSpecifier(){}
+};
+
 class EscapeSequence : public BaseToken
 {
 public:
@@ -671,6 +862,37 @@ public:
         uExponentPart(){}
 };
 
+class ExternalDeclaration : public BaseToken
+{
+public:
+    enum EExternalDeclaration
+    {
+        NONE,
+        FUNCTION_DEFINITION,
+        DECLARATION
+    } eExternalDeclaration;
+
+    union UExternalDeclaration
+    {
+        struct SFunctionDefinition
+        {
+            FunctionDefinition* functionDefinition;
+        } sFunctionDefinition;
+        struct SDeclaration
+        {
+            Declaration* declaration;
+        } sDeclaration;
+
+        UExternalDeclaration():
+            sFunctionDefinition{nullptr}{}
+    } uExternalDeclaration;
+
+    ExternalDeclaration():
+        BaseToken(),
+        eExternalDeclaration(NONE),
+        uExternalDeclaration(){}
+};
+
 class FloatingConstant : public BaseToken
 {
 public:
@@ -742,6 +964,32 @@ public:
         BaseToken(),
         eFractionalConstant(NONE),
         uFractionalConstant(){}
+};
+
+class FunctionDefinition : public BaseToken
+{
+public:
+    DeclarationSpecifiers* declarationSpecifiers;
+    Declarator* declarator;
+    DeclarationList* declarationList;
+    CompoundStatement* compoundStatement;
+
+    FunctionDefinition():
+        BaseToken(),
+        declarationSpecifiers(nullptr),
+        declarator(nullptr),
+        declarationList(nullptr),
+        compoundStatement(nullptr){}
+};
+
+class FunctionSpecifier : public BaseToken
+{
+public:
+    std::string element;
+
+    FunctionSpecifier():
+        BaseToken(),
+        element(){}
 };
 
 class Group : public BaseToken
@@ -888,6 +1136,39 @@ public:
         BaseToken(),
         eHeaderName(NONE),
         uHeaderName(){}
+};
+
+class HexadecimalConstant : public BaseToken
+{
+public:
+    enum EHexadecimalConstant
+    {
+        NONE,
+        HEXADECIMAL_PREFIX_HEXADECIMAL_DIGIT,
+        HEXADECIMAL_CONSTANT_HEXADECIMAL_DIGIT
+    } eHexadecimalConstant;
+
+    union UHexadecimalConstant
+    {
+        struct SHexadecimalPrefixHexadecimalDigit
+        {
+            HexadecimalPrefix* hexadecimalPrefix;
+            HexadecimalDigit* hexadecimalDigit;
+        } sHexadecimalPrefixHexadecimalDigit;
+        struct SHexadecimalConstantHexadecimalDigit
+        {
+            HexadecimalConstant* hexadecimalConstant;
+            HexadecimalDigit* hexadecimalDigit;
+        } sHexadecimalConstantHexadecimalDigit;
+
+        UHexadecimalConstant():
+            sHexadecimalPrefixHexadecimalDigit{nullptr, nullptr}{}
+    } uHexadecimalConstant;
+
+    HexadecimalConstant():
+        BaseToken(),
+        eHexadecimalConstant(NONE),
+        uHexadecimalConstant(){}
 };
 
 class HexadecimalDigit : public BaseToken
@@ -1218,8 +1499,51 @@ public:
         endifLine(nullptr){}
 };
 
+class InitDeclarator : public BaseToken
+{
+public:
+    enum EInitDeclarator
+    {
+        NONE,
+        DECLARATOR,
+        DECLARATOR_INITIALIZER
+    } eInitDeclarator;
+
+    union UInitDeclarator
+    {
+        struct SDeclarator
+        {
+            Declarator* declarator;
+        } sDeclarator;
+        struct SDeclaratorInitializer
+        {
+            Declarator* declarator;
+            Initializer* initializer;
+        } sDeclaratorInitializer;
+
+        UInitDeclarator():
+            sDeclarator{nullptr}{}
+    } uInitDeclarator;
+
+    InitDeclarator():
+        BaseToken(),
+        eInitDeclarator(NONE),
+        uInitDeclarator(){}
+};
+
+class InitDeclaratorList : public BaseToken
+{
+public:
+    std::vector<InitDeclarator*> initDeclarators;
+
+    InitDeclaratorList():
+        BaseToken(),
+        initDeclarators(){}
+};
+
 class IntegerConstant : public BaseToken
 {
+public:
     enum EIntegerConstant
     {
         NONE,
@@ -1256,12 +1580,77 @@ class IntegerConstant : public BaseToken
         uIntegerConstant(){}
 };
 
+class IntegerSuffix : public BaseToken
+{
+public:
+    enum EIntegerSuffix
+    {
+        NONE,
+        UNSIGNED_SUFFIX_LONG_SUFFIX,
+        UNSIGNED_SUFFIX_LONG_LONG_SUFFIX,
+        LONG_SUFFIX_UNSIGNED_SUFFIX,
+        LONG_LONG_SUFFIX_UNSIGNED_SUFFIX
+    } eIntegerSuffix;
+
+    union UIntegerSuffix
+    {
+        struct SUnsignedSuffixLongSuffix
+        {
+            UnsignedSuffix* unsignedSuffix;
+            LongSuffix* longSuffix;
+        } sUnsignedSuffixLongSuffix;
+        struct SUnsignedSuffixLongLongSuffix
+        {
+            UnsignedSuffix* unsignedSuffix;
+            LongLongSuffix* longLongSuffix;
+        } sUnsignedSuffixLongLongSuffix;
+        struct SLongSuffixUnsignedSuffix
+        {
+            LongSuffix* longSuffix;
+            UnsignedSuffix* unsignedsuffix;
+        } sLongSuffixUnsignedSuffix;
+        struct SLongLongSuffixUnsignedSuffix
+        {
+            LongLongSuffix* longLongSuffix;
+            UnsignedSuffix* unsignedSuffix;
+        } sLongLongSuffixUnsignedSuffix;
+    
+        UIntegerSuffix():
+            sUnsignedSuffixLongSuffix{nullptr, nullptr}{}
+    } uIntegerSuffix;
+
+    IntegerSuffix():
+        BaseToken(),
+        eIntegerSuffix(NONE),
+        uIntegerSuffix(){}
+};
+
 class Keyword : public BaseToken
 {
 public:
     std::string element;
 
     Keyword():
+        BaseToken(),
+        element(){}
+};
+
+class LongSuffix : public BaseToken
+{
+public:
+    char element;
+
+    LongSuffix():
+        BaseToken(),
+        element(0){}
+};
+
+class LongLongSuffix : public BaseToken
+{
+public:
+    std::string element;
+
+    LongLongSuffix():
         BaseToken(),
         element(){}
 };
@@ -1320,6 +1709,7 @@ public:
 
 class OctalConstant : public BaseToken
 {
+public:
     enum EOctalConstant
     {
         NONE,
@@ -1713,6 +2103,16 @@ public:
         element(0){}
 };
 
+class StorageClassSpecifier : public BaseToken
+{
+public:
+    std::string element;
+
+    StorageClassSpecifier():
+        BaseToken(),
+        element(){}
+};
+
 class StringLiteral : public BaseToken
 {
 public:
@@ -1723,6 +2123,40 @@ public:
         BaseToken(),
         encodingPrefix(nullptr),
         sCharSequence(nullptr){}
+};
+
+class StructOrUnionSpecifier : public BaseToken
+{
+public:
+    enum EStructOrUnionSpecifier
+    {
+        NONE,
+        STRUCT_OR_UNION_IDENTIFIER_STRUCT_DECLARATION_LIST,
+        STRUCT_OR_UNION_IDENTIFIER
+    } eStructOrUnionSpecifier;
+
+    union UStructOrUnionSpecifier
+    {
+        struct SStructOrUnionIdentifierStructDeclarationList
+        {
+            StructOrUnion* structOrUnion;
+            Identifier* identifier;
+            StructDeclarationList* structDeclarationList;
+        } sStructOrUnionIdentifierStructDeclarationList;
+        struct SStructOrUnionIdentifier
+        {
+            StructOrUnion* structOrUnion;
+            Identifier* identifier;
+        } sStructOrUnionIdentifier;
+
+        UStructOrUnionSpecifier():
+            sStructOrUnionIdentifierStructDeclarationList{nullptr, nullptr, nullptr}{}
+    } uStructOrUnionSpecifier;
+
+    StructOrUnionSpecifier():
+        BaseToken(),
+        eStructOrUnionSpecifier(NONE),
+        uStructOrUnionSpecifier(){}
 };
 
 class TextLine : public BaseToken
@@ -1783,6 +2217,82 @@ public:
         uToken(){}
 };
 
+class TranslationUnit : public BaseToken
+{
+public:
+    std::vector<ExternalDeclaration*> externalDeclarations;
+
+    TranslationUnit():
+        BaseToken(),
+        externalDeclarations(){}
+};
+
+class TypedefName : public BaseToken
+{
+public:
+    Identifier* identifier;
+
+    TypedefName():
+        BaseToken(),
+        identifier(nullptr){}
+};
+
+class TypeQualifier : public BaseToken
+{
+public:
+    std::string element;
+
+    TypeQualifier():
+        BaseToken(),
+        element(){}
+};
+
+class TypeSpecifier : public BaseToken
+{
+public:
+    enum ETypeSpecifier
+    {
+        NONE,
+        BASE,
+        ATOMIC_TYPE_SPECIFIER,
+        STRUCT_OR_UNION_SPECIFIER,
+        ENUM_SPECIFIER,
+        TYPEDEF_NAME
+    } eTypeSpecifier;
+
+    union UTypeSpecifier
+    {
+        struct SBase
+        {
+            std::string* element;
+        } sBase;
+        struct SAtomicTypeSpecifier
+        {
+            AtomicTypeSpecifier* atomicTypeSpecifier;
+        } sAtomicTypeSpecifier;
+        struct SStructOrUnionSpecifier
+        {
+            StructOrUnionSpecifier* structOrUnionSpecifier;
+        } sStructOrUnionSpecifier;
+        struct SEnumSpecifier
+        {
+            EnumSpecifier* enumSpecifier;
+        } sEnumSpecifier;
+        struct STypedefName
+        {
+            TypedefName* typedefName;
+        } sTypedefName;
+
+        UTypeSpecifier():
+            sAtomicTypeSpecifier{nullptr}{}
+    } uTypeSpecifier;
+
+    TypeSpecifier():
+        BaseToken(),
+        eTypeSpecifier(NONE),
+        uTypeSpecifier(){}
+};
+
 class UniversalCharacterName : public BaseToken
 {
 public:
@@ -1813,4 +2323,14 @@ public:
         BaseToken(),
         eUniversalCharacterName(NONE),
         uUniversalCharacterName(){}
+};
+
+class UnsignedSuffix : public BaseToken
+{
+public:
+    char element;
+
+    UnsignedSuffix():
+        BaseToken(),
+        element(0){}
 };

@@ -4,6 +4,7 @@
 #include <vector>
 #include <utility>
 
+class Compiler;
 class Initializer;
 class PPTokenizer;
 class PPDirectiveTokenizer;
@@ -13,6 +14,7 @@ class PPCharacterConverter;
 class Preprocessor
 {
 public:
+    friend Compiler;
     friend Initializer;
     friend PPTokenizer;
     friend PPDirectiveTokenizer;

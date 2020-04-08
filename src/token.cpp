@@ -528,7 +528,7 @@ void TOKEN::getString(PPNumber* ppNumber, std::string& data)
         case(PPNumber::PP_NUMBER_p_SIGN):
             getString(ppNumber->uPPNumber.sPPNumber_p_Sign.ppNumber, data);
             data.push_back('p');
-            getString(ppNumber->uPPNumber.sPPNumber_P_Sign.sign, data);
+            getString(ppNumber->uPPNumber.sPPNumber_p_Sign.sign, data);
             break;
         case(PPNumber::PP_NUMBER_P_SIGN):
             getString(ppNumber->uPPNumber.sPPNumber_P_Sign.ppNumber, data);

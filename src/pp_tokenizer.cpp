@@ -678,11 +678,12 @@ PPNumber* PPTokenizer::getPPNumber(PPNumber* bef)
         else if(isMatched(mIdx, '.'))
         {
             mIdx++;
+            ppNumber.uPPNumber.sPPNumberDot.ppNumber = bef;
             ppNumber.ePPNumber = PPNumber::PP_NUMBER_DOT;
         }
         else
         {
-            auto isCreated = false;
+            bool    isCreated = false;
 
             if(isMatched(mIdx, 'e'))
             {
