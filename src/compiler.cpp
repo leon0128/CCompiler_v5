@@ -39,8 +39,8 @@ bool Compiler::execute(int argc, char** argv)
     if(mIsValid)
         convert();
 
-    // if(mIsValid)
-    //     tokenize();
+    if(mIsValid)
+        tokenize();
 
     return mIsValid;
 }
@@ -75,7 +75,7 @@ void Compiler::convert()
 
 void Compiler::tokenize()
 {
-    mIsValid = mTokenizer->execute(mPP->getPPTokens());
+    mIsValid = mTokenizer->execute(mTokens);
 
     if(!mIsValid)
         error("failed to tokenize.");

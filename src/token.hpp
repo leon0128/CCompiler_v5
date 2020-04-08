@@ -18,7 +18,7 @@ class ControlLine;
 class DecimalConstant;
 class DecimalFloatingConstant;
 class Declaration;
-class DeclarationList; //
+class DeclarationList;
 class DeclarationSpecifiers;
 class Declarator; //
 class Digit;
@@ -73,6 +73,7 @@ class NonzeroDigit;
 class OctalConstant;
 class OctalDigit;
 class OctalEscapeSequence;
+class Pointer;
 class PPNumber;
 class PPTokens;
 class PreprocessingFile;
@@ -97,6 +98,7 @@ class TranslationUnit;
 class TypedefName;
 class TypeName; //
 class TypeQualifier;
+class TypeQualifierList;
 class TypeSpecifier;
 class UniversalCharacterName;
 class UnsignedSuffix;
@@ -105,34 +107,56 @@ namespace TOKEN
 {
     void error(const char* message);
 
+    void getString(BinaryExponentPart*, std::string& data);
     void getString(CChar*, std::string& data);
     void getString(CCharSequence*, std::string& data);
     void getString(CharacterConstant*, std::string& data);
+    void getString(Constant*, std::string& data);
     void getString(ControlLine*, std::string& data);
-    void getString(Digit*, std::string& digit);
+    void getString(DecimalConstant*, std::string& data);
+    void getString(DecimalFloatingConstant*, std::string& data);
+    void getString(Digit*, std::string& data);
+    void getString(DigitSequence*, std::string& data);
     void getString(ElifGroup*, std::string& data);
     void getString(ElifGroups*, std::string& data);
     void getString(ElseGroup*, std::string& data);
     void getString(EndifLine*, std::string& data);
     void getString(EncodingPrefix*, std::string& data);
+    void getString(EnumerationConstant*, std::string& data);
     void getString(EscapeSequence*, std::string& data);
+    void getString(ExponentPart*, std::string& data);
+    void getString(FloatingConstant*, std::string& data);
+    void getString(FloatingSuffix*, std::string& data);
+    void getString(FractionalConstant*, std::string& data);
     void getString(Group*, std::string& data);
     void getString(GroupPart*, std::string& data);
     void getString(HChar*, std::string& data);
     void getString(HCharSequence*, std::string& data);
     void getString(HeaderName*, std::string& data);
+    void getString(HexadecimalConstant*, std::string& data);
     void getString(HexadecimalDigit*, std::string& data);
+    void getString(HexadecimalDigitSequence*, std::string& data);
     void getString(HexadecimalEscapeSequence*, std::string& data);
+    void getString(HexadecimalFloatingConstant*, std::string& data);
+    void getString(HexadecimalFractionalConstant*, std::string& data);
+    void getString(HexadecimalPrefix*, std::string& data);
     void getString(HexQuad*, std::string& data);
     void getString(Identifier*, std::string& data);
     void getString(IdentifierList*, std::string& data);
     void getString(IdentifierNondigit*, std::string& data);
     void getString(IfGroup*, std::string& data);
     void getString(IfSection*, std::string& data);
+    void getString(IntegerConstant*, std::string& data);
+    void getString(IntegerSuffix*, std::string& data);
+    void getString(Keyword*, std::string& data);
+    void getString(LongSuffix*, std::string& data);
+    void getString(LongLongSuffix*, std::string& data);
     void getString(Lparen*, std::string& data);
     void getString(NewLine*, std::string& data);
     void getString(Nondigit*, std::string& data);
     void getString(NonDirective*, std::string& data);
+    void getString(NonzeroDigit*, std::string& data);
+    void getString(OctalConstant*, std::string& data);
     void getString(OctalDigit*, std::string& data);
     void getString(OctalEscapeSequence*, std::string& data);
     void getString(PPNumber*, std::string& data);
@@ -149,7 +173,9 @@ namespace TOKEN
     void getString(SimpleEscapeSequence*, std::string& data);
     void getString(StringLiteral*, std::string& data);
     void getString(TextLine*, std::string& data);
+    void getString(Token*, std::string& data);
     void getString(UniversalCharacterName*, std::string& data);
+    void getString(UnsignedSuffix*, std::string& data);
 };
 
 class BaseToken
@@ -567,6 +593,16 @@ public:
         BaseToken(),
         eDeclaration(NONE),
         uDeclaration(){}
+};
+
+class DeclarationList : public BaseToken
+{
+public:
+    std::vector<Declaration*> declarations;
+
+    DeclarationList():
+        BaseToken(),
+        declarations(){}
 };
 
 class DeclarationSpecifiers : public BaseToken
@@ -1786,6 +1822,38 @@ public:
         BaseToken(),
         eOctalEscapeSequence(NONE),
         uOctalEscapeSequence(){}
+};
+
+class Pointer : public BaseToken
+{
+public:
+    enum EPointer
+    {
+        NONE,
+        TYPE_QUALIFIER_LIST,
+        TYPE_QUALIFIER_LIST_POINTER
+    } ePointer;
+
+    union UPointer
+    {
+        struct STypeQualifierList
+        {
+            TypeQualifierList* typeQualifierList;
+        } sTypeQualifierList;
+        struct STypeQualifierListPointer
+        {
+            TypeQualifierList* typeQualifierList;
+            Pointer* pointer;
+        } sTypeQualifierPointer;
+
+        UPointer():
+            sTypeQualifierList{nullptr}{}
+    } uPointer;
+
+    Pointer():
+        BaseToken(),
+        ePointer(NONE),
+        uPointer(){}
 };
 
 class PPNumber : public BaseToken

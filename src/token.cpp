@@ -9,6 +9,29 @@ void TOKEN::error(const char* message)
               << std::endl; 
 }
 
+void TOKEN::getString(BinaryExponentPart* binaryExponentPart, std::string& data)
+{
+    switch(binaryExponentPart->eBinaryExponentPart)
+    {
+        case(BinaryExponentPart::p_SIGN_DIGIT_SEQUENCE):
+            data.push_back('p');
+            if(binaryExponentPart->uBinaryExponentPart.s_p_SignDigitSequence.sign)
+                getString(binaryExponentPart->uBinaryExponentPart.s_p_SignDigitSequence.sign, data);
+            getString(binaryExponentPart->uBinaryExponentPart.s_p_SignDigitSequence.digitSequence, data);
+            break;
+        case(BinaryExponentPart::P_SIGN_DIGIT_SEQUENCE):
+            data.push_back('P');
+            if(binaryExponentPart->uBinaryExponentPart.s_P_SignDigitSequence.sign)
+                getString(binaryExponentPart->uBinaryExponentPart.s_P_SignDigitSequence.sign, data);
+            getString(binaryExponentPart->uBinaryExponentPart.s_P_SignDigitSequence.digitSequence, data);
+            break;
+
+        default:
+            error("BinaryExponentPart");
+            break;
+    }
+}
+
 void TOKEN::getString(CChar* cChar, std::string& data)
 {
     switch(cChar->eCChar)
@@ -74,6 +97,29 @@ void TOKEN::getString(CharacterConstant* characterConstant, std::string& data)
 
         default:
             error("CharacterConstant");
+            break;
+    }
+}
+
+void TOKEN::getString(Constant* constant, std::string& data)
+{
+    switch(constant->eConstant)
+    {
+        case(Constant::INTEGER_CONSTANT):
+            getString(constant->uConstant.sIntegerConstant.integerConstant, data);
+            break;
+        case(Constant::FLOATING_CONSTANT):
+            getString(constant->uConstant.sFloatingConstant.floatingConstant, data);
+            break;
+        case(Constant::ENUMERATION_CONSTANT):
+            getString(constant->uConstant.sEnumerationConstant.enumerationConstant, data);
+            break;
+        case(Constant::CHARACTER_CONSTANT):
+            getString(constant->uConstant.sCharacterConstant.characterConstant, data);
+            break;
+        
+        default:
+            error("Constant");
             break;
     }
 }
@@ -151,9 +197,69 @@ void TOKEN::getString(ControlLine* controlLine, std::string& data)
     }
 }
 
+void TOKEN::getString(DecimalConstant* decimalConstant, std::string& data)
+{
+    switch(decimalConstant->eDecimalConstant)
+    {
+        case(DecimalConstant::NONZERO_DIGIT):
+            getString(decimalConstant->uDecimalConstant.sNonzeroDigit.nonzeroDigit, data);
+            break;
+        case(DecimalConstant::DECIMAL_CONSTANT_DIGIT):
+            getString(decimalConstant->uDecimalConstant.sDecimalConstantDigit.decimalConstant, data);
+            getString(decimalConstant->uDecimalConstant.sDecimalConstantDigit.digit, data);
+            break;
+        
+        default:
+            error("DecimalConstant");
+            break;
+    }
+}
+
+void TOKEN::getString(DecimalFloatingConstant* decimalFloatingConstant, std::string& data)
+{
+    switch(decimalFloatingConstant->eDecimalFloatingConstant)
+    {
+        case(DecimalFloatingConstant::FRACTIONAL_CONSTANT_EXPONENT_PART_FLOATING_SUFFIX):
+            getString(decimalFloatingConstant->uDecimalFloatingConstant.sFractionalConstantExponentPartFloatingSuffix.fractionalConstant, data);
+            if(decimalFloatingConstant->uDecimalFloatingConstant.sFractionalConstantExponentPartFloatingSuffix.exponentPart)
+                getString(decimalFloatingConstant->uDecimalFloatingConstant.sFractionalConstantExponentPartFloatingSuffix.exponentPart, data);
+            if(decimalFloatingConstant->uDecimalFloatingConstant.sFractionalConstantExponentPartFloatingSuffix.floatingSuffix)
+                getString(decimalFloatingConstant->uDecimalFloatingConstant.sFractionalConstantExponentPartFloatingSuffix.floatingSuffix, data);
+            break;
+        case(DecimalFloatingConstant::DIGIT_SEQUENCE_EXPONENT_PART_FLOATING_SUFFIX):
+            getString(decimalFloatingConstant->uDecimalFloatingConstant.sDigitSequenceExponentPartFloatingSuffix.digitSequence, data);
+            getString(decimalFloatingConstant->uDecimalFloatingConstant.sDigitSequenceExponentPartFloatingSuffix.exponentPart, data);
+            if(decimalFloatingConstant->uDecimalFloatingConstant.sDigitSequenceExponentPartFloatingSuffix.floatingSuffix)
+                getString(decimalFloatingConstant->uDecimalFloatingConstant.sDigitSequenceExponentPartFloatingSuffix.floatingSuffix, data);
+            break;
+        
+        default:
+            error("DecimalFloatingConstant");
+            break;
+    }
+}
+
 void TOKEN::getString(Digit* digit, std::string& data)
 {
     data.push_back(digit->element);
+}
+
+void TOKEN::getString(DigitSequence* digitSequence, std::string& data)
+{
+    switch(digitSequence->eDigitSequence)
+    {
+        case(DigitSequence::DIGIT):
+            getString(digitSequence->uDigitSequence.sDigit.digit, data);
+            break;
+        case(DigitSequence::DIGIT_SEQUENCE_DIGIT):
+            getString(digitSequence->uDigitSequence.sDigitSequenceDigit.digitSequence, data);
+            getString(digitSequence->uDigitSequence.sDigitSequenceDigit.digit, data);
+            break;
+
+        default:
+            error("DigitSequence");
+            break;
+    }
 }
 
 void TOKEN::getString(ElifGroup* elifGroup, std::string& data)
@@ -202,6 +308,11 @@ void TOKEN::getString(EncodingPrefix* encodingPrefix, std::string& data)
     data += encodingPrefix->element;
 }
 
+void TOKEN::getString(EnumerationConstant* enumerationConstant, std::string& data)
+{
+    getString(enumerationConstant->identifier, data);
+}
+
 void TOKEN::getString(EscapeSequence* escapeSequence, std::string& data)
 {
     switch(escapeSequence->eEscapeSequence)
@@ -221,6 +332,72 @@ void TOKEN::getString(EscapeSequence* escapeSequence, std::string& data)
         
         default:
             error("EscapeSequence");
+            break;
+    }
+}
+
+void TOKEN::getString(ExponentPart* expoentPart, std::string& data)
+{
+    switch(expoentPart->eExponentPart)
+    {
+        case(ExponentPart::e_SIGN_DIGIT_SEQUENCE):
+            data.push_back('e');
+            if(expoentPart->uExponentPart.s_e_SignDigitSequence.sign)
+                getString(expoentPart->uExponentPart.s_e_SignDigitSequence.sign, data);
+            getString(expoentPart->uExponentPart.s_e_SignDigitSequence.digitSequence, data);
+            break;
+        case(ExponentPart::E_SIGN_DIGIT_SEQUENCE):
+            data.push_back('E');
+            if(expoentPart->uExponentPart.s_E_SignDigitSequence.sign)
+                getString(expoentPart->uExponentPart.s_E_SignDigitSequence.sign, data);
+            getString(expoentPart->uExponentPart.s_E_SignDigitSequence.digitSequence, data);
+            break;
+        
+        default:
+            error("ExponentPart");
+            break;
+    }
+}
+
+void TOKEN::getString(FloatingConstant* floatingConstant, std::string& data)
+{
+    switch(floatingConstant->eFloatingConstant)
+    {
+        case(FloatingConstant::DECIMAL_FLOATING_CONSTANT):
+            getString(floatingConstant->uFloatingConstant.sDecimalFloatingConstant.decimalFloatingConstant, data);
+            break;
+        case(FloatingConstant::HEXADECIMAL_FLOATING_CONSTANT):
+            getString(floatingConstant->uFloatingConstant.sHexadecimalFloatingConstant.hexadecimalFloatingConstant, data);
+            break;
+
+        default:
+            error("FloatingConstant");
+            break;
+    }
+}
+
+void TOKEN::getString(FloatingSuffix* floatingSuffix, std::string& data)
+{
+    data.push_back(floatingSuffix->element);
+}
+
+void TOKEN::getString(FractionalConstant* fractionalConstant, std::string& data)
+{
+    switch(fractionalConstant->eFractionalConstant)
+    {
+        case(FractionalConstant::DIGIT_SEQUENCE_DIGIT_SEQUENCE):
+            if(fractionalConstant->uFractionalConstant.sDigitSequenceDigitSequence.digitSequence)
+                getString(fractionalConstant->uFractionalConstant.sDigitSequenceDigitSequence.digitSequence, data);
+            data.push_back('.');
+            getString(fractionalConstant->uFractionalConstant.sDigitSequenceDigitSequence.digitSequence_1, data);
+            break;
+        case(FractionalConstant::DIGIT_SEQUENCE):
+            getString(fractionalConstant->uFractionalConstant.sDigitSequence.digitSequence, data);
+            data.push_back('.');
+            break;
+        
+        default:
+            error("FractionalConstant");
             break;
     }
 }
@@ -311,9 +488,46 @@ void TOKEN::getString(HeaderName* headerName, std::string& data)
     }
 }
 
+void TOKEN::getString(HexadecimalConstant* hexadecimalConstant, std::string& data)
+{
+    switch(hexadecimalConstant->eHexadecimalConstant)
+    {
+        case(HexadecimalConstant::HEXADECIMAL_PREFIX_HEXADECIMAL_DIGIT):
+            getString(hexadecimalConstant->uHexadecimalConstant.sHexadecimalPrefixHexadecimalDigit.hexadecimalPrefix, data);
+            getString(hexadecimalConstant->uHexadecimalConstant.sHexadecimalPrefixHexadecimalDigit.hexadecimalDigit, data);
+            break;
+        case(HexadecimalConstant::HEXADECIMAL_CONSTANT_HEXADECIMAL_DIGIT):
+            getString(hexadecimalConstant->uHexadecimalConstant.sHexadecimalConstantHexadecimalDigit.hexadecimalConstant, data);
+            getString(hexadecimalConstant->uHexadecimalConstant.sHexadecimalConstantHexadecimalDigit.hexadecimalDigit, data);
+            break;
+        
+        default:
+            error("HexadecimalConstant");
+            break;
+    }
+}
+
 void TOKEN::getString(HexadecimalDigit* hexadecimalDigit, std::string& data)
 {
     data.push_back(hexadecimalDigit->element);
+}
+
+void TOKEN::getString(HexadecimalDigitSequence* hexadecimalDigitSequence, std::string& data)
+{
+    switch(hexadecimalDigitSequence->eHexadecimalDigitSequence)
+    {
+        case(HexadecimalDigitSequence::HEXADECIMAL_DIGIT):
+            getString(hexadecimalDigitSequence->uHexadecimalDigitSequence.sHexadecimalDigit.hexadecimalDigit, data);
+            break;
+        case(HexadecimalDigitSequence::HEXADECIMAL_DIGIT_SEQUENCE_HEXADECIMAL_DIGIT):
+            getString(hexadecimalDigitSequence->uHexadecimalDigitSequence.sHexadecimalDigitSequenceHexadecimalDigit.hexadecimalDigitSequence, data);
+            getString(hexadecimalDigitSequence->uHexadecimalDigitSequence.sHexadecimalDigitSequenceHexadecimalDigit.hexadecimalDigit, data);
+            break;
+
+        default:
+            error("HexadecimalDigitSequence");
+            break;
+    }
 }
 
 void TOKEN::getString(HexadecimalEscapeSequence* hexadecimalEscapeSequence, std::string& data)
@@ -333,6 +547,57 @@ void TOKEN::getString(HexadecimalEscapeSequence* hexadecimalEscapeSequence, std:
             error("HexadecimalDigit");
             break;
     }
+}
+
+void TOKEN::getString(HexadecimalFloatingConstant* hexadecimalFloatingConstant, std::string& data)
+{
+    switch(hexadecimalFloatingConstant->eHexadecimalFloatingConstant)
+    {
+        case(HexadecimalFloatingConstant::HEXADECIMAL_PREFIX_HEXADECIMAL_FRACTIONAL_CONSTANT_BINARY_EXPONENT_PART_FLOATING_SUFFIX):
+            getString(hexadecimalFloatingConstant->uHexadecimalFloatingConstant.sHexadecimalPrefixHexadecimalFractionalConstantBinaryExponentPartFloatingSuffix.hexadecimalPrefix, data);
+            getString(hexadecimalFloatingConstant->uHexadecimalFloatingConstant.sHexadecimalPrefixHexadecimalFractionalConstantBinaryExponentPartFloatingSuffix.hexadecimalFractionalConstant, data);
+            getString(hexadecimalFloatingConstant->uHexadecimalFloatingConstant.sHexadecimalPrefixHexadecimalFractionalConstantBinaryExponentPartFloatingSuffix.binaryExponentPart, data);
+            if(hexadecimalFloatingConstant->uHexadecimalFloatingConstant.sHexadecimalPrefixHexadecimalFractionalConstantBinaryExponentPartFloatingSuffix.floatingSuffix)
+                getString(hexadecimalFloatingConstant->uHexadecimalFloatingConstant.sHexadecimalPrefixHexadecimalFractionalConstantBinaryExponentPartFloatingSuffix.floatingSuffix, data);
+            break;
+        case(HexadecimalFloatingConstant::HEXADECIMAL_PREFIX_HEXADECIMAL_DIGIT_SEQUENCE_BINARY_EXPONENT_PART_FLOATING_SUFFIX):
+            getString(hexadecimalFloatingConstant->uHexadecimalFloatingConstant.sHexadecimalPrefixHexadecimalDigitSequenceBinaryExponentPartFloatingSuffix.hexadecimalPrefix, data);
+            getString(hexadecimalFloatingConstant->uHexadecimalFloatingConstant.sHexadecimalPrefixHexadecimalDigitSequenceBinaryExponentPartFloatingSuffix.hexadecimalDigitSequence, data);
+            getString(hexadecimalFloatingConstant->uHexadecimalFloatingConstant.sHexadecimalPrefixHexadecimalDigitSequenceBinaryExponentPartFloatingSuffix.binaryExponentPart, data);
+            if(hexadecimalFloatingConstant->uHexadecimalFloatingConstant.sHexadecimalPrefixHexadecimalDigitSequenceBinaryExponentPartFloatingSuffix.floatingSuffix)
+                getString(hexadecimalFloatingConstant->uHexadecimalFloatingConstant.sHexadecimalPrefixHexadecimalDigitSequenceBinaryExponentPartFloatingSuffix.floatingSuffix, data);
+            break;
+        
+        default:
+            error("HexadecimalFloatingConstant");
+            break;
+    }
+}
+
+void TOKEN::getString(HexadecimalFractionalConstant* hexadecimalFractionalConstant, std::string& data)
+{
+    switch(hexadecimalFractionalConstant->eHexadecimalFractionalConstant)
+    {
+        case(HexadecimalFractionalConstant::HEXADECIMAL_DIGIT_SEQUENCE_HEXADECIMAL_DIGIT_SEQUENCE):
+            if(hexadecimalFractionalConstant->uHexadecimalFractionalConstant.sHexadecimalDigitSequenceHexadecimalDigitSequence.hexadecimalDigitSequence)
+                getString(hexadecimalFractionalConstant->uHexadecimalFractionalConstant.sHexadecimalDigitSequenceHexadecimalDigitSequence.hexadecimalDigitSequence, data);
+            data.push_back('.');
+            getString(hexadecimalFractionalConstant->uHexadecimalFractionalConstant.sHexadecimalDigitSequenceHexadecimalDigitSequence.hexadecimalDigitSequence_1, data);
+            break;
+        case(HexadecimalFractionalConstant::HEXADECIMAL_DIGIT_SEQUENCE):
+            getString(hexadecimalFractionalConstant->uHexadecimalFractionalConstant.sHexadecimalDigitSequence.hexadecimalDigitSequence, data);
+            data.push_back('.');
+            break;
+        
+        default:
+            error("HexadecimalFractionalConstant");
+            break;
+    }
+}
+
+void TOKEN::getString(HexadecimalPrefix* hexadecimalPrefix, std::string& data)
+{
+    data += hexadecimalPrefix->element;
 }
 
 void TOKEN::getString(HexQuad* hexQuad, std::string& data)
@@ -445,6 +710,76 @@ void TOKEN::getString(IfSection* ifSection, std::string& data)
     getString(ifSection->endifLine, data);
 }
 
+void TOKEN::getString(IntegerConstant* integerConstant, std::string& data)
+{
+    switch(integerConstant->eIntegerConstant)
+    {
+        case(IntegerConstant::DECIMAL_CONSTANT_INTEGER_SUFFIX):
+            getString(integerConstant->uIntegerConstant.sDecimalConstantIntegerSuffix.decimalConstant, data);
+            if(integerConstant->uIntegerConstant.sDecimalConstantIntegerSuffix.integerSuffix)
+                getString(integerConstant->uIntegerConstant.sDecimalConstantIntegerSuffix.integerSuffix, data);
+            break;
+        case(IntegerConstant::OCTAL_CONSTANT_INTEGER_SUFFIX):
+            getString(integerConstant->uIntegerConstant.sOctalConstantIntegerSuffix.octalConstant, data);
+            if(integerConstant->uIntegerConstant.sOctalConstantIntegerSuffix.integerSuffix)
+                getString(integerConstant->uIntegerConstant.sOctalConstantIntegerSuffix.integerSuffix, data);
+            break;
+        case(IntegerConstant::HEXADECIMAL_CONSTANT_INTEGER_SUFFIX):
+            getString(integerConstant->uIntegerConstant.sHexadecimalConstantIntegerSuffix.hexadecimalConstant, data);
+            if(integerConstant->uIntegerConstant.sHexadecimalConstantIntegerSuffix.integerSuffix)
+                getString(integerConstant->uIntegerConstant.sHexadecimalConstantIntegerSuffix.integerSuffix, data);
+            break;
+        
+        default:
+            error("IntegerConstant");
+            break;
+    }
+}
+
+void TOKEN::getString(IntegerSuffix* integerSuffix, std::string& data)
+{
+    switch(integerSuffix->eIntegerSuffix)
+    {
+        case(IntegerSuffix::UNSIGNED_SUFFIX_LONG_SUFFIX):
+            getString(integerSuffix->uIntegerSuffix.sUnsignedSuffixLongSuffix.unsignedSuffix, data);
+            if(integerSuffix->uIntegerSuffix.sUnsignedSuffixLongSuffix.longSuffix)
+                getString(integerSuffix->uIntegerSuffix.sUnsignedSuffixLongSuffix.longSuffix, data);
+            break;
+        case(IntegerSuffix::UNSIGNED_SUFFIX_LONG_LONG_SUFFIX):
+            getString(integerSuffix->uIntegerSuffix.sUnsignedSuffixLongLongSuffix.unsignedSuffix, data);
+            getString(integerSuffix->uIntegerSuffix.sUnsignedSuffixLongLongSuffix.longLongSuffix, data);
+            break;
+        case(IntegerSuffix::LONG_SUFFIX_UNSIGNED_SUFFIX):
+            getString(integerSuffix->uIntegerSuffix.sLongSuffixUnsignedSuffix.longSuffix, data);
+            if(integerSuffix->uIntegerSuffix.sLongSuffixUnsignedSuffix.unsignedsuffix)
+                getString(integerSuffix->uIntegerSuffix.sLongSuffixUnsignedSuffix.unsignedsuffix, data);
+            break;
+        case(IntegerSuffix::LONG_LONG_SUFFIX_UNSIGNED_SUFFIX):
+            getString(integerSuffix->uIntegerSuffix.sLongLongSuffixUnsignedSuffix.longLongSuffix, data);
+            getString(integerSuffix->uIntegerSuffix.sLongLongSuffixUnsignedSuffix.unsignedSuffix, data);
+            break;
+        
+        default:
+            error("IntegerSuffix");
+            break;
+    }
+}
+
+void TOKEN::getString(Keyword* keyword, std::string& data)
+{
+    data += keyword->element;
+}
+
+void TOKEN::getString(LongSuffix* longSuffix, std::string& data)
+{
+    data.push_back(longSuffix->element);
+}
+
+void TOKEN::getString(LongLongSuffix* longLongSuffix, std::string& data)
+{
+    data += longLongSuffix->element;
+}
+
 void TOKEN::getString(Lparen* lparen, std::string& data)
 {
     data.push_back('(');
@@ -464,6 +799,29 @@ void TOKEN::getString(NonDirective* nonDirective, std::string& data)
 {
     getString(nonDirective->ppTokens, data);
     getString(nonDirective->newLine, data);
+}
+
+void TOKEN::getString(NonzeroDigit* nonzeroDigit, std::string& data)
+{
+    data.push_back(nonzeroDigit->element);
+}
+
+void TOKEN::getString(OctalConstant* octalConstant, std::string& data)
+{
+    switch(octalConstant->eOctalConstant)
+    {
+        case(OctalConstant::ZERO):
+            data.push_back(octalConstant->uOctalConstant.sZero.element);
+            break;
+        case(OctalConstant::OCTAL_CONSTANT_OCTAL_DIGIT):
+            getString(octalConstant->uOctalConstant.sOctalConstantOctalDigit.octalConstant, data);
+            getString(octalConstant->uOctalConstant.sOctalConstantOctalDigit.octalDigit, data);
+            break;
+        
+        default:
+            error("OctalConstant");
+            break;
+    }
 }
 
 void TOKEN::getString(OctalDigit* octalDigit, std::string& data)
@@ -698,6 +1056,32 @@ void TOKEN::getString(TextLine* textLine, std::string& data)
     getString(textLine->newLine, data);
 }
 
+void TOKEN::getString(Token* token, std::string& data)
+{
+    switch(token->eToken)
+    {
+        case(Token::KEYWORD):
+            getString(token->uToken.sKeyword.keyword, data);
+            break;
+        case(Token::IDENTIFIER):
+            getString(token->uToken.sIdentifier.identifier, data);
+            break;
+        case(Token::CONSTANT):
+            getString(token->uToken.sConstant.constant, data);
+            break;
+        case(Token::STRING_LITERAL):
+            getString(token->uToken.sStringLiteral.stringLiteral, data);
+            break;
+        case(Token::PUNCTUATOR):
+            getString(token->uToken.sPunctuator.punctuator, data);
+            break;
+        
+        default:
+            error("Token");
+            break;
+    }
+}
+
 void TOKEN::getString(UniversalCharacterName* universalCharacterName, std::string& data)
 {
     switch(universalCharacterName->eUniversalCharacterName)
@@ -716,4 +1100,9 @@ void TOKEN::getString(UniversalCharacterName* universalCharacterName, std::strin
             error("UniversalCharacterName");
             break;
     }
+}
+
+void TOKEN::getString(UnsignedSuffix* unsignedSuffix, std::string& data)
+{
+    data.push_back(unsignedSuffix->element);
 }
