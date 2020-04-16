@@ -1,5 +1,5 @@
 #include "preprocessor.hpp"
-#include "initializer.hpp"
+#include "pp_initializer.hpp"
 #include "pp_tokenizer.hpp"
 #include "pp_directive_tokenizer.hpp"
 #include "pp_directive_processor.hpp"
@@ -16,7 +16,7 @@ void Preprocessor::includePredefinedMacro()
 }
 
 Preprocessor::Preprocessor():
-    mInitializer(nullptr),
+    mPPInitializer(nullptr),
     mPPTokenizer(nullptr),
     mPPDirectiveTokenizer(nullptr),
     mPPDirectiveProcessor(nullptr),
@@ -30,7 +30,7 @@ Preprocessor::Preprocessor():
     mProcessedPPTokens(),
     mIsValid(true)
 {
-    mInitializer = new Initializer(this);
+    mPPInitializer = new PPInitializer(this);
     mPPTokenizer = new PPTokenizer(this);
     mPPDirectiveTokenizer = new PPDirectiveTokenizer(this);
     mPPDirectiveProcessor = new PPDirectiveProcessor(this);
@@ -39,7 +39,7 @@ Preprocessor::Preprocessor():
 
 Preprocessor::~Preprocessor()
 {
-    delete mInitializer;
+    delete mPPInitializer;
     delete mPPTokenizer;
     delete mPPDirectiveTokenizer;
     delete mPPDirectiveProcessor;
@@ -96,7 +96,7 @@ bool Preprocessor::characterConvert()
 
 void Preprocessor::initialize()
 {
-    mIsValid = mInitializer->execute();
+    mIsValid = mPPInitializer->execute();
 
     if(!mIsValid)
         error("failed to initialize source code.");

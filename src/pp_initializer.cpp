@@ -1,10 +1,10 @@
-#include "initializer.hpp"
+#include "pp_initializer.hpp"
 #include "preprocessor.hpp"
 #include "file_manager.hpp"
 #include "config.hpp"
 #include <iostream>
 
-const std::unordered_map<char, char> Initializer::TRIGRAPH_MAP
+const std::unordered_map<char, char> PPInitializer::TRIGRAPH_MAP
     = {{'(', '['},
        {')', ']'},
        {'<', '{'},
@@ -15,13 +15,13 @@ const std::unordered_map<char, char> Initializer::TRIGRAPH_MAP
        {'!', '|'},
        {'-', '~'}};
 
-Initializer::Initializer(Preprocessor* pp):
+PPInitializer::PPInitializer(Preprocessor* pp):
     mPP(pp),
     mIsValid(true)
 {
 }
 
-bool Initializer::execute()
+bool PPInitializer::execute()
 {
     openFile();
 
@@ -34,7 +34,7 @@ bool Initializer::execute()
     return mIsValid;
 }
 
-void Initializer::openFile()
+void PPInitializer::openFile()
 {
     std::string result;
     bool isFound = false;
@@ -80,7 +80,7 @@ void Initializer::openFile()
     }
 }
 
-bool Initializer::isFoundCurrentPath(std::string& result) const
+bool PPInitializer::isFoundCurrentPath(std::string& result) const
 {
     result.clear();
 
@@ -95,7 +95,7 @@ bool Initializer::isFoundCurrentPath(std::string& result) const
         return false;
 }
 
-bool Initializer::isFoundSystemPath(std::string& result) const
+bool PPInitializer::isFoundSystemPath(std::string& result) const
 {
     result.clear();
 
@@ -117,7 +117,7 @@ bool Initializer::isFoundSystemPath(std::string& result) const
         return false;
 }
 
-void Initializer::replaceTrigraph() const
+void PPInitializer::replaceTrigraph() const
 {
     if(config().pp_is_replaced_trigraph)
     {
@@ -138,7 +138,7 @@ void Initializer::replaceTrigraph() const
     }
 }
 
-void Initializer::joinLine() const
+void PPInitializer::joinLine() const
 {
     for(auto pos = mPP->mSrc.find('\\');
         pos != std::string::npos;
@@ -168,9 +168,9 @@ void Initializer::joinLine() const
         mPP->mSrc.push_back('\n');
 }
 
-void Initializer::error(const char* message) const
+void PPInitializer::error(const char* message) const
 {
-    std::cerr << "Initializer error:\n"
+    std::cerr << "PPInitializer error:\n"
               << "    what: " << message
               << "\n    file: " << mPP->mDir << mPP->mFile
               << std::endl;

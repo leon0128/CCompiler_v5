@@ -5,7 +5,7 @@
 #include <utility>
 
 class Compiler;
-class Initializer;
+class PPInitializer;
 class PPTokenizer;
 class PPDirectiveTokenizer;
 class PPDirectiveProcessor;
@@ -15,7 +15,7 @@ class Preprocessor
 {
 public:
     friend Compiler;
-    friend Initializer;
+    friend PPInitializer;
     friend PPTokenizer;
     friend PPDirectiveTokenizer;
     friend PPDirectiveProcessor;
@@ -57,7 +57,7 @@ private:
 
     static std::vector<class ControlLine*> MACROS; 
 
-    Initializer* mInitializer;
+    PPInitializer* mPPInitializer;
     PPTokenizer* mPPTokenizer; 
     PPDirectiveTokenizer* mPPDirectiveTokenizer;
     PPDirectiveProcessor* mPPDirectiveProcessor;

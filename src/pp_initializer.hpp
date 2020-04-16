@@ -4,13 +4,13 @@
 #include <string>
 #include <unordered_map>
 
-class Initializer
+class PPInitializer
 {
 private:
     static const std::unordered_map<char, char> TRIGRAPH_MAP;
 
 public:
-    Initializer(Preprocessor* pp);
+    PPInitializer(Preprocessor* pp);
 
     bool execute();
 

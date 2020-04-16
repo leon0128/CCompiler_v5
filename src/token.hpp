@@ -5,40 +5,63 @@
 
 class BaseToken;
 
+class AbstractDeclarator;
+class AdditiveExpression;
 class AlignmentSpecifier;
+class ANDExpression;
+class ArgumentExpressionList;
+class AssignmentExpression;
+class AssignmentOperator;
 class AtomicTypeSpecifier;
 class BinaryExponentPart;
+class BlockItem;
+class BlockItemList;
+class CastExpression;
 class CChar;
 class CCharSequence;
 class CharacterConstant;
-class CompoundStatement; //
+class CompoundStatement;
+class ConditionalExpression;
 class Constant;
-class ConstantExpression; //
+class ConstantExpression;
 class ControlLine;
 class DecimalConstant;
 class DecimalFloatingConstant;
 class Declaration;
 class DeclarationList;
 class DeclarationSpecifiers;
-class Declarator; //
+class Declarator;
+class Designation;
+class Designator;
+class DesignatorList;
 class Digit;
 class DigitSequence;
+class DirectAbstractDeclarator;
+class DirectDeclarator;
 class ElifGroup;
 class ElifGroups;
 class ElseGroup;
 class EndifLine;
 class EncodingPrefix;
 class EnumerationConstant;
-class EnumeratorList; //
+class Enumerator;
+class EnumeratorList;
 class EnumSpecifier;
+class EqualityExpression;
 class EscapeSequence;
+class ExclusiveORExpression;
 class ExponentPart;
+class Expression;
+class ExpressionStatement;
 class ExternalDeclaration;
 class FloatingConstant;
 class FloatingSuffix;
 class FractionalConstant;
 class FunctionDefinition;
 class FunctionSpecifier;
+class GenericAssociation;
+class GenericAssocList;
+class GenericSelection;
 class Group;
 class GroupPart;
 class HChar;
@@ -57,15 +80,23 @@ class IdentifierList;
 class IdentifierNondigit;
 class IfGroup;
 class IfSection;
+class InclusiveORExpression;
 class InitDeclarator;
 class InitDeclaratorList;
-class Initializer; //
+class Initializer;
+class InitializerList;
 class IntegerConstant;
 class IntegerSuffix;
+class IterationStatement;
+class JumpStatement;
 class Keyword;
+class LabeledStatement;
+class LogicalANDExpression;
+class LogicalORExpression;
 class LongSuffix;
 class LongLongSuffix;
 class Lparen;
+class MultiplicativeExpression;
 class NewLine;
 class Nondigit;
 class NonDirective;
@@ -73,33 +104,48 @@ class NonzeroDigit;
 class OctalConstant;
 class OctalDigit;
 class OctalEscapeSequence;
+class ParameterDeclaration;
+class ParameterList;
+class ParameterTypeList;
 class Pointer;
+class PostfixExpression;
 class PPNumber;
 class PPTokens;
 class PreprocessingFile;
 class PreprocessingToken;
+class PrimaryExpression;
 class Punctuator;
 class QChar;
 class QCharSequence;
+class RelationalExpression;
 class ReplacementList;
 class SChar;
 class SCharSequence;
+class SelectionStatement;
+class ShiftExpression;
 class Sign;
 class SimpleEscapeSequence;
-class StaticAssertDeclaration; //
+class SpecifierQualifierList;
+class Statement;
+class StaticAssertDeclaration;
 class StorageClassSpecifier;
 class StringLiteral;
-class StructDeclarationList; //
-class StructOrUnion; //
+class StructDeclaration;
+class StructDeclarationList;
+class StructDeclarator;
+class StructDeclaratorList;
+class StructOrUnion;
 class StructOrUnionSpecifier;
 class TextLine;
 class Token;
 class TranslationUnit;
 class TypedefName;
-class TypeName; //
+class TypeName;
 class TypeQualifier;
 class TypeQualifierList;
 class TypeSpecifier;
+class UnaryExpression;
+class UnaryOperator;
 class UniversalCharacterName;
 class UnsignedSuffix;
 
@@ -188,6 +234,55 @@ public:
     static void destroy(){}
 };
 
+class AbstractDeclarator : public BaseToken
+{
+public:
+    enum EAbstractDeclarator
+    {
+        NONE,
+        POINTER,
+        POINTER_DIRECT_ABSTRACT_DECLARATOR
+    } eAbstractDeclarator;
+
+    union UAbstractDeclarator
+    {
+        struct SPointer
+        {
+            Pointer* pointer;
+        } sPointer;
+        struct UPointerDirectAbstractDeclarator
+        {
+            Pointer* pointer;
+            DirectAbstractDeclarator* directAbstractDeclarator;
+        } sPointerDirectAbstractDeclarator;
+
+        UAbstractDeclarator():
+            sPointer{nullptr}{}
+    } uAbstractDeclarator;
+
+    AbstractDeclarator():
+        BaseToken(),
+        eAbstractDeclarator(NONE),
+        uAbstractDeclarator(){}
+};
+
+class AdditiveExpression : public BaseToken
+{
+public:
+    enum EAdditiveExpression
+    {
+        NONE,
+        PLUS,
+        MINUS
+    };
+
+    std::vector<std::pair<MultiplicativeExpression*, EAdditiveExpression>> multiplicativeExpressionPairVec;
+
+    AdditiveExpression():
+        BaseToken(),
+        multiplicativeExpressionPairVec(){}
+};
+
 class AlignmentSpecifier : public BaseToken
 {
 public:
@@ -217,6 +312,69 @@ public:
         BaseToken(),
         eAlignmentSpecifier(NONE),
         uAlignmentSpecifier(){}
+};
+
+class ANDExpression : public BaseToken
+{
+public:
+    std::vector<EqualityExpression*> equalityExpressions;
+
+    ANDExpression():
+        BaseToken(),
+        equalityExpressions(){}
+};
+
+class ArgumentExpressionList : public BaseToken
+{
+public:
+    std::vector<AssignmentExpression*> assignmentExpressions;
+
+    ArgumentExpressionList():
+        BaseToken(),
+        assignmentExpressions(){}
+};
+
+class AssignmentExpression : public BaseToken
+{
+public:
+    enum EAssignmentExpression
+    {
+        NONE,
+        CONDITIONAL_EXPRESSION,
+        UNARY_EXPRESSION_ASSIGNMENT_OPERATOR_ASSIGNMENT_EXPRESSION
+    } eAssignmentExpression;
+
+    union UAssignmentExpression
+    {
+        struct SConditionalExpression
+        {
+            ConditionalExpression* conditionalExpression;
+        } sConditionalExpression;
+        struct SUnaryExpressionAssignmentOperatorAssignmentExpression
+        {
+            UnaryExpression* unaryExpression;
+            AssignmentOperator* assignmentOperator;
+            AssignmentExpression* assignmentExpression;
+        } sUnaryExpressionAssignmentOperatorAssignmentExpression;
+
+        UAssignmentExpression():
+            sConditionalExpression{nullptr}{}
+    } uAssignmentExpression;
+
+    AssignmentExpression():
+        BaseToken(),
+        eAssignmentExpression(NONE),
+        uAssignmentExpression(){}
+};
+
+class AssignmentOperator : public BaseToken
+{
+public:
+    Punctuator* punctuator;
+
+    AssignmentOperator():
+        BaseToken(),
+        punctuator(nullptr){}
 };
 
 class AtomicTypeSpecifier : public BaseToken
@@ -260,6 +418,79 @@ public:
         BaseToken(),
         eBinaryExponentPart(NONE),
         uBinaryExponentPart(){}
+};
+
+class BlockItem : public BaseToken
+{
+public:
+    enum EBlockItem
+    {
+        NONE,
+        DECLARATION,
+        STATEMENT
+    } eBlockItem;
+
+    union UBlockItem
+    {
+        struct SDeclaration
+        {
+            Declaration* declaration;
+        } sDeclaration;
+        struct SStatement
+        {
+            Statement* statement;
+        } sStatement;
+
+        UBlockItem():
+            sDeclaration{nullptr}{}
+    } uBlockItem;
+
+    BlockItem():
+        BaseToken(),
+        eBlockItem(NONE),
+        uBlockItem(){}
+};
+
+class BlockItemList : public BaseToken
+{
+public:
+    std::vector<BlockItem*> blockItems;
+
+    BlockItemList():
+        BaseToken(),
+        blockItems(){}
+};
+
+class CastExpression : public BaseToken
+{
+public:
+    enum ECastExpression
+    {
+        NONE,
+        UNARY_EXPRESSION,
+        TYPE_NAME_CAST_EXPRESSION
+    } eCastExpression;
+
+    union UCastExpression
+    {
+        struct SUnaryExpression
+        {
+            UnaryExpression* unaryExpression;
+        } sUnaryExpression;
+        struct STypeNameCastExpression
+        {
+            TypeName* typeName;
+            CastExpression* castExpression;
+        } sTypeNameCastExpression;
+
+        UCastExpression():
+            sUnaryExpression{nullptr}{}
+    } uCastExpression;
+
+    CastExpression():
+        BaseToken(),
+        eCastExpression(NONE),
+        uCastExpression(){}
 };
 
 class CChar : public BaseToken
@@ -366,6 +597,49 @@ public:
         uCharacterConstant(){}
 };
 
+class CompoundStatement : public BaseToken
+{
+public:
+    BlockItemList* blockItemList;
+
+    CompoundStatement():
+        BaseToken(),
+        blockItemList(nullptr){}
+};
+
+class ConditionalExpression : public BaseToken
+{
+public:
+    enum EConditionalExpression
+    {
+        NONE,
+        LOGICAL_OR_EXPRESSION,
+        LOGICAL_OR_EXPRESSION_EXPRESSION_CONDITIONAL_EXPRESSION
+    } eConditionalExpression;
+
+    union UConditionalExpression
+    {
+        struct SLogicalORExpression
+        {
+            LogicalORExpression* logicalORExpression;
+        } sLogicalORExpression;
+        struct SLogicalORExpressionExpressionConditionalExpression
+        {
+            LogicalORExpression* logicalORExpression;
+            Expression* expression;
+            ConditionalExpression* conditionalExpression;
+        } sLogicalORExpressionExpressionConditionalExpression;
+
+        UConditionalExpression():
+            sLogicalORExpression{nullptr}{}
+    } uConditionalExpression;
+
+    ConditionalExpression():
+        BaseToken(),
+        eConditionalExpression(NONE),
+        uConditionalExpression(){}
+};
+
 class Constant : public BaseToken
 {
 public:
@@ -405,6 +679,16 @@ public:
         BaseToken(),
         eConstant(NONE),
         uConstant(){}
+};
+
+class ConstantExpression : public BaseToken
+{
+public:
+    ConditionalExpression* conditionalExpression;
+
+    ConstantExpression():
+        BaseToken(),
+        conditionalExpression(nullptr){}
 };
 
 class ControlLine : public BaseToken
@@ -656,6 +940,69 @@ public:
         uDeclarationSpecifiers(){}
 };
 
+class Declarator : public BaseToken
+{
+public:
+    Pointer* pointer;
+    DirectDeclarator* directDeclarator;
+
+    Declarator():
+        BaseToken(),
+        pointer(nullptr),
+        directDeclarator(nullptr){}
+};
+
+class Designation : public BaseToken
+{
+public:
+    DesignatorList* designatorList;
+
+    Designation():
+        BaseToken(),
+        designatorList(nullptr){}
+};
+
+class Designator : public BaseToken
+{
+public:
+    enum EDesignator
+    {
+        NONE,
+        CONSTANT_EXPRESSION,
+        IDENTIFIER
+    } eDesignator;
+
+    union UDesignator
+    {
+        struct SConstantExpression
+        {
+            ConstantExpression* constantExpression;
+        } sConstantExpression;
+        struct SIdentifier
+        {
+            Identifier* identifier;
+        } sIdentifier;
+
+        UDesignator():
+            sConstantExpression{nullptr}{}
+    } uDesignator;
+
+    Designator():
+        BaseToken(),
+        eDesignator(NONE),
+        uDesignator(){}
+};
+
+class DesignatorList : public BaseToken
+{
+public:
+    std::vector<Designator*> designators;
+
+    DesignatorList():
+        BaseToken(),
+        designators(){}
+};
+
 class Digit : public BaseToken
 {
 public:
@@ -696,6 +1043,134 @@ public:
         BaseToken(),
         eDigitSequence(NONE),
         uDigitSequence(){}
+};
+
+class DirectAbstractDeclarator : public BaseToken
+{
+public:
+    enum EDirectAbstractDeclarator
+    {
+        NONE,
+        ABSTRACT_DECLARATOR,
+        DIRECT_ABSTRACT_DECLARATOR_TYPE_QUALIFIER_LIST_ASSIGNMENT_EXPRESSION,
+        DIRECT_ABSTRACT_DECLARATOR_STATIC_TYPE_QUALIFIER_LIST_ASSIGNMENT_EXPRESSION,
+        DIRECT_ABSTRACT_DECLARATOR_TYPE_QUALIFIER_LIST_STATIC_ASSIGNMENT_EXPRESSION,
+        DIRECT_ABSTRACT_DECLARATOR_ASTERISK,
+        DIRECT_ABSTRACT_DECLARATOR_PARAMETER_TYPE_LIST
+    } eDirectAbstractDeclarator;
+
+    union UDirectAbstractDeclarator
+    {
+        struct SAbstractDeclarator
+        {
+            AbstractDeclarator* abstractDeclarator;
+        } sAbstractDeclarator;
+        struct SDirectAbstractDeclaratorTypeQualifierListAssignmentExpression
+        {
+            DirectAbstractDeclarator* directAbstractDeclarator;
+            TypeQualifierList* typeQualifierList;
+            AssignmentExpression* assignmentExpression;
+        } sDirectAbstractDeclaratorTypeQualifierListAssignmentExpression;
+        struct SDirectAbstractDeclaratorStaticTypeQualifierListAssignmentExpression
+        {
+            DirectAbstractDeclarator* directAbstractDeclarator;
+            TypeQualifierList* typeQualifierList;
+            AssignmentExpression* assignmentExpression;
+        } sDirectAbstractDeclaratorStaticTypeQualifierListAssignmentExpression;
+        struct SDirectAbstractDeclaratorTypeQualifierListStaticAssignmentExpression
+        {
+            DirectAbstractDeclarator* directAbstractDeclarator;
+            TypeQualifierList* typeQualifierList;
+            AssignmentExpression* assignmentExpression;
+        } sDirectAbstractDeclaratorTypeQualifierListStaticAssignmentExpression;
+        struct SDirectAbstractDeclaratorAsterisk
+        {
+            DirectAbstractDeclarator* directAbstractDeclarator;
+        } sDirectAbstractDeclaratorAsterisk;
+        struct SDirectAbstractDeclaratorParameterTypeList
+        {
+            DirectAbstractDeclarator* directAbstractDeclarator;
+            ParameterTypeList* parameterTypeList;
+        } sDirectAbstractDeclaratorParameterTypeList;
+
+        UDirectAbstractDeclarator():
+            sAbstractDeclarator{nullptr}{}
+    } uDirectAbstractDeclarator;
+
+    DirectAbstractDeclarator():
+        BaseToken(),
+        eDirectAbstractDeclarator(NONE),
+        uDirectAbstractDeclarator(){}
+};
+
+class DirectDeclarator : public BaseToken
+{
+public:
+    enum EDirectDeclarator
+    {
+        NONE,
+        IDENTIFIER,
+        DECLARATOR,
+        DIRECT_DECLARATOR_TYPE_QUALIFIER_LIST_ASSIGNMENT_EXPRESSION,
+        DIRECT_DECLARATOR_STATIC_TYPE_QUALIFIER_LIST_ASSIGNMENT_EXPRESSION,
+        DIRECT_DECLARATOR_TYPE_QUALIFIER_LIST_STATIC_ASSIGNMENT_EXPRESSION,
+        DIRECT_DECLARATOR_TYPE_QUALIFIER_LIST,
+        DIRECT_DECLARATOR_PARAMETER_TYPE_LIST,
+        DIRECT_DECLARATOR_IDENTIFIER_LIST
+    } eDirectDeclarator;
+
+    union UDirectDeclarator
+    {
+        struct SIdentifier
+        {
+            Identifier* identifier;
+        } sIdentifier;
+        struct SDeclarator
+        {
+            Declarator* declarator;
+        } sDeclarator;
+        struct SDirectDeclaratorTypeQualifierListAssignmentExpression
+        {
+            DirectDeclarator* directDeclarator;
+            TypeQualifierList* typeQualifierList;
+            AssignmentExpression* assignmentExpression;
+        } sDirectDeclaratorTypeQualifierListAssignmentExpression;
+        struct SDirectDeclaratorStaticTypeQualifierListAssignmentExpression
+        {
+            DirectDeclarator* directDeclarator;
+            TypeQualifierList* typeQualifierList;
+            AssignmentExpression* assignmentExpression;
+        } sDirectDeclaratorStaticTypeQualifierListAssignmentExpression;
+        struct SDirectDeclaratorTypeQualifierListStaticAssignmentExpression
+        {
+            DirectDeclarator* directDeclarator;
+            TypeQualifierList* typeQualifierList;
+            AssignmentExpression* assignmentExpression;
+        } sDirectDeclaratorTypeQualifierListStaticAssignmentExpression;
+        struct SDirectDeclaratorTypeQualifierList
+        {
+            DirectDeclarator* directDeclarator;
+            TypeQualifierList* typeQualifierList;
+        } sDirectDeclaratorTypeQualifierList;
+        struct SDirectDeclaratorParameterTypeList
+        {
+            DirectDeclarator* directDeclarator;
+            ParameterTypeList* parameterTypeList;
+        } sDirectDeclaratorParameterTypeList;
+        struct SDirectDeclaratorIdentifierList
+        {
+            DirectDeclarator* directDeclarator;
+            IdentifierList* identifierList;
+        } sDirectDeclaratorIdentifierList;
+    
+        UDirectDeclarator():
+            sIdentifier{nullptr}{}
+    } uDirectDeclarator;
+
+    DirectDeclarator():
+        BaseToken(),
+        eDirectDeclarator(NONE),
+        uDirectDeclarator(){}
 };
 
 class ElifGroup : public BaseToken
@@ -786,6 +1261,48 @@ public:
         identifier(nullptr){}
 };
 
+class Enumerator : public BaseToken
+{
+public:
+    enum EEnumerator
+    {
+        NONE,
+        ENUMERATION_CONSTANT,
+        ENUMERATION_CONSTANT_CONSTANT_EXPRESSION
+    } eEnumerator;
+
+    union UEnumerator
+    {
+        struct SEnumerationConstant
+        {
+            EnumerationConstant* enumerationConstant;
+        } sEnumerationConstant;
+        struct SEnumerationConstantConstantExression
+        {
+            EnumerationConstant* enumerationConstant;
+            ConstantExpression* constantExression;
+        } sEnumerationConstantConstantExpression;
+
+        UEnumerator():
+            sEnumerationConstant{nullptr}{}
+    } uEnumerator;
+
+    Enumerator():
+        BaseToken(),
+        eEnumerator(NONE),
+        uEnumerator(){}
+};
+
+class EnumeratorList : public BaseToken
+{
+public:
+    std::vector<Enumerator*> enumerators;
+
+    EnumeratorList():
+        BaseToken(),
+        enumerators(){}
+};
+
 class EnumSpecifier : public BaseToken
 {
 public:
@@ -822,6 +1339,23 @@ public:
         BaseToken(),
         eEnumSpecifier(NONE),
         uEnumSpecifier(){}
+};
+
+class EqualityExpression : public BaseToken
+{
+public:
+    enum EEqualityExpression
+    {
+        NONE,
+        EQUAL_EQUAL,
+        NOT_EQUAL
+    };
+
+    std::vector<std::pair<RelationalExpression*, EEqualityExpression>> relationalExpressionPairVec;
+
+    EqualityExpression():
+        BaseToken(),
+        relationalExpressionPairVec(){}
 };
 
 class EscapeSequence : public BaseToken
@@ -865,6 +1399,16 @@ public:
         uEscapeSequence(){}
 };
 
+class ExclusiveORExpression : public BaseToken
+{
+public:
+    std::vector<ANDExpression*> _ANDExpressions;
+
+    ExclusiveORExpression():
+        BaseToken(),
+        _ANDExpressions(){}
+};
+
 class ExponentPart : public BaseToken
 {
 public:
@@ -896,6 +1440,26 @@ public:
         BaseToken(),
         eExponentPart(NONE),
         uExponentPart(){}
+};
+
+class Expression : public BaseToken
+{
+public:
+    std::vector<AssignmentExpression*> assignmentExpressions;
+
+    Expression():
+        BaseToken(),
+        assignmentExpressions(){}
+};
+
+class ExpressionStatement : public BaseToken
+{
+public:
+    Expression* expression;
+
+    ExpressionStatement():
+        BaseToken(),
+        expression(nullptr){}
 };
 
 class ExternalDeclaration : public BaseToken
@@ -1026,6 +1590,60 @@ public:
     FunctionSpecifier():
         BaseToken(),
         element(){}
+};
+
+class GenericAssociation : public BaseToken
+{
+public:
+    enum EGenericAssociation
+    {
+        NONE,
+        TYPE_NAME_ASSIGNMENT_EXPRESSION,
+        DEFAULT_ASSIGNMENT_EXPRESSION
+    } eGenericAssociation;
+
+    union UGenericAssociation
+    {
+        struct STypeNameAssignmentExpression
+        {
+            TypeName* typeName;
+            AssignmentExpression* assignmentExpression;
+        } sTypeNameAssignmentExpression;
+        struct SDefaultAssignmentExpression
+        {
+            AssignmentExpression* assignmentExpression;
+        } sDefaultAssignmentExpression;
+
+        UGenericAssociation():
+            sTypeNameAssignmentExpression{nullptr, nullptr}{}
+    } uGenericAssociation;
+
+    GenericAssociation():
+        BaseToken(),
+        eGenericAssociation(NONE),
+        uGenericAssociation(){}
+};
+
+class GenericAssocList : public BaseToken
+{
+public:
+    std::vector<GenericAssociation*> genericAssociations;
+
+    GenericAssocList():
+        BaseToken(),
+        genericAssociations(){}
+};
+
+class GenericSelection : public BaseToken
+{
+public:
+    AssignmentExpression* assignmentExpression;
+    GenericAssocList* genericAssocList;
+
+    GenericSelection():
+        BaseToken(),
+        assignmentExpression(nullptr),
+        genericAssocList(nullptr){}
 };
 
 class Group : public BaseToken
@@ -1535,6 +2153,16 @@ public:
         endifLine(nullptr){}
 };
 
+class InclusiveORExpression : public BaseToken
+{
+public:
+    std::vector<ExclusiveORExpression*> exclusiveORExpressions;
+
+    InclusiveORExpression():
+        BaseToken(),
+        exclusiveORExpressions(){}
+};
+
 class InitDeclarator : public BaseToken
 {
 public:
@@ -1575,6 +2203,62 @@ public:
     InitDeclaratorList():
         BaseToken(),
         initDeclarators(){}
+};
+
+class Initializer : public BaseToken
+{
+public:
+    enum EInitializer
+    {
+        NONE,
+        ASSIGNMENT_EXPRESSION,
+        INITIALIZER_LIST,
+        INITIALIZER_LIST_COMMA
+    } eInitializer;
+
+    union UInitializer
+    {
+        struct SAssignmentExpression
+        {
+            AssignmentExpression* assignmentExpression;
+        } sAssignmentExpression;
+        struct SInitializerList
+        {
+            InitializerList* initializerList;
+        } sInitializerList;
+        struct SInitializerListComma
+        {
+            InitializerList* initializerList;
+        } sInitializerListComma;
+
+        UInitializer():
+            sAssignmentExpression{nullptr}{}
+    } uInitializer;
+
+    Initializer():
+        BaseToken(),
+        eInitializer(NONE),
+        uInitializer(){}
+};
+
+class InitializerList : public BaseToken
+{
+public:
+    struct SDesignationInitializer
+    {
+        Designation* designation;
+        Initializer* initializer;
+
+        SDesignationInitializer():
+            designation(nullptr),
+            initializer(nullptr){}
+    };
+
+    std::vector<SDesignationInitializer> sDesignationInitializers;
+
+    InitializerList():
+        BaseToken(),
+        sDesignationInitializers(){}
 };
 
 class IntegerConstant : public BaseToken
@@ -1661,6 +2345,88 @@ public:
         uIntegerSuffix(){}
 };
 
+class IterationStatement : public BaseToken
+{
+public:
+    enum EIterationStatement
+    {
+        NONE,
+        WHILE_EXPRESSION_STATEMENT,
+        DO_STATEMENT_WHILE_EXPRESSION,
+        FOR_EXPRESSION_EXPRESSION_EXPRESSION_STATEMENT,
+        FOR_DECLARATION_EXPRESSION_EXPRESSION_STATEMENT
+    } eIterationStatement;
+    
+    union UIterationStatement
+    {
+        struct SWhileExpressionStatement
+        {
+            Expression* expression;
+            Statement* statement;
+        } sWhileExpressionStatement;
+        struct SDoStatementWhileExpression
+        {
+            Statement* statement;
+            Expression* expression;
+        } sDoStatementWhileExpression;
+        struct SForExpressionExpressionExpressionStatement
+        {
+            Expression* expression;
+            Expression* expression_1;
+            Expression* expression_2;
+            Statement* statement;
+        } sForExpressionExpressionExpressionStatement;
+        struct SForDeclarationExpressionExpressionStatement
+        {
+            Declaration* declaration;
+            Expression* expression;
+            Expression* expression_1;
+            Statement* statement;
+        } sForDeclarationExpressionExpressionStatement;
+
+        UIterationStatement():
+            sWhileExpressionStatement{nullptr, nullptr}{}
+    } uIterationStatement;
+
+    IterationStatement():
+        BaseToken(),
+        eIterationStatement(NONE),
+        uIterationStatement(){}
+};
+
+class JumpStatement : public BaseToken
+{
+public:
+    enum EJumpStatement
+    {
+        NONE,
+        GOTO_IDENTIFIER,
+        CONTINUE,
+        BREAK,
+        RETURN_EXPRESSION
+    } eJumpStatement;
+
+    union UJumpStatement
+    {
+        struct SGotoIdentifier
+        {
+            Identifier* identifier;
+        } sGotoIdentifier;
+        struct SReturnExpression
+        {
+            Expression* expression;
+        } sReturnExpression;
+
+        UJumpStatement():
+            sGotoIdentifier{nullptr}{}
+    } uJumpStatement;
+
+    JumpStatement():
+        BaseToken(),
+        eJumpStatement(NONE),
+        uJumpStatement(){}
+};
+
 class Keyword : public BaseToken
 {
 public:
@@ -1669,6 +2435,64 @@ public:
     Keyword():
         BaseToken(),
         element(){}
+};
+
+class LabeledStatement : public BaseToken
+{
+public:
+    enum ELabeledStatement
+    {
+        NONE,
+        IDENTIFIER_STATEMENT,
+        CASE_CONSTANT_EXPRESSION_STATEMENT,
+        DEFAULT_STATEMENT
+    } eLabeledStatement;
+
+    union ULabeledStatement
+    {
+        struct SIdentifierStatement
+        {
+            Identifier* identifier;
+            Statement* statement;
+        } sIdentifierStatement;
+        struct SCaseConstantExpressionStatement
+        {
+            ConstantExpression* constantExpression;
+            Statement* statement;
+        } sCaseConstantExpressionStatement;
+        struct SDefaultStatement
+        {
+            Statement* statement;
+        } sDefaultStatement;
+
+        ULabeledStatement():
+            sIdentifierStatement{nullptr, nullptr}{}
+    } uLabeledStatement;
+
+    LabeledStatement():
+        BaseToken(),
+        eLabeledStatement(),
+        uLabeledStatement(){}
+};
+
+class LogicalANDExpression : public BaseToken
+{
+public:
+    std::vector<InclusiveORExpression*> inclusiveORExpressions;
+
+    LogicalANDExpression():
+        BaseToken(),
+        inclusiveORExpressions(){}
+};
+
+class LogicalORExpression : public BaseToken
+{
+public:
+    std::vector<LogicalANDExpression*> logicalANDExpressions;
+
+    LogicalORExpression():
+        BaseToken(),
+        logicalANDExpressions(){}
 };
 
 class LongSuffix : public BaseToken
@@ -1699,6 +2523,24 @@ public:
     Lparen():
         BaseToken(),
         element(0){}
+};
+
+class MultiplicativeExpression : public BaseToken
+{
+public:
+    enum EMultiplicativeExpression
+    {
+        NONE,
+        ASTERISK,
+        SLASH,
+        PERCENT
+    };
+
+    std::vector<std::pair<CastExpression*, EMultiplicativeExpression>> castExpressionPairVec;
+
+    MultiplicativeExpression():
+        BaseToken(),
+        castExpressionPairVec(){}
 };
 
 class NewLine : public BaseToken
@@ -1824,6 +2666,80 @@ public:
         uOctalEscapeSequence(){}
 };
 
+class ParameterDeclaration : public BaseToken
+{
+public:
+    enum EParameterDeclaration
+    {
+        NONE,
+        DECLARATION_SPECIFIERS_DECLARATOR,
+        DECLARATION_SPECIFIERS_ABSTRACT_DECLARATOR
+    } eParameterDeclaration;
+
+    union UParameterDeclaration
+    {
+        struct SDeclarationSpecifiersDeclarator
+        {
+            DeclarationSpecifiers* declarationSpecifiers;
+            Declarator* declarator;
+        } sDeclarationSpecifiersDeclarator;
+        struct SDeclarationSpecifiersAbstractDeclarator
+        {
+            DeclarationSpecifiers* declarationSpecifiers;
+            AbstractDeclarator* abstractDeclarator;
+        } sDeclarationSpecifiersAbstractDeclarator;
+
+        UParameterDeclaration():
+            sDeclarationSpecifiersDeclarator{nullptr, nullptr}{}
+    } uParameterDeclaration;
+
+    ParameterDeclaration():
+        BaseToken(),
+        eParameterDeclaration(NONE),
+        uParameterDeclaration(){}
+};
+
+class ParameterList : public BaseToken
+{
+public:
+    std::vector<ParameterDeclaration*> parameterDeclarations;
+
+    ParameterList():
+        BaseToken(),
+        parameterDeclarations(){}
+};
+
+class ParameterTypeList : public BaseToken
+{
+public:
+    enum EParameterTypeList
+    {
+        NONE,
+        PARAMETER_LIST,
+        PARAMETER_LIST_DOTDOTDOT
+    } eParameterTypeList;
+
+    union UParameterTypeList
+    {
+        struct SParameterList
+        {
+            ParameterList* parameterList;
+        } sParameterList;
+        struct SParameterListDotdotdot
+        {
+            ParameterList* parameterList;
+        } sParameterListDotdotdot;
+
+        UParameterTypeList():
+            sParameterList{nullptr}{}
+    } uParameterTypeList;
+
+    ParameterTypeList():
+        BaseToken(),
+        eParameterTypeList(NONE),
+        uParameterTypeList(){}
+};
+
 class Pointer : public BaseToken
 {
 public:
@@ -1854,6 +2770,78 @@ public:
         BaseToken(),
         ePointer(NONE),
         uPointer(){}
+};
+
+class PostfixExpression : public BaseToken
+{
+public:
+    enum EPostfixExpression
+    {
+        NONE,
+        PRIMARY_EXPRESSION,
+        POSTFIX_EXPRESSION_EXPRESSION,
+        POSTFIX_EXPRESSION_ARGUMENT_EXPRESSION_LIST,
+        POSTFIX_EXPRESSION_DOT_IDENTIFIER,
+        POSTFIX_EXPRESSION_ARROW_IDENTIFIER,
+        POSTFIX_EXPRESSION_PLUSPLUS,
+        POSTFIX_EXPRESSION_MINUSMINUS,
+        TYPE_NAME_INITIALIZER_LIST,
+        TYPE_NAME_INITIALIZER_LIST_DOT
+    } ePostfixExpression;
+
+    union UPostfixExpression
+    {
+        struct SPrimaryExpression
+        {
+            PrimaryExpression* primaryExpression;
+        } sPrimaryExpression;
+        struct SPostfixExpressionExpression
+        {
+            PostfixExpression* postfixExpression;
+            Expression* expression;
+        } sPostfixExpressionExpression;
+        struct SPostfixExpressionArgumentExpressionList
+        {
+            PostfixExpression* postfixExpression;
+            ArgumentExpressionList* argumentExpressionList;
+        } sPostfixExpressionArgumentExpressionList;
+        struct SPostfixExpressionDotIdentifier
+        {
+            PostfixExpression* postfixExpression;
+            Identifier* identifier;
+        } sPostfixExpressionDotIdentifier;
+        struct SPostfixExpressionArrowIdentifier
+        {
+            PostfixExpression* postfixExpression;
+            Identifier* identifier;
+        } sPostfixExpressionArrowIdentifier;
+        struct SPostfixExpressionPlusplus
+        {
+            PostfixExpression* postfixExpression;
+        } sPostfixExpressionPlusplus;
+        struct SPostfixExpressionMinusminus
+        {
+            PostfixExpression* postfixExpression;
+        } sPostfixExpressionMinusminus;
+        struct STypeNameIdentifierList
+        {
+            TypeName* typeName;
+            IdentifierList* identifierList;
+        } sTypeNameIdentifierList;
+        struct STypeNameIdentifierListDot
+        {
+            TypeName* typeName;
+            IdentifierList* identifierList;
+        } sTypeNameIdentifierListDot;
+
+        UPostfixExpression():
+            sPrimaryExpression{nullptr}{}
+    } uPostfixExpression;
+
+    PostfixExpression():
+        BaseToken(),
+        ePostfixExpression(NONE),
+        uPostfixExpression(){}
 };
 
 class PPNumber : public BaseToken
@@ -2026,6 +3014,52 @@ public:
         uPreprocessingToken(){}
 };
 
+class PrimaryExpression : public BaseToken
+{
+public:
+    enum EPrimaryExpression
+    {
+        NONE,
+        IDENTIFIER,
+        CONSTANT,
+        STRING_LITERAL,
+        EXPRESSION,
+        GENERIC_SELECTION
+    } ePrimaryExpression;
+
+    union UPrimaryExpression
+    {
+        struct SIdentifier
+        {
+            Identifier* identifier;
+        } sIdentifier;
+        struct SConstant
+        {
+            Constant* constant;
+        } sConstant;
+        struct SStringLiteral
+        {
+            StringLiteral* stringLiteral;
+        } sStringLiteral;
+        struct SExpression
+        {
+            Expression* expression;
+        } sExpression;
+        struct SGenericSelection
+        {
+            GenericSelection* genericSelection;
+        } sGenericSelection;
+
+        UPrimaryExpression():
+            sIdentifier{nullptr}{}
+    } uPrimaryExpression;
+
+    PrimaryExpression():
+        BaseToken(),
+        ePrimaryExpression(NONE),
+        uPrimaryExpression(){}
+};
+
 class Punctuator : public BaseToken
 {
 public:
@@ -2076,6 +3110,25 @@ public:
         BaseToken(),
         eQCharSequence(NONE),
         uQCharSequence(){}
+};
+
+class RelationalExpression : public BaseToken
+{
+public:
+    enum ERelationalExpression
+    {
+        NONE,
+        LESS,
+        GREATER,
+        LESS_EQUAL,
+        GREATER_EQUAL
+    };
+
+    std::vector<std::pair<ShiftExpression*, ERelationalExpression>> shiftExpressionPairVec;
+
+    RelationalExpression():
+        BaseToken(),
+        shiftExpressionPairVec(){}
 };
 
 class ReplacementList : public BaseToken
@@ -2151,6 +3204,63 @@ public:
         uSCharSequence(){}
 };
 
+class SelectionStatement : public BaseToken
+{
+public:
+    enum ESelectionStatement
+    {
+        NONE,
+        IF_EXPRESSION_STATEMENT,
+        IF_EXPRESSION_STATEMENT_ELSE_STATEMENT,
+        SWITCH_EXPRESSION_STATEMENT
+    } eSelectionStatement;
+
+    union USelectionStatement
+    {
+        struct SIfExpressionStatement
+        {
+            Expression* expression;
+            Statement* statement;
+        } sIfExpressionStatement;
+        struct SIfExpressionStatementElseStatement
+        {
+            Expression* expression;
+            Statement* statement;
+            Statement* statement_1;
+        } sIfExpressionStatementElseStatement;
+        struct SSwitchExpressionStatement
+        {
+            Expression* expression;
+            Statement* statement;
+        } sSwitchExpressionStatement;
+
+        USelectionStatement():
+            sIfExpressionStatement{nullptr, nullptr}{}
+    } uSelectionStatement;
+
+    SelectionStatement():
+        BaseToken(),
+        eSelectionStatement(NONE),
+        uSelectionStatement(){}
+};
+
+class ShiftExpression : public BaseToken
+{
+public:
+    enum EShiftExpression
+    {
+        NONE,
+        LEFT,
+        RIGHT
+    };
+
+    std::vector<std::pair<AdditiveExpression*, EShiftExpression>> additiveExpressionPairVec;
+
+    ShiftExpression():
+        BaseToken(),
+        additiveExpressionPairVec(){}
+};
+
 class Sign : public BaseToken
 {
 public:
@@ -2169,6 +3279,102 @@ public:
     SimpleEscapeSequence():
         BaseToken(),
         element(0){}
+};
+
+class SpecifierQualifierList : public BaseToken
+{
+public:
+    enum ESpecifierQualifierList
+    {
+        NONE,
+        TYPE_SPECIFIER_SPECIFIER_QUALIFIER_LIST,
+        TYPE_QUALIFIER_SPECIFIER_QUALIFIER_LIST
+    } eSpecifierQualifierList;
+
+    union USpecifierQualifierList
+    {
+        struct STypeSpecifierSpecifierQualifierList
+        {
+            TypeSpecifier* typeSpecifier;
+            SpecifierQualifierList* specifierQualifierList;
+        } sTypeSpecifierSpecifierQualifierList;
+        struct STypeQualifierSpecifierQualifierList
+        {
+            TypeQualifier* typeQualifier;
+            SpecifierQualifierList* specifierQualifierList;
+        } sTypeQualifierSpecifierQualifierList;
+
+        USpecifierQualifierList():
+            sTypeSpecifierSpecifierQualifierList{nullptr, nullptr}{}
+    } uSpecifierQualifier;
+
+    SpecifierQualifierList():
+        BaseToken(),
+        eSpecifierQualifierList(NONE),
+        uSpecifierQualifier(){}
+};
+
+class Statement : public BaseToken
+{
+public:
+    enum EStatement
+    {
+        NONE,
+        LABELED_STATEMENT,
+        COMPOUND_STATEMENT,
+        EXPRESSION_STATEMENT,
+        SELECTION_STATEMENT,
+        ITERATION_STATEMENT,
+        JUMP_STATEMENT
+    } eStatement;
+
+    union UStatement
+    {
+        struct SLabeledStatement
+        {
+            LabeledStatement* labeledStatement;
+        } sLabeledStatement;
+        struct SCompoundStatement
+        {
+            CompoundStatement* compoundStatement;
+        } sCompoundStatement;
+        struct SExpressionStatement
+        {
+            ExpressionStatement* expressionStatement;
+        } sExpressionStatement;
+        struct SSelectionStatement
+        {
+            SelectionStatement* selectionStatement;
+        } sSelectionStatement;
+        struct SIterationStatement
+        {
+            IterationStatement* iterationStatement;
+        } sIterationStatement;
+        struct SJumpStatement
+        {
+            JumpStatement* jumpStatement;
+        } sJumpStatement;
+
+        UStatement():
+            sLabeledStatement{nullptr}{}
+    } uStatement;
+
+    Statement():
+        BaseToken(),
+        eStatement(NONE),
+        uStatement(){}
+};
+
+class StaticAssertDeclaration : public BaseToken
+{
+public:
+    ConstantExpression* constantExpression;
+    StringLiteral* stringLiteral;
+
+    StaticAssertDeclaration():
+        BaseToken(),
+        constantExpression(nullptr),
+        stringLiteral(nullptr){}
 };
 
 class StorageClassSpecifier : public BaseToken
@@ -2191,6 +3397,100 @@ public:
         BaseToken(),
         encodingPrefix(nullptr),
         sCharSequence(nullptr){}
+};
+
+class StructDeclaration : public BaseToken
+{
+public:
+    enum EStructDeclaration
+    {
+        NONE,
+        SPECIFIER_QUALIFIER_LIST_STRUCT_DECLARATOR_LIST,
+        STATIC_ASSERT_DECLARATION
+    } eStructDeclaration;
+
+    union UStructDeclaration
+    {
+        struct SSpecifierQualifierListStructDeclaratorList
+        {
+            SpecifierQualifierList* specifierQualifierList;
+            StructDeclaratorList* structDeclaratorList;
+        } sSpecifierQualifierListStructDeclaratorList;
+        struct SStaticAssertDeclaration
+        {
+            StaticAssertDeclaration* staticAssertDeclaration;
+        } sStaticAssertDeclaration;
+
+        UStructDeclaration():
+            sSpecifierQualifierListStructDeclaratorList{nullptr, nullptr}{}
+    } uStructDeclaration;
+
+    StructDeclaration():
+        BaseToken(),
+        eStructDeclaration(NONE),
+        uStructDeclaration(){}
+};
+
+class StructDeclarationList : public BaseToken
+{
+public:
+    std::vector<StructDeclaration*> structDeclarations;
+
+    StructDeclarationList():
+        BaseToken(),
+        structDeclarations(){}
+};
+
+class StructDeclarator : public BaseToken
+{
+public:
+    enum EStructDeclarator
+    {
+        NONE,
+        DECLARATOR,
+        DECLARATOR_CONSTANT_EXPRESSION
+    } eStructDeclarator;
+
+    union UStructDeclarator
+    {
+        struct SDeclarator
+        {
+            Declarator* declarator;
+        } sDeclarator;
+        struct SDeclaratorConstantExpression
+        {
+            Declarator* declarator;
+            ConstantExpression* constantExpression;
+        } sDeclaratorConstantExpression;
+
+        UStructDeclarator():
+            sDeclarator{nullptr}{}
+    } uStructDeclarator;
+
+    StructDeclarator():
+        BaseToken(),
+        eStructDeclarator(NONE),
+        uStructDeclarator(){}
+};
+
+class StructDeclaratorList : public BaseToken
+{
+public:
+    std::vector<StructDeclarator*> structDeclarators;
+
+    StructDeclaratorList():
+        BaseToken(),
+        structDeclarators(){}
+};
+
+class StructOrUnion : public BaseToken
+{
+public:
+    std::string element;
+
+    StructOrUnion():
+        BaseToken(),
+        element(){}
 };
 
 class StructOrUnionSpecifier : public BaseToken
@@ -2305,6 +3605,18 @@ public:
         identifier(nullptr){}
 };
 
+class TypeName : public BaseToken
+{
+public:
+    SpecifierQualifierList* specifierQualifierList;
+    AbstractDeclarator* abstractDeclarator;
+
+    TypeName():
+        BaseToken(),
+        specifierQualifierList(nullptr),
+        abstractDeclarator(nullptr){}
+};
+
 class TypeQualifier : public BaseToken
 {
 public:
@@ -2313,6 +3625,16 @@ public:
     TypeQualifier():
         BaseToken(),
         element(){}
+};
+
+class TypeQualifierList : public BaseToken
+{
+public:
+    std::vector<TypeQualifier*> typeQualifiers;
+
+    TypeQualifierList():
+        BaseToken(),
+        typeQualifiers(){}
 };
 
 class TypeSpecifier : public BaseToken
@@ -2359,6 +3681,73 @@ public:
         BaseToken(),
         eTypeSpecifier(NONE),
         uTypeSpecifier(){}
+};
+
+class UnaryExpression : public BaseToken
+{
+public:
+    enum EUnaryExpression
+    {
+        NONE,
+        POSTFIX_EXPRESSION,
+        PLUS_PLUS_UNARY_EXPRESSION,
+        MINUS_MINUS_UNARY_EXPRESSION,
+        UNARY_OPERATOR_CAST_EXPRESSION,
+        SIZEOF_UNARY_EXPRESSION,
+        SIZEOF_TYPE_NAME,
+        ALIGNAF_TYPE_NAME
+    } eUnaryExpression;
+
+    union UUnaryExpression
+    {
+        struct SPostfixExpression
+        {
+            PostfixExpression* postfixExpression;
+        } sPostfixExpression;
+        struct SPlusPlusUnaryExpression
+        {
+            UnaryExpression* unaryExpression;
+        } sPlusPlusUnaryExpression;
+        struct SMinusMinusUnaryExpression
+        {
+            UnaryExpression* unaryExpression;
+        } sMinusMinusUnaryExpression;
+        struct SUnaryOperatorCastExpression
+        {
+            UnaryOperator* unaryOperator;
+            CastExpression* castExpression;
+        } sUnaryOperatorCastExpression;
+        struct SSizeofUnaryExpression
+        {
+            UnaryExpression* unaryExpression;
+        } sSizeofUnaryExpression;
+        struct SSizeofTypeName
+        {
+            TypeName* typeName;
+        } sSizeofTypeName;
+        struct SAlignofTypeName
+        {
+            TypeName* typeName;
+        } sAlignofTypeName;
+
+        UUnaryExpression():
+            sPostfixExpression{nullptr}{}
+    } uUnaryExpression;
+
+    UnaryExpression():
+        BaseToken(),
+        eUnaryExpression(NONE),
+        uUnaryExpression(){}
+};
+
+class UnaryOperator : public BaseToken
+{
+public:
+    Punctuator* punctuator;
+
+    UnaryOperator():
+        BaseToken(),
+        punctuator(nullptr){}
 };
 
 class UniversalCharacterName : public BaseToken
