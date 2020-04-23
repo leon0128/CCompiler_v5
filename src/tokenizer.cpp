@@ -6,6 +6,7 @@ std::vector<Token*> tmp;
 Tokenizer::Tokenizer():
     mTokens(tmp),
     mIdx(0),
+    mTypedefNames(),
     mIsValid(true)
 {
 }
@@ -399,6 +400,8 @@ CastExpression* Tokenizer::getCastExpression()
         else
             isValid = false;
     }
+    else
+        isValid = false;
 
     if(!isValid)
     {
@@ -427,16 +430,20 @@ CompoundStatement* Tokenizer::getCompoundStatement()
     auto befIdx = mIdx;
     bool isValid = true;
 
-    if(isMatched(mIdx, Token::PUNCTUATOR, "("))
+    if(isMatched(mIdx, Token::PUNCTUATOR, "{"))
     {
         mIdx++;
 
+        mTypedefNames.emplace_back();
+
         compoundStatement.blockItemList = getBlockItemList();
 
-        if(isMatched(mIdx, Token::PUNCTUATOR, ")"))
+        if(isMatched(mIdx, Token::PUNCTUATOR, "}"))
             mIdx++;
         else
             isValid = false;
+        
+        mTypedefNames.pop_back();
     }
     else
         isValid = false;
@@ -552,7 +559,7 @@ Declaration* Tokenizer::getDeclaration()
 
     if(declaration.uDeclaration.sDeclarationSpecifiersInitDeclaratorList.declarationSpecifiers = getDeclarationSpecifiers())
     {
-        declaration.uDeclaration.sDeclarationSpecifiersInitDeclaratorList.initDeclaratorList = getInitDeclaratorList();
+        declaration.uDeclaration.sDeclarationSpecifiersInitDeclaratorList.initDeclaratorList = getInitDeclaratorList(isTypedefDeclaration(declaration.uDeclaration.sDeclarationSpecifiersInitDeclaratorList.declarationSpecifiers));
         
         if(isMatched(mIdx, Token::PUNCTUATOR, ";"))
         {
@@ -1744,7 +1751,7 @@ InitDeclarator* Tokenizer::getInitDeclarator()
     }
 }
 
-InitDeclaratorList* Tokenizer::getInitDeclaratorList()
+InitDeclaratorList* Tokenizer::getInitDeclaratorList(bool isTypedef)
 {
     std::vector<InitDeclarator*> initDeclaratorVec;
 
@@ -1754,6 +1761,8 @@ InitDeclaratorList* Tokenizer::getInitDeclaratorList()
     if(id)
     {
         initDeclaratorVec.push_back(id);
+        if(isTypedef)
+            addTypedefDeclaration(id);
 
         while(1)
         {
@@ -1762,7 +1771,11 @@ InitDeclaratorList* Tokenizer::getInitDeclaratorList()
                 mIdx++;
 
                 if(id = getInitDeclarator())
+                {
                     initDeclaratorVec.push_back(id);
+                    if(isTypedef)
+                        addTypedefDeclaration(id);
+                }
                 else
                 {
                     mIdx--;
@@ -3189,6 +3202,8 @@ TranslationUnit* Tokenizer::getTranslationUnit()
     auto befIdx = mIdx;
     bool isValid = true;
 
+    mTypedefNames.emplace_back();
+
     while(mIdx < mTokens.size() &&
           isValid)
     {
@@ -3203,6 +3218,8 @@ TranslationUnit* Tokenizer::getTranslationUnit()
                       << std::endl;
         }
     }
+
+    mTypedefNames.pop_back();
 
     if(isValid)
     {
@@ -3227,11 +3244,16 @@ TypedefName* Tokenizer::getTypedefName()
 {
     if(isMatched(mIdx, Token::IDENTIFIER))
     {
-        mIdx++;
+        if(isDeclarated(mTokens[mIdx]->uToken.sIdentifier.identifier))
+        {
+            mIdx++;
 
-        TypedefName* typedefName = new TypedefName();
-        typedefName->identifier = mTokens[mIdx - 1]->uToken.sIdentifier.identifier;
-        return typedefName;
+            TypedefName* typedefName = new TypedefName();
+            typedefName->identifier = mTokens[mIdx - 1]->uToken.sIdentifier.identifier;
+            return typedefName;
+        }
+        else
+            return nullptr;
     }
     else
         return nullptr;
@@ -3479,6 +3501,141 @@ UnaryOperator* Tokenizer::getUnaryOperator()
     }
     else
         return nullptr;
+}
+
+bool Tokenizer::isTypedefDeclaration(DeclarationSpecifiers* declarationSpecifier) const
+{
+    bool isTypedef = false;
+
+    for(DeclarationSpecifiers* ds = declarationSpecifier; ds != nullptr;)
+    {
+        switch(ds->eDeclarationSpecifiers)
+        {
+            case(DeclarationSpecifiers::STORAGE_CLASS_SPECIFIER):
+                if(ds->uDeclarationSpecifiers.sStorageClassSpecifier.storageClassSpecifier->element == "typedef")
+                {
+                    isTypedef = true;
+                    ds = nullptr;
+                }
+                else
+                    ds = ds->uDeclarationSpecifiers.sStorageClassSpecifier.declarationSpecifier;
+                break;
+            case(DeclarationSpecifiers::TYPE_SPECIFIER):
+                ds = ds->uDeclarationSpecifiers.sTypeSpecifier.declarationSpecifiers;
+                break;
+            case(DeclarationSpecifiers::TYPE_QUALIFIER):
+                ds = ds->uDeclarationSpecifiers.sTypeQualifier.declarationSpecifiers;
+                break;
+            case(DeclarationSpecifiers::FUNCTION_SPECIFIER):
+                ds = ds->uDeclarationSpecifiers.sFunctionSpecifier.declarationSpecifiers;
+                break;
+            case(DeclarationSpecifiers::ALIGNMENT_SPECIFIER):
+                ds = ds->uDeclarationSpecifiers.sAlignmentSpecifier.declarationSpecifiers;
+                break;
+            
+            default:
+                ds = nullptr;
+                std::cerr << "implementaion-error:\n"
+                          << "    what: unexpected enumeration.\n"
+                          << "    enum: " << ds->eDeclarationSpecifiers
+                          << std::endl;
+                break;
+        }
+    }
+
+    return isTypedef;
+}
+
+bool Tokenizer::isDeclarated(Identifier* identifier) const
+{
+    bool isValid = false;
+
+    std::string data;
+    TOKEN::getString(identifier, data);
+
+    for(auto&& map : mTypedefNames)
+    {
+        if(map.find(data) != map.end())
+        {
+            isValid = true;
+            break;
+        }
+    }
+
+    return isValid;
+}
+
+void Tokenizer::extractIdentifierData(Declarator* declarator, std::string& data) const
+{
+    if(declarator)
+    {
+        for(DirectDeclarator* dd = declarator->directDeclarator; dd != nullptr;)
+        {
+            switch(dd->eDirectDeclarator)
+            {
+                case(DirectDeclarator::IDENTIFIER):
+                    TOKEN::getString(dd->uDirectDeclarator.sIdentifier.identifier, data);
+                    break;
+                case(DirectDeclarator::DECLARATOR):
+                    extractIdentifierData(dd->uDirectDeclarator.sDeclarator.declarator, data);
+                    break;
+                case(DirectDeclarator::DIRECT_DECLARATOR_TYPE_QUALIFIER_LIST_ASSIGNMENT_EXPRESSION):
+                    dd = dd->uDirectDeclarator.sDirectDeclaratorTypeQualifierListAssignmentExpression.directDeclarator;
+                    break;
+                case(DirectDeclarator::DIRECT_DECLARATOR_STATIC_TYPE_QUALIFIER_LIST_ASSIGNMENT_EXPRESSION):
+                    dd = dd->uDirectDeclarator.sDirectDeclaratorStaticTypeQualifierListAssignmentExpression.directDeclarator;
+                    break;
+                case(DirectDeclarator::DIRECT_DECLARATOR_TYPE_QUALIFIER_LIST_STATIC_ASSIGNMENT_EXPRESSION):
+                    dd = dd->uDirectDeclarator.sDirectDeclaratorTypeQualifierListStaticAssignmentExpression.directDeclarator;
+                    break;
+                case(DirectDeclarator::DIRECT_DECLARATOR_TYPE_QUALIFIER_LIST):
+                    dd = dd->uDirectDeclarator.sDirectDeclaratorTypeQualifierList.directDeclarator;
+                    break;
+                case(DirectDeclarator::DIRECT_DECLARATOR_PARAMETER_TYPE_LIST):
+                    dd = dd->uDirectDeclarator.sDirectDeclaratorParameterTypeList.directDeclarator;
+                    break;
+                case(DirectDeclarator::DIRECT_DECLARATOR_IDENTIFIER_LIST):
+                    dd = dd->uDirectDeclarator.sDirectDeclaratorIdentifierList.directDeclarator;
+                    break;
+                
+                default:
+                    dd = nullptr;
+                    std::cerr << "implementation-error:\n"
+                              << "    what: unexpected enumuration.\n"
+                              << "    enum: " << dd->eDirectDeclarator
+                              << std::endl;
+                    break;
+            }
+        }
+    }
+}
+
+void Tokenizer::addTypedefDeclaration(InitDeclarator* initDeclarator)
+{
+    if(initDeclarator)
+    {
+        Declarator* declarator = nullptr;
+
+        switch(initDeclarator->eInitDeclarator)
+        {
+            case(InitDeclarator::DECLARATOR):
+                declarator = initDeclarator->uInitDeclarator.sDeclarator.declarator;
+                break;
+            case(InitDeclarator::DECLARATOR_INITIALIZER):
+                declarator = initDeclarator->uInitDeclarator.sDeclaratorInitializer.declarator;
+                break;
+
+            default:
+                std::cerr << "implementation-error:\n"
+                          << "    what: unexpected enumration.\n"
+                          << "    enum: " << initDeclarator->eInitDeclarator
+                          << std::endl;
+        }
+
+        std::string data;
+        extractIdentifierData(declarator, data);
+        mTypedefNames.back().emplace(data, 0);
+    }
 }
 
 bool Tokenizer::isMatched(std::size_t idx, Token::EToken tag, std::string data) const

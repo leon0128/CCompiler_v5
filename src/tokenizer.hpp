@@ -2,6 +2,7 @@
 
 #include "token.hpp"
 #include <vector>
+#include <unordered_map>
 
 class Tokenizer
 {
@@ -53,7 +54,7 @@ private:
     IdentifierList* getIdentifierList(IdentifierList* bef = nullptr);
     InclusiveORExpression* getInclusiveORExpression();
     InitDeclarator* getInitDeclarator();
-    InitDeclaratorList* getInitDeclaratorList();
+    InitDeclaratorList* getInitDeclaratorList(bool isTypedef = false);
     Initializer* getInitializer();
     InitializerList* getInitializerList();
     IterationStatement* getIterationStatement();
@@ -91,11 +92,18 @@ private:
     UnaryExpression* getUnaryExpression();
     UnaryOperator* getUnaryOperator();
 
+    bool isTypedefDeclaration(DeclarationSpecifiers*) const;
+    bool isDeclarated(Identifier*) const;
+    void extractIdentifierData(Declarator*, std::string& data) const;
+    void addTypedefDeclaration(InitDeclarator*);
+
     bool isMatched(std::size_t idx, Token::EToken tag, std::string data) const;
     bool isMatched(std::size_t idx, Token::EToken tag) const;
 
     std::vector<Token*> mTokens;
     std::size_t mIdx;
+
+    std::vector<std::unordered_map<std::string, int>> mTypedefNames;
 
     bool mIsValid;
 };
