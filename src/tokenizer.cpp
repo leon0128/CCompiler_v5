@@ -11,13 +11,11 @@ Tokenizer::Tokenizer():
 {
 }
 
-bool Tokenizer::execute(std::vector<Token*>& tokens)
+TranslationUnit* Tokenizer::execute(std::vector<Token*>& tokens)
 {
     mTokens = tokens;
 
-    getTranslationUnit();
-
-    return mIsValid;
+    return getTranslationUnit();
 }
 
 AbstractDeclarator* Tokenizer::getAbstractDeclarator()

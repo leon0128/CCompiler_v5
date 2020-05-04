@@ -3,18 +3,23 @@
 #include "token.hpp"
 #include "token_converter.hpp"
 #include "tokenizer.hpp"
+#include "translator.hpp"
 #include <iostream>
 
 Compiler::Compiler():
     mPP(nullptr),
     mTokenConverter(nullptr),
     mTokenizer(nullptr),
+    mTranslator(nullptr),
     mTokens(),
+    mTranslationUnit(nullptr),
+    mAssemble(),
     mIsValid(true)
 {
     mPP = new Preprocessor();
     mTokenConverter = new TokenConverter();
     mTokenizer = new Tokenizer();
+    mTranslator = new Translator();
 }
 
 Compiler::~Compiler()
@@ -22,6 +27,7 @@ Compiler::~Compiler()
     delete mPP;
     delete mTokenConverter;
     delete mTokenizer;
+    delete mTranslator;
 
     BaseToken::destroy();
 }
@@ -41,6 +47,9 @@ bool Compiler::execute(int argc, char** argv)
 
     if(mIsValid)
         tokenize();
+
+    if(mIsValid)
+        translate();
 
     return mIsValid;
 }
@@ -75,10 +84,19 @@ void Compiler::convert()
 
 void Compiler::tokenize()
 {
-    mIsValid = mTokenizer->execute(mTokens);
+    if(mTranslationUnit = mTokenizer->execute(mTokens))
+        ;
+    else
+        mIsValid = false;
 
     if(!mIsValid)
         error("failed to tokenize.");
+}
+
+void Compiler::translate()
+{
+    if(!(mIsValid = mTranslator->execute(mTranslationUnit, mAssemble)))
+        error("failed to translate.");
 }
 
 void Compiler::error(const char* message) const

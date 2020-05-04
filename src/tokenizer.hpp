@@ -9,7 +9,7 @@ class Tokenizer
 public:
     Tokenizer();
 
-    bool execute(std::vector<Token*>&);
+    TranslationUnit* execute(std::vector<Token*>&);
 
 private:
     AbstractDeclarator* getAbstractDeclarator();
